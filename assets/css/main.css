@@ -1,0 +1,1094 @@
+/**--------------------General**/
+@import url("https://fonts.googleapis.com/css?family=Bebas+Neue|Chathura:100,300,400,700,800|Economica:400,400i,700,700i|Khand:300,400,500,600,700|Londrina+Outline");
+::-webkit-scrollbar {
+  width: 5px;
+  height: 3px;
+  border-left: 0;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #FF5252;
+  border-radius: 0px;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-snap-type: y proximity;
+}
+
+body {
+  margin: 0 !important;
+  font-family: "Khand", sans-serif !important;
+}
+
+h2 {
+  font-family: "Bebas Neue", cursive;
+  font-size: 50px !important;
+  text-align: center;
+  padding-top: 15% !important;
+  text-decoration-line: underline;
+  -webkit-text-decoration-color: #FF5252;
+  text-decoration-color: #FF5252;
+  -webkit-text-decoration-skip: ink;
+  text-decoration-skip: ink;
+}
+
+h3 {
+  font-family: "Bebas Neue", cursive;
+  font-size: 40px !important;
+  text-align: center;
+}
+
+h4 {
+  font-family: "Bebas Neue", cursive;
+  font-size: 30px !important;
+}
+
+h5 {
+  font-family: "Bebas Neue", cursive;
+  font-size: 20px !important;
+  text-align: center;
+  margin: 3% !important;
+  text-decoration-line: underline;
+  -webkit-text-decoration-color: #FF5252;
+  text-decoration-color: #FF5252;
+  -webkit-text-decoration-skip: ink;
+  text-decoration-skip: ink;
+}
+
+p {
+  font-family: "Chathura", sans-serif;
+  text-align: center;
+  font-size: 30px;
+  line-height: 0.8;
+}
+
+#row {
+  display: flex;
+  -ms-flex-wrap: wrap;
+  flex-wrap: wrap;
+  margin-right: 0;
+  margin-left: 0;
+  padding: 0;
+}
+
+/**----------------Title section**/
+#title_section {
+  scroll-snap-align: start;
+}
+
+#title_div {
+  height: 400px;
+}
+
+.title {
+  font-size: 90px;
+  text-align: center;
+  cursor: pointer;
+  font-family: "Bebas Neue", cursive;
+  margin: 0 !important;
+  padding: 0;
+  text-decoration-line: underline;
+  -webkit-text-decoration-color: #FF5252;
+  text-decoration-color: #FF5252;
+  -webkit-text-decoration-skip: ink;
+  text-decoration-skip: ink;
+}
+
+#subtitle {
+  font-size: 40px;
+  margin: 10px auto 220px;
+  text-align: center;
+  font-family: "Chathura", sans-serif;
+  line-height: 0.7;
+}
+
+#red-wood {
+  background: url("../img/red-wood.jpg");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  height: 300px;
+  width: 100%;
+  overflow: hidden;
+  margin: 0;
+  background-attachment: fixed;
+}
+
+/*Title css animation*/
+.text {
+  position: absolute;
+  top: 360px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-50%);
+  list-style: none;
+  text-align: center;
+  width: fit-content;
+}
+
+#underline {
+  margin: 0;
+  text-decoration-line: underline;
+  -webkit-text-decoration-color: #FF5252;
+  text-decoration-color: #FF5252;
+  -webkit-text-decoration-skip: ink;
+  text-decoration-skip: ink;
+}
+
+.text li {
+  float: left;
+  opacity: 1;
+  transition: all 0.8s ease-in-out;
+  max-width: 2em;
+}
+
+.text li.spaced {
+  padding-left: 0.5em;
+}
+
+.text.hidden li.ghost {
+  opacity: 0;
+  max-width: 0;
+}
+
+/*Navbar*/
+.topnav {
+  background-color: white;
+  color: black;
+  position: fixed;
+  width: 100%;
+  top: 0;
+  z-index: 2;
+  opacity: 0.9;
+}
+
+#logo {
+  background: url("../img/navbar-logo.jpg");
+  background-position: top;
+  background-repeat: no-repeat;
+  background-size: cover;
+  height: 45px;
+  width: 55px;
+  overflow: hidden;
+  margin: 8px;
+  transition: 0.4s;
+  border-radius: 0.25rem;
+}
+
+#logo:hover {
+  transform: scale(0.9, 0.9);
+}
+
+.topnav a {
+  float: left;
+  color: black;
+  text-align: center;
+  padding: 0 10px;
+  font-size: 30px;
+  margin: 8px;
+  font-family: "Chathura", sans-serif;
+  font-weight: 700;
+}
+
+#loginBtn {
+  padding: 0 10px;
+  font-size: 30px;
+  margin: 8px;
+  font-family: "Chathura", sans-serif;
+  font-weight: 700;
+  background-color: unset;
+  border: unset;
+}
+
+#loginBtn:hover {
+  background-color: #041215;
+  color: white;
+  text-decoration: none;
+}
+
+.active {
+  text-decoration-line: underline;
+  -webkit-text-decoration-color: #FF5252;
+  text-decoration-color: #FF5252;
+  -webkit-text-decoration-skip: ink;
+  text-decoration-skip: ink;
+  color: white;
+}
+
+#icon {
+  font-family: unset;
+  font-weight: unset;
+  margin: 0 !important;
+  font-size: 36px !important;
+  display: none;
+}
+
+.dropdown {
+  float: left;
+  overflow: hidden;
+  position: inherit !important;
+}
+
+.dropbtn {
+  margin: 8px;
+}
+
+.dropdown .dropbtn {
+  border: none;
+  outline: none;
+  color: black;
+  padding: 0 10px;
+  background-color: inherit;
+  font-weight: 700;
+  font-family: "Chathura", sans-serif;
+  font-size: 30px;
+}
+
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: #f9f9f9;
+  min-width: 160px;
+  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+  z-index: 1;
+}
+
+.dropdown-content a {
+  float: none;
+  color: black;
+  padding: 12px 16px;
+  text-decoration: none;
+  display: block;
+  text-align: left;
+}
+
+.topnav a:hover, .dropdown:hover .dropbtn {
+  background-color: black;
+  color: white;
+  text-decoration: none;
+  border-radius: 0.2rem;
+}
+
+.topnav:hover {
+  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+}
+
+.dropdown-content a:hover {
+  background-color: #ddd;
+  color: black;
+  text-decoration: none;
+}
+
+.dropdown:hover .dropdown-content {
+  display: block;
+}
+
+@media screen and (max-width: 600px) {
+  .topnav a:not(:first-child), .dropdown .dropbtn {
+    display: none;
+  }
+  .topnav a#icon {
+    float: right;
+    display: block;
+  }
+}
+@media screen and (max-width: 600px) {
+  .topnav.responsive #icon {
+    position: absolute;
+    right: 0;
+    top: 0;
+  }
+  .topnav.responsive a {
+    float: none;
+    display: block;
+    text-align: left;
+  }
+  .topnav.responsive .dropdown {
+    float: none;
+  }
+  .topnav.responsive .dropdown .dropbtn {
+    display: block;
+    width: 100%;
+    text-align: left;
+  }
+}
+/**--------------------Resizing codes **/
+@media screen and (min-width: 450px) {
+  #maplist {
+    width: 20%;
+  }
+  #sidebar {
+    width: 98% !important;
+  }
+  #circular_atlas {
+    padding-top: 5% !important;
+  }
+}
+@media screen and (max-width: 900px) {
+  .title {
+    font-size: 50px;
+    padding: 0px;
+  }
+  #subtitle, p {
+    font-size: 30px;
+  }
+  .topnav a {
+    font-size: 24px !important;
+  }
+  #red-wood {
+    height: 220px;
+  }
+  .rw-wrapper h2, span {
+    font-size: 30px !important;
+  }
+  #circular_action h4, p {
+    font-size: 24px !important;
+  }
+  #sidebar {
+    width: 98% !important;
+  }
+  .map {
+    width: 75% !important;
+  }
+  .atlas {
+    padding: 10% 2% 20% !important;
+  }
+  #circular_atlas {
+    padding-top: 15% !important;
+  }
+  #reuse, #refuse, #reduce, #repair, #remanu, #recycle {
+    height: 200px;
+  }
+}
+@media screen and (max-width: 450px) {
+  .title {
+    font-size: 40px;
+    padding: 0px;
+  }
+  #subtitle, p {
+    font-size: 30px;
+  }
+  #red-wood {
+    height: 180px;
+  }
+  #reuse, #refuse, #reduce, #repair, #remanu, #recycle {
+    height: 120px;
+    width: 90%;
+  }
+  .circactions h4 {
+    top: 20% !important;
+  }
+  .circactions p {
+    top: 5% !important;
+  }
+  .rw-wrapper {
+    width: 60% !important;
+  }
+  #circular_atlas h4 {
+    font-size: 18px !important;
+  }
+  .atlas {
+    display: block !important;
+    padding-top: 2% !important;
+  }
+  #sidebar {
+    width: 100% !important;
+    margin: 30% auto 0 !important;
+  }
+  #map {
+    scroll-snap-align: end;
+    width: 100% !important;
+  }
+  .mapboxgl-ctrl-group {
+    visibility: hidden;
+  }
+  .overlay {
+    height: 100%;
+    width: 0;
+    position: fixed;
+    z-index: 2;
+    top: 0;
+    left: 0;
+    overflow-x: hidden;
+    transition: 0.5s;
+  }
+  #search_button {
+    position: absolute;
+    right: 10px;
+    background: url("../img/search_button.jpg");
+    background-repeat: no-repeat;
+    background-size: cover;
+    margin: 10px;
+    padding: 20px;
+    z-index: 1;
+  }
+  #close_button {
+    position: absolute;
+    right: 0;
+    background: url("../img/close_button.jpg");
+    background-repeat: no-repeat;
+    background-size: cover;
+    margin: 10px;
+    padding: 20px;
+    z-index: 1;
+  }
+}
+/**------------------Circaction section**/
+.circactions {
+  padding: 5% 2%;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+#circular_action p {
+  margin: 2% 5%;
+}
+
+.circactions div {
+  clear: both;
+  height: 300px;
+  width: 220px;
+  margin: 2% auto;
+  border: unset !important;
+}
+
+.circactions h4 {
+  font-size: 18px;
+  color: white;
+  padding: 5%;
+  text-align: center;
+  top: 40%;
+  position: relative;
+}
+
+.circactions p {
+  text-align: left;
+  margin: 2% 5%;
+  color: white;
+  visibility: hidden;
+  position: absolute;
+  top: 10%;
+}
+
+.card:hover p {
+  visibility: visible;
+}
+
+.card:hover h4 {
+  visibility: hidden;
+}
+
+#refuse {
+  background-color: #0c343d;
+}
+
+#reduce {
+  background-color: #134f5c;
+}
+
+#reuse {
+  background-color: #45818e;
+}
+
+#repair {
+  background-color: #76a5af;
+}
+
+#remanu {
+  background-color: #a2c4c9;
+}
+
+#recycle {
+  background-color: #d0e0e3;
+}
+
+/**--------------------Mapbox section**/
+.atlas {
+  padding: 5% 2% 10%;
+  display: flex;
+  flex-wrap: wrap;
+  background-color: #d0e0e3;
+}
+
+#circular_atlas {
+  padding-top: 60px !important;
+  scroll-snap-align: start;
+  line-height: 1.2;
+}
+
+#circular_atlas h4 {
+  width: 100%;
+  text-align: center;
+}
+
+.map {
+  width: 80%;
+}
+
+#map {
+  min-height: 560px;
+  font-family: inherit;
+  position: relative;
+  z-index: 0 !important;
+}
+
+.atlas a {
+  color: black;
+  font-family: "Khand", sans-serif;
+  font-size: 12px;
+}
+
+.atlas a:hover {
+  color: #FF5252;
+  text-decoration: none;
+}
+
+.atlas h4 {
+  font-size: 18px !important;
+  cursor: pointer;
+  font-family: "Bebas Neue", cursive;
+  text-decoration-line: underline;
+  -webkit-text-decoration-color: #FF5252;
+  text-decoration-color: #FF5252;
+  -webkit-text-decoration-skip: ink;
+  text-decoration-skip: ink;
+}
+
+.atlas p {
+  text-align: left;
+  font-family: "Chathura", sans-serif;
+  line-height: 0.5;
+  font-size: 22px;
+}
+
+.mapboxgl-popup-close-button {
+  display: none;
+}
+
+.mapboxgl-popup-content {
+  line-height: 1.2;
+  padding: 2%;
+  width: 120px;
+  box-shadow: none;
+}
+
+.mapboxgl-popup-content-wrapper {
+  padding: 1%;
+}
+
+.mapboxgl-container .leaflet-marker-icon {
+  cursor: pointer;
+}
+
+/*Map listing*/
+#sidebar {
+  width: 15%;
+  height: 560px;
+  top: 0;
+  left: 0;
+  overflow: hidden;
+  margin: 0 2%;
+  border: solid 6px #0c343d;
+  box-shadow: 0 2.8px 2.2px rgba(0, 0, 0, 0.034), 0 6.7px 5.3px rgba(0, 0, 0, 0.048), 0 12.5px 10px rgba(0, 0, 0, 0.06), 0 22.3px 17.9px rgba(0, 0, 0, 0.072), 0 41.8px 33.4px rgba(0, 0, 0, 0.086), 0 100px 80px rgba(0, 0, 0, 0.12);
+}
+
+#sidebar:hover ::-webkit-scrollbar {
+  width: 10px !important;
+}
+
+.stockholmlist {
+  font-size: 18px;
+  cursor: pointer;
+  font-family: "Bebas Neue", cursive;
+  text-decoration-line: underline;
+  -webkit-text-decoration-color: #FF5252;
+  text-decoration-color: #FF5252;
+  -webkit-text-decoration-skip: ink;
+  text-decoration-skip: ink;
+}
+
+.listings {
+  height: 370px;
+  overflow: auto;
+  background-color: #f9f9f9;
+}
+
+.listings .item {
+  display: block;
+  border-bottom: 1px solid #eee;
+  padding: 10px;
+}
+
+fieldset {
+  border: none;
+}
+
+input {
+  display: block;
+  border: none;
+  width: 100%;
+  border-radius: 0;
+  padding: 8px;
+}
+
+.clearfix {
+  display: block;
+}
+
+.clearfix::after {
+  content: ".";
+  display: block;
+  height: 0;
+  clear: both;
+  visibility: hidden;
+}
+
+/* Hide and show map layers */
+#selectlayers {
+  background: #fff;
+  z-index: 1;
+  font-family: "Bebas Neue", cursive;
+}
+
+#selectlayers a {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0c343d;
+  display: block;
+  margin: 0;
+  padding: 10px;
+  text-decoration: none;
+  text-transform: uppercase;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.25);
+  text-align: center;
+}
+
+#selectlayers a:last-child {
+  border: none;
+}
+
+#selectlayers a:hover {
+  background-color: #f8f8f8;
+  color: #404040;
+}
+
+#selectlayers a.active {
+  background-color: #0c343d;
+  color: #ffffff;
+}
+
+#selectlayers a.active:hover {
+  background: #134f5c;
+}
+
+/**-------------------------Footer**/
+#actual-footer {
+  background-color: #0c343d;
+  margin: 0;
+  color: white;
+  padding: 10% 2% 5%;
+}
+
+#info-footer {
+  padding: 0 10% 20px;
+}
+
+#info-footer p {
+  line-height: 1.5;
+  padding-top: 20px;
+}
+
+#author {
+  font-size: 18px !important;
+  text-align: center !important;
+  padding-top: 20px;
+}
+
+#author a {
+  text-decoration: none;
+  color: white;
+}
+
+#author a:hover {
+  text-decoration: none;
+  color: #FF5252;
+}
+
+.form-control {
+  margin: 2% auto;
+  max-width: 80%;
+  font-size: 24px !important;
+  font-family: "Chathura", sans-serif;
+  line-height: 0.7;
+  border-radius: 0.25rem !important;
+}
+
+.send_button {
+  text-align: center;
+}
+
+.send_button button {
+  outline: none;
+  height: 40px;
+  width: 130px;
+  border-radius: 40px !important;
+  background: #0c343d;
+  border: 2px solid white;
+  color: white;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.send_button button:hover {
+  color: #0c343d;
+  background: white;
+}
+
+.send_button button:after {
+  content: "\f003";
+  font-family: "FontAwesome";
+}
+
+.send_button .onclic {
+  width: 40px;
+  border-color: #FF5252;
+  border-width: 3px;
+  font-size: 0;
+  border-left-color: #0c343d;
+  animation: rotating 2s 0.25s linear infinite;
+}
+
+.send_button .onclic:after {
+  content: "";
+}
+
+.send_button .onclic:hover {
+  color: white;
+  background: #0c343d;
+}
+
+.send_button .validate:after {
+  font-family: "FontAwesome";
+  content: "\f00c";
+}
+
+.send_button .validate {
+  font-size: 13px;
+  color: #0c343d;
+  background: white;
+}
+
+@keyframes rotating {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+/*---------------------Circular Action animation */
+/** Reference https://tympanus.net/codrops/2012/04/17/rotating-words-with-css-animations/ **/
+.rw-wrapper {
+  width: 90%;
+  position: relative;
+  font-family: "Bree Serif";
+  padding: 10px;
+  text-align: center;
+}
+
+.rw-sentence {
+  margin: 0;
+}
+
+.rw-words {
+  display: inline;
+  text-indent: 10px;
+}
+
+.rw-words-1 span {
+  position: absolute;
+  opacity: 0;
+  overflow: hidden;
+  color: #45818e;
+  -webkit-animation: rotateWord 8s linear infinite 1s;
+  -ms-animation: rotateWord 8s linear infinite 1s;
+  animation: rotateWord 8s linear infinite 1s;
+}
+
+.rw-words-1 span:nth-child(2) {
+  -webkit-animation-delay: 2s;
+  -ms-animation-delay: 2s;
+  animation-delay: 2s;
+  color: #45818e;
+}
+
+.rw-words-1 span:nth-child(3) {
+  -webkit-animation-delay: 3s;
+  -ms-animation-delay: 3s;
+  animation-delay: 3s;
+  color: #45818e;
+}
+
+.rw-words-1 span:nth-child(4) {
+  -webkit-animation-delay: 4s;
+  -ms-animation-delay: 4s;
+  animation-delay: 4s;
+  color: #45818e;
+}
+
+.rw-words-1 span:nth-child(5) {
+  -webkit-animation-delay: 5s;
+  -ms-animation-delay: 5s;
+  animation-delay: 5s;
+  color: #45818e;
+}
+
+.rw-words-1 span:nth-child(6) {
+  -webkit-animation-delay: 6s;
+  -ms-animation-delay: 6s;
+  animation-delay: 6s;
+  color: #45818e;
+}
+
+.rw-words-1 span:nth-child(7) {
+  -webkit-animation-delay: 7s;
+  -ms-animation-delay: 7s;
+  animation-delay: 7s;
+  color: #45818e;
+}
+
+.rw-words-1 span:nth-child(8) {
+  -webkit-animation-delay: 8s;
+  -ms-animation-delay: 8s;
+  animation-delay: 8s;
+  color: #45818e;
+}
+
+@-webkit-keyframes rotateWord {
+  0% {
+    opacity: 0;
+  }
+  2% {
+    opacity: 0;
+    -webkit-transform: translateY(-30px);
+  }
+  5% {
+    opacity: 1;
+    -webkit-transform: translateY(0px);
+  }
+  17% {
+    opacity: 1;
+    -webkit-transform: translateY(0px);
+  }
+  20% {
+    opacity: 0;
+    -webkit-transform: translateY(30px);
+  }
+  80% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@-ms-keyframes rotateWord {
+  0% {
+    opacity: 0;
+  }
+  2% {
+    opacity: 0;
+    -ms-transform: translateY(-30px);
+  }
+  5% {
+    opacity: 1;
+    -ms-transform: translateY(0px);
+  }
+  17% {
+    opacity: 1;
+    -ms-transform: translateY(0px);
+  }
+  20% {
+    opacity: 0;
+    -ms-transform: translateY(30px);
+  }
+  80% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes rotateWord {
+  0% {
+    opacity: 0;
+  }
+  2% {
+    opacity: 0;
+    -webkit-transform: translateY(-30px);
+    transform: translateY(-30px);
+  }
+  5% {
+    opacity: 1;
+    -webkit-transform: translateY(0px);
+    transform: translateY(0px);
+  }
+  17% {
+    opacity: 1;
+    -webkit-transform: translateY(0px);
+    transform: translateY(0px);
+  }
+  20% {
+    opacity: 0;
+    -webkit-transform: translateY(30px);
+    transform: translateY(30px);
+  }
+  80% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@media screen and (max-width: 768px) {
+  .rw-sentence {
+    font-size: 18px;
+  }
+}
+@media screen and (max-width: 320px) {
+  .rw-sentence {
+    font-size: 9px;
+  }
+}
+/** --------Minimal styles for auth header & modal --------**/
+#authHeader {
+  position: fixed;
+  top: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 1100;
+}
+
+#authHeader .avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  cursor: pointer;
+}
+
+#authHeader .profile {
+  position: relative;
+}
+
+#authHeader .menu {
+  position: absolute;
+  right: 0;
+  top: 120%;
+  display: none;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 0.5rem;
+  min-width: 200px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+}
+
+#authHeader .profile:hover .menu {
+  display: block;
+}
+
+#authHeader .btn-link {
+  background: none;
+  border: none;
+  padding: 0.25rem 0;
+  cursor: pointer;
+}
+
+/* Modal container stays the same */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1200;
+}
+
+/* Flip card */
+#flip {
+  animation: init 600ms cubic-bezier(0.26, 1, 0.3, 1);
+  background-color: transparent;
+  position: relative;
+  width: min(360px, 92vw);
+  height: 360px;
+  transform-style: preserve-3d;
+  transition: transform 700ms cubic-bezier(0.2, 0.7, 0.1, 1);
+  perspective: 2000px; /* perspective on the same element is fine here */
+}
+
+/* When #flip is the URL hash target, rotate the card */
+#flip:target {
+  transform: rotateY(180deg);
+}
+
+/* Faces fill the whole card */
+.front, .back {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  background: #fff;
+  padding: 1rem;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+}
+
+.front {
+  transform: rotateY(0deg);
+}
+
+.back {
+  transform: rotateY(180deg);
+  background: linear-gradient(180deg, #ffffff 0%, #f7f9ff 100%);
+}
+
+@keyframes init {
+  from {
+    transform: rotateY(90deg);
+  }
+  to {
+    transform: rotateY(0);
+  }
+}
+#toSignin, #toSignup {
+  color: #FF5252;
+}
+
+#signInSubmit, #signUpSubmit {
+  background-color: #FF5252;
+  border: unset;
+  width: 80%;
+  margin: auto;
+}
+
+#signUpForm label, #signInForm label {
+  margin: 1rem 0 0;
+}
+
+#signUpForm p, #signInForm p {
+  margin: 0.5rem 0 0;
+  font-size: x-large;
+  font-weight: 400;
+}
+
+/*# sourceMappingURL=data:application/json;charset=utf-8,%7B%22version%22:3,%22sourceRoot%22:%22%22,%22sources%22:%5B%22../scss/main.scss%22%5D,%22names%22:%5B%5D,%22mappings%22:%22AAGA;AAEQ;AAER;EACI;EACA;EACA;EACA;;;AAGJ;EACI;EACA;;;AAGJ;EACI;EACA;;;AAGJ;EACI;EACA;;;AAGJ;EACI;EACA;EACA;EACA;EACA;EACA;EACA;EACA;EACA;;;AAGJ;EACI;EACA;EACA;;;AAGJ;EACI;EACA;;;AAGJ;EACI;EACA;EACA;EACA;EACA;EACA;EACA;EACA;EACA;;;AAGJ;EACI;EACA;EACA;EACA;;;AAGJ;EACI;EACA;EACA;EACA;EACA;EACA;;;AAGJ;AAEA;EACI;;;AAGJ;EACI;;;AAGJ;EACI;EACA;EACA;EACA;EACA;EACA;EACA;EACA;EACA;EACA;EACA;;;AAGJ;EACI;EACA;EACA;EACA;EACA;;;AAGJ;EACI;EACA;EACA;EACA;EACA;EACA;EACA;EACA;EACA;;;AAGJ;AAEA;EACI;EACA;EACA;EACA;EACA;EACA;EACA;;;AAGJ;EACI;EACA;EACA;EACA;EACA;EACA;;;AAGJ;EACI;EACA;EACA;EACA;;;AAGJ;EACI;;;AAGJ;EACI;EACA;;;AAGJ;AAEA;EACI;EACA;EACA;EACA;EACA;EACA;EACA;;;AAGJ;EACI;EACA;EACA;EACA;EACA;EACA;EACA;EACA;EACA;EACA;;;AAGJ;EACI;;;AAGJ;EACI;EACA;EACA;EACA;EACA;EACA;EACA;EACA;;;AAGJ;EACI;EACA;EACA;EACA;EACA;EACA;EACA;;;AAGJ;EACI;EACA;EACA;;;AAGJ;EACI;EACA;EACA;EACA;EACA;EACA;;;AAGJ;EACI;EACA;EACA;EACA;EACA;;;AAGJ;EACI;EACA;EACA;;;AAGJ;EACI;;;AAGJ;EACI;EACA;EACA;EACA;EACA;EACA;EACA;EACA;;;AAGJ;EACI;EACA;EACA;EACA;EACA;EACA;;;AAGJ;EACI;EACA;EACA;EACA;EACA;EACA;;;AAGJ;EACI;EACA;EACA;EACA;;;AAGJ;EACI;;;AAGJ;EACI;EACA;EACA;;;AAGJ;EACI;;;AAGJ;EACI;IACA;;EAEA;IACA;IACA;;;AAIJ;EACI;IACA;IACA;IACA;;EAEA;IACA;IACA;IACA;;EAEA;IACI;;EAEJ;IACA;IACA;IACA;;;AAIJ;AAEA;EACI;IAAU;;EACV;IAAU;;EACV;IAAiB;;;AAGrB;EACI;IAAQ;IAAiB;;EACzB;IAAc;;EACd;IAAW;;EACX;IAAW;;EACX;IAAsB;;EACtB;IAAwB;;EACxB;IAAU;;EACV;IAAM;;EACN;IAAQ;;EACR;IAAiB;;EACjB;IAAsD;;;AAG1D;EACI;IAAQ;IAAiB;;EACzB;IAAc;;EACd;IAAW;;EACX;IAAsD;IAAe;;EACrE;IAAiB;;EACjB;IAAgB;;EAChB;IAAa;;EACb;IAAoB;;EACpB;IAAQ;IAA0B;;EAClC;IAAU;IAAwB;;EAClC;IAAM;IAAwB;;EAC9B;IAAsB;;EACtB;IACI;IACA;IACA;IACA;IACA;IACA;IACA;IACA;;EAEJ;IACI;IACA;IACA;IACA;IACA;IACA;IACA;IACA;;EAEJ;IACI;IACA;IACA;IACA;IACA;IACA;IACA;IACA;;;AAKR;AAEA;EACI;EACA;EACA;;;AAGJ;EACI;;;AAGJ;EACI;EACA;EACA;EACA;EACA;;;AAGJ;EACI;EACA;EACA;EACA;EACA;EACA;;;AAGJ;EACI;EACA;EACA;EACA;EACA;EACA;;;AAGJ;EACI;;;AAGJ;EACI;;;AAGJ;EACI;;;AAGJ;EACI;;;AAGJ;EACI;;;AAGJ;EACI;;;AAGJ;EACI;;;AAGJ;EACI;;;AAGJ;AAEA;EACI;EACA;EACA;EACA;;;AAGJ;EACI;EACA;EACA;;;AAGJ;EACI;EACA;;;AAGJ;EACI;;;AAGJ;EACI;EACA;EACA;EACA;;;AAGJ;EACI;EACA;EACA;;;AAGJ;EACE;EACA;;;AAGF;EACI;EACA;EACA;EACA;EACA;EACA;EACA;EACA;;;AAGJ;EACI;EACA;EACA;EACA;;;AAIJ;EACI;;;AAGJ;EACE;EACA;EACA;EACA;;;AAGF;EACE;;;AAGF;EACE;;;AAGF;AAEA;EACI;EACA;EACA;EACA;EACA;EACA;EACA;EACA,YACI;;;AAQR;EACI;;;AAGJ;EACI;EACA;EACA;EACA;EACA;EACA;EACA;EACA;;;AAGJ;EACI;EACA;EACA;;;AAGJ;EACI;EACA;EACA;;;AAGJ;EACI;;;AAGJ;EACI;EACA;EACA;EACA;EACA;;;AAGJ;EACI;;;AAGJ;EACI;EACA;EACA;EACA;EACA;;;AAGJ;AAEA;EACI;EACA;EACA;;;AAGJ;EACI;EACA;EACA;EACA;EACA;EACA;EACA;EACA;EACA;EACA;;;AAGJ;EACI;;;AAGJ;EACI;EACA;;;AAGJ;EACI;EACA;;;AAGJ;EACI;;;AAIJ;AAEA;EACI;EACA;EACA;EACA;;;AAGJ;EACI;;;AAGJ;EACI;EACA;;;AAGJ;EACI;EACA;EACA;;;AAGJ;EACI;EACA;;;AAGJ;EACI;EACA;;;AAGJ;EACI;EACA;EACA;EACA;EACA;EACA;;;AAGJ;EACI;;;AAGJ;EACI;EACA;EACA;EACA;EACA;EACA;EACA;EACA;EACA;;;AAGJ;EACI;EACA;;;AAGJ;EACI;EACA;;;AAGJ;EACI;EACA;EACA;EACA;EACA;EACA;;;AAGJ;EACI;;;AAGJ;EACI;EACA;;;AAGJ;EACI;EACA;;;AAGJ;EACI;EACA;EACA;;;AAGJ;EACE;IACE;;EAEF;IACE;;;AAKJ;AACA;AAEA;EACC;EACA;EACA;EACA;EACG;;;AAGJ;EACC;;;AAGD;EACC;EACA;;;AAED;EACC;EACA;EACA;EACA;EACA;EACA;EACA;;;AAED;EACI;EACH;EACA;EACA;;;AAED;EACI;EACH;EACA;EACA;;;AAED;EACI;EACH;EACA;EACA;;;AAED;EACI;EACH;EACA;EACA;;;AAED;EACI;EACH;EACA;EACA;;;AAED;EACI;EACH;EACA;EACA;;;AAED;EACI;EACH;EACA;EACA;;;AAED;EACI;IAAK;;EACL;IAAK;IAAY;;EACpB;IAAK;IAAY;;EACd;IAAM;IAAY;;EACrB;IAAM;IAAY;;EAClB;IAAM;;EACH;IAAO;;;AAEX;EACI;IAAK;;EACL;IAAK;IAAY;;EACpB;IAAK;IAAY;;EACd;IAAM;IAAY;;EACrB;IAAM;IAAY;;EAClB;IAAM;;EACH;IAAO;;;AAEX;EACI;IAAK;;EACL;IAAK;IAAY;IAAsC;;EAC1D;IAAK;IAAY;IAAoC;;EAClD;IAAM;IAAY;IAAoC;;EACzD;IAAM;IAAY;IAAqC;;EACvD;IAAM;;EACH;IAAO;;;AAEX;EACC;IAAe;;;AAEhB;EACC;IAAe;;;AAIhB;AACA;EACI;EACA;EACA;EACA;EACA;EACA;EACA;;;AAEJ;EACI;EACA;EACA;EACA;EACA;;;AAGJ;EACI;;;AAGJ;EACI;EACA;EACA;EACA;EACA;EACA;EACA;EACA;EACA;EACA;;;AAGJ;EACI;;;AAGJ;EACI;EACA;EACA;EACA;;;AAGJ;AACA;EACE;EACA;EACA;EACA;EACA;EACA;EACA;;;AAGF;AACA;EACE;EACA;EACA;EAEA;EACA;EAEA;EACA;EACA;;;AAGF;AACA;EACE;;;AAGF;AACA;EACE;EACA;EAAQ;EACR;EAAa;EACb;EACA;EACA;EACA;EACA;EACA;EACA;EACA;EACA;;;AAGF;EAAS;;;AACT;EAAS;EAA4B;;;AAErC;EACE;IAAO;;EACP;IAAO;;;AAGT;EACI;;;AAGJ;EACI;EACA;EACA;EACA;;;AAGJ;EACI;;;AAGJ;EACI;EACA;EACA%22,%22file%22:%22main.css%22%7D */
