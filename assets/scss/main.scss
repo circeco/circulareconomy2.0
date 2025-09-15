@@ -874,11 +874,11 @@ input {
     gap: 12px;
     z-index: 1100;
 }
-#authHeader .avatar {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    object-fit: cover;
+
+#avatar {
+    width: 40px;
+    height: 40px;
+    margin: 8px;
     cursor: pointer;
 }
 
@@ -889,10 +889,8 @@ input {
 #authHeader .menu {
     position: absolute;
     right: 0;
-    top: 120%;
     display: none;
     background: #fff;
-    border: 1px solid #ddd;
     border-radius: 8px;
     padding: .5rem;
     min-width: 200px;
@@ -903,10 +901,11 @@ input {
     display: block;
 }
 
-#authHeader .btn-link {
+#authHeader #logoutBtn {
     background: none;
     border: none;
-    padding: .25rem 0;
+    color: #FF5252;
+    font-size: small;
     cursor: pointer;
 }
 

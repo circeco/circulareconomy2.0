@@ -181,21 +181,27 @@ signUpForm && signUpForm.addEventListener("submit", async (e) => {
 });
 
 // ======================================================
-// Header state & favourites rendering
+// Header state rendering
 // ======================================================
+const emailEl = document.getElementById("userEmail");
+
 auth.onAuthStateChanged(async (user) => {
   if (user) {
     if (loginBtn)    loginBtn.style.display = "none";
     if (profileMenu) profileMenu.style.display = "";
-    if (avatarImg)   avatarImg.src = user.photoURL || "https://www.gravatar.com/avatar/?d=mp&s=64";
+    if (avatarImg)   avatarImg.src = "assets/img/avatar.png";
+    if (emailEl)     emailEl.textContent = user.email;   // 👈 set email
+
     try { await loadFavourites(user.uid); } catch (e) { console.error(e); }
   } else {
     if (profileMenu) profileMenu.style.display = "none";
     if (loginBtn)    loginBtn.style.display = "";
+    if (emailEl)     emailEl.textContent = "";           // 👈 clear on logout
     try { clearFavouritesFromMap(); } catch {}
     try { renderFavouritesDropdown([]); } catch {}
   }
 });
+
 
 // ======================================================
 // Firestore helpers for favourites

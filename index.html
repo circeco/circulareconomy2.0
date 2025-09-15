@@ -54,23 +54,16 @@
     <div id="authHeader">
       <button id="loginBtn" class="btn btn-sm btn-light">Sign in</button>
       <div id="profileMenu" class="profile" style="display:none;">
-        <img id="avatar" class="avatar" alt="profile" />
+        <img id="avatar" alt="profile" />
         <div class="menu">
-          <div class="dropdown-item" style="font-weight:600;">Ciao! 👋</div>
+          <div class="dropdown-item" style="font-weight:600;">Welcome!</div>
+          <div id="userEmail" class="dropdown-item small text-muted"></div>
           <div class="dropdown-divider" style="height:1px;background:#eee;margin:.25rem 0;"></div>
-
-          <div class="dropdown-item" style="font-weight:600;">⭐ Preferiti</div>
-          <div id="favDropdown">
-            <ul id="favList" style="list-style:none;padding:0;margin:0;max-height:220px;overflow:auto;"></ul>
-            <div id="favEmpty" style="padding:.25rem .5rem; color:#777; display:none;">Nessun preferito</div>
-          </div>
-
-          <div class="dropdown-divider" style="height:1px;background:#eee;margin:.25rem 0;"></div>
-          <a id="profileLink" href="#profile" class="dropdown-item">Profilo</a>
-          <button id="logoutBtn" class="btn-link dropdown-item">Sign out</button>
+          <button id="logoutBtn" class="dropdown-item">Sign out</button>
         </div>
       </div>
     </div>
+
   </header>
 
   <!-- 🧰 login/signup flip modal -->
