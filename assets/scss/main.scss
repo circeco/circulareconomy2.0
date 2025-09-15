@@ -526,6 +526,10 @@ p {
     display: none;
 }
 
+.popup-header, .listing-header {
+    display: flex;
+}
+
 .mapboxgl-popup-content {
   line-height: 1.2;
   padding: 2%;
@@ -984,3 +988,20 @@ input {
     font-weight: 400;
 }
 
+// FAVOURITES //
+.heart-btn {
+    border: 0;
+    color: #FF5252;
+    background: transparent;
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+}
+.heart-btn[aria-pressed="true"] {
+    color: #FF5252;
+    border: 0;
+}
+
+.heart-btn:focus {
+    outline: none;
+}
