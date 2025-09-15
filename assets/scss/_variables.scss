@@ -1,2 +1,15 @@
-// design tokens
-$brand:#0b6;
+// --- Fonts (reused in many places) ---
+$font-bebas: 'Bebas Neue', cursive;
+$font-chathura: 'Chathura', sans-serif;
+$font-khand: 'Khand', sans-serif;
+
+// --- Accent & brand colors (reused several times) ---
+$color-accent: #FF5252;     // red accent for underline, links, buttons, hearts
+$brand-deep:   #0c343dff;   // deep green/teal (footer, sidebar border, layers)
+$brand-mid:    #134f5cff;   // darker teal (hover/active)
+$brand-teal:   #45818eff;   // teal (reuse + rotating words)
+$blue-gray:    #d0e0e3ff;   // pale blue-gray (atlas bg, recycle)
+
+// --- Shared backgrounds/shadows used in multiple spots ---
+$bg-light:     #f9f9f9;     // dropdown + listings background
+$shadow-md:    0px 8px 16px 0px rgba(0,0,0,0.2); // dropdown + topnav hover

@@ -1,2 +1,8 @@
-// mixins live here
-@mixin sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
+// Colored underline + ink skip (used in multiple headings/links)
+@mixin underline-accent($color) {
+  text-decoration-line: underline;
+  -webkit-text-decoration-color: $color;
+  text-decoration-color: $color;
+  -webkit-text-decoration-skip: ink;
+  text-decoration-skip: ink;
+}

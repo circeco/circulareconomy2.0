@@ -1,5 +1,5 @@
-/**--------------------General**/
 @import url("https://fonts.googleapis.com/css?family=Bebas+Neue|Chathura:100,300,400,700,800|Economica:400,400i,700,700i|Khand:300,400,500,600,700|Londrina+Outline");
+/* Scrollbars */
 ::-webkit-scrollbar {
   width: 5px;
   height: 3px;
@@ -12,6 +12,7 @@
   border-radius: 0px;
 }
 
+/* Base */
 html {
   scroll-behavior: smooth;
   scroll-snap-type: y proximity;
@@ -73,7 +74,7 @@ p {
   padding: 0;
 }
 
-/**----------------Title section**/
+/* ---------------- Title section ---------------- */
 #title_section {
   scroll-snap-align: start;
 }
@@ -105,10 +106,7 @@ p {
 }
 
 #red-wood {
-  background: url("../img/red-wood.jpg");
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: cover;
+  background: url("../img/red-wood.jpg") center/cover no-repeat;
   height: 300px;
   width: 100%;
   overflow: hidden;
@@ -116,7 +114,7 @@ p {
   background-attachment: fixed;
 }
 
-/*Title css animation*/
+/* Title animation */
 .text {
   position: absolute;
   top: 360px;
@@ -125,6 +123,19 @@ p {
   list-style: none;
   text-align: center;
   width: fit-content;
+}
+.text li {
+  float: left;
+  opacity: 1;
+  transition: all 0.8s ease-in-out;
+  max-width: 2em;
+}
+.text li.spaced {
+  padding-left: 0.5em;
+}
+.text.hidden li.ghost {
+  opacity: 0;
+  max-width: 0;
 }
 
 #underline {
@@ -136,23 +147,7 @@ p {
   text-decoration-skip: ink;
 }
 
-.text li {
-  float: left;
-  opacity: 1;
-  transition: all 0.8s ease-in-out;
-  max-width: 2em;
-}
-
-.text li.spaced {
-  padding-left: 0.5em;
-}
-
-.text.hidden li.ghost {
-  opacity: 0;
-  max-width: 0;
-}
-
-/*Navbar*/
+/* ---------------- Navbar ---------------- */
 .topnav {
   background-color: white;
   color: black;
@@ -162,24 +157,6 @@ p {
   z-index: 2;
   opacity: 0.9;
 }
-
-#logo {
-  background: url("../img/navbar-logo.jpg");
-  background-position: top;
-  background-repeat: no-repeat;
-  background-size: cover;
-  height: 45px;
-  width: 55px;
-  overflow: hidden;
-  margin: 8px;
-  transition: 0.4s;
-  border-radius: 0.25rem;
-}
-
-#logo:hover {
-  transform: scale(0.9, 0.9);
-}
-
 .topnav a {
   float: left;
   color: black;
@@ -189,6 +166,84 @@ p {
   margin: 8px;
   font-family: "Chathura", sans-serif;
   font-weight: 700;
+}
+.topnav a:hover {
+  background-color: black;
+  color: white;
+  text-decoration: none;
+  border-radius: 0.2rem;
+}
+.topnav .dropdown {
+  float: left;
+  overflow: hidden;
+  position: inherit !important;
+}
+.topnav .dropdown .dropbtn {
+  margin: 8px;
+  border: none;
+  outline: none;
+  color: black;
+  padding: 0 10px;
+  background-color: inherit;
+  font-weight: 700;
+  font-family: "Chathura", sans-serif;
+  font-size: 30px;
+}
+.topnav .dropdown:hover .dropbtn {
+  background-color: black;
+  color: white;
+  text-decoration: none;
+  border-radius: 0.2rem;
+}
+.topnav .dropdown:hover .dropdown-content {
+  display: block;
+}
+.topnav:hover {
+  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+}
+.topnav {
+  /* responsive (<=600px) */
+}
+@media screen and (max-width: 600px) {
+  .topnav a:not(:first-child), .topnav .dropdown .dropbtn {
+    display: none;
+  }
+  .topnav a#icon {
+    float: right;
+    display: block;
+  }
+  .topnav.responsive #icon {
+    position: absolute;
+    right: 0;
+    top: 0;
+  }
+  .topnav.responsive a {
+    float: none;
+    display: block;
+    text-align: left;
+  }
+  .topnav.responsive .dropdown {
+    float: none;
+  }
+  .topnav.responsive .dropdown .dropbtn {
+    display: block;
+    width: 100%;
+    text-align: left;
+  }
+}
+
+/* logo (kept outside .topnav to preserve specificity) */
+#logo {
+  background: url("../img/navbar-logo.jpg") top/cover no-repeat;
+  height: 45px;
+  width: 55px;
+  overflow: hidden;
+  margin: 8px;
+  transition: 0.4s;
+  border-radius: 0.25rem;
+}
+#logo:hover {
+  transform: scale(0.9, 0.9);
 }
 
 #loginBtn {
@@ -200,7 +255,6 @@ p {
   background-color: unset;
   border: unset;
 }
-
 #loginBtn:hover {
   background-color: #041215;
   color: white;
@@ -224,27 +278,6 @@ p {
   display: none;
 }
 
-.dropdown {
-  float: left;
-  overflow: hidden;
-  position: inherit !important;
-}
-
-.dropbtn {
-  margin: 8px;
-}
-
-.dropdown .dropbtn {
-  border: none;
-  outline: none;
-  color: black;
-  padding: 0 10px;
-  background-color: inherit;
-  font-weight: 700;
-  font-family: "Chathura", sans-serif;
-  font-size: 30px;
-}
-
 .dropdown-content {
   display: none;
   position: absolute;
@@ -253,7 +286,6 @@ p {
   box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
   z-index: 1;
 }
-
 .dropdown-content a {
   float: none;
   color: black;
@@ -262,58 +294,13 @@ p {
   display: block;
   text-align: left;
 }
-
-.topnav a:hover, .dropdown:hover .dropbtn {
-  background-color: black;
-  color: white;
-  text-decoration: none;
-  border-radius: 0.2rem;
-}
-
-.topnav:hover {
-  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
-}
-
 .dropdown-content a:hover {
   background-color: #ddd;
   color: black;
   text-decoration: none;
 }
 
-.dropdown:hover .dropdown-content {
-  display: block;
-}
-
-@media screen and (max-width: 600px) {
-  .topnav a:not(:first-child), .dropdown .dropbtn {
-    display: none;
-  }
-  .topnav a#icon {
-    float: right;
-    display: block;
-  }
-}
-@media screen and (max-width: 600px) {
-  .topnav.responsive #icon {
-    position: absolute;
-    right: 0;
-    top: 0;
-  }
-  .topnav.responsive a {
-    float: none;
-    display: block;
-    text-align: left;
-  }
-  .topnav.responsive .dropdown {
-    float: none;
-  }
-  .topnav.responsive .dropdown .dropbtn {
-    display: block;
-    width: 100%;
-    text-align: left;
-  }
-}
-/**--------------------Resizing codes **/
+/* ---------------- Resizing codes ---------------- */
 @media screen and (min-width: 450px) {
   #maplist {
     width: 20%;
@@ -413,38 +400,29 @@ p {
     overflow-x: hidden;
     transition: 0.5s;
   }
-  #search_button {
-    position: absolute;
-    right: 10px;
-    background: url("../img/search_button.jpg");
-    background-repeat: no-repeat;
-    background-size: cover;
-    margin: 10px;
-    padding: 20px;
-    z-index: 1;
-  }
-  #close_button {
+  #search_button, #close_button {
     position: absolute;
     right: 0;
-    background: url("../img/close_button.jpg");
     background-repeat: no-repeat;
     background-size: cover;
     margin: 10px;
     padding: 20px;
     z-index: 1;
   }
+  #search_button {
+    right: 10px;
+    background-image: url("../img/search_button.jpg");
+  }
+  #close_button {
+    background-image: url("../img/close_button.jpg");
+  }
 }
-/**------------------Circaction section**/
+/* ---------------- Circaction section ---------------- */
 .circactions {
   padding: 5% 2%;
   display: flex;
   flex-wrap: wrap;
 }
-
-#circular_action p {
-  margin: 2% 5%;
-}
-
 .circactions div {
   clear: both;
   height: 300px;
@@ -452,7 +430,6 @@ p {
   margin: 2% auto;
   border: unset !important;
 }
-
 .circactions h4 {
   font-size: 18px;
   color: white;
@@ -461,7 +438,6 @@ p {
   top: 40%;
   position: relative;
 }
-
 .circactions p {
   text-align: left;
   margin: 2% 5%;
@@ -471,10 +447,13 @@ p {
   top: 10%;
 }
 
+#circular_action p {
+  margin: 2% 5%;
+}
+
 .card:hover p {
   visibility: visible;
 }
-
 .card:hover h4 {
   visibility: hidden;
 }
@@ -503,12 +482,37 @@ p {
   background-color: #d0e0e3;
 }
 
-/**--------------------Mapbox section**/
+/* ---------------- Mapbox section ---------------- */
 .atlas {
   padding: 5% 2% 10%;
   display: flex;
   flex-wrap: wrap;
   background-color: #d0e0e3;
+}
+.atlas a {
+  color: black;
+  font-family: "Khand", sans-serif;
+  font-size: 12px;
+}
+.atlas a:hover {
+  color: #FF5252;
+  text-decoration: none;
+}
+.atlas h4 {
+  font-size: 18px !important;
+  cursor: pointer;
+  font-family: "Bebas Neue", cursive;
+  text-decoration-line: underline;
+  -webkit-text-decoration-color: #FF5252;
+  text-decoration-color: #FF5252;
+  -webkit-text-decoration-skip: ink;
+  text-decoration-skip: ink;
+}
+.atlas p {
+  text-align: left;
+  font-family: "Chathura", sans-serif;
+  line-height: 0.5;
+  font-size: 22px;
 }
 
 #circular_atlas {
@@ -516,7 +520,6 @@ p {
   scroll-snap-align: start;
   line-height: 1.2;
 }
-
 #circular_atlas h4 {
   width: 100%;
   text-align: center;
@@ -531,35 +534,6 @@ p {
   font-family: inherit;
   position: relative;
   z-index: 0 !important;
-}
-
-.atlas a {
-  color: black;
-  font-family: "Khand", sans-serif;
-  font-size: 12px;
-}
-
-.atlas a:hover {
-  color: #FF5252;
-  text-decoration: none;
-}
-
-.atlas h4 {
-  font-size: 18px !important;
-  cursor: pointer;
-  font-family: "Bebas Neue", cursive;
-  text-decoration-line: underline;
-  -webkit-text-decoration-color: #FF5252;
-  text-decoration-color: #FF5252;
-  -webkit-text-decoration-skip: ink;
-  text-decoration-skip: ink;
-}
-
-.atlas p {
-  text-align: left;
-  font-family: "Chathura", sans-serif;
-  line-height: 0.5;
-  font-size: 22px;
 }
 
 .mapboxgl-popup-close-button {
@@ -585,7 +559,7 @@ p {
   cursor: pointer;
 }
 
-/*Map listing*/
+/* Map listing */
 #sidebar {
   width: 15%;
   height: 560px;
@@ -596,7 +570,6 @@ p {
   border: solid 6px #0c343d;
   box-shadow: 0 2.8px 2.2px rgba(0, 0, 0, 0.034), 0 6.7px 5.3px rgba(0, 0, 0, 0.048), 0 12.5px 10px rgba(0, 0, 0, 0.06), 0 22.3px 17.9px rgba(0, 0, 0, 0.072), 0 41.8px 33.4px rgba(0, 0, 0, 0.086), 0 100px 80px rgba(0, 0, 0, 0.12);
 }
-
 #sidebar:hover ::-webkit-scrollbar {
   width: 10px !important;
 }
@@ -617,7 +590,6 @@ p {
   overflow: auto;
   background-color: #f9f9f9;
 }
-
 .listings .item {
   display: block;
   border-bottom: 1px solid #eee;
@@ -639,7 +611,6 @@ input {
 .clearfix {
   display: block;
 }
-
 .clearfix::after {
   content: ".";
   display: block;
@@ -648,13 +619,12 @@ input {
   visibility: hidden;
 }
 
-/* Hide and show map layers */
+/* Hide/show map layers */
 #selectlayers {
   background: #fff;
   z-index: 1;
   font-family: "Bebas Neue", cursive;
 }
-
 #selectlayers a {
   font-size: 14px;
   font-weight: 600;
@@ -667,26 +637,22 @@ input {
   border-bottom: 1px solid rgba(0, 0, 0, 0.25);
   text-align: center;
 }
-
 #selectlayers a:last-child {
   border: none;
 }
-
 #selectlayers a:hover {
   background-color: #f8f8f8;
   color: #404040;
 }
-
 #selectlayers a.active {
   background-color: #0c343d;
   color: #ffffff;
 }
-
 #selectlayers a.active:hover {
   background: #134f5c;
 }
 
-/**-------------------------Footer**/
+/* ---------------- Footer ---------------- */
 #actual-footer {
   background-color: #0c343d;
   margin: 0;
@@ -697,7 +663,6 @@ input {
 #info-footer {
   padding: 0 10% 20px;
 }
-
 #info-footer p {
   line-height: 1.5;
   padding-top: 20px;
@@ -708,12 +673,10 @@ input {
   text-align: center !important;
   padding-top: 20px;
 }
-
 #author a {
   text-decoration: none;
   color: white;
 }
-
 #author a:hover {
   text-decoration: none;
   color: #FF5252;
@@ -731,7 +694,6 @@ input {
 .send_button {
   text-align: center;
 }
-
 .send_button button {
   outline: none;
   height: 40px;
@@ -743,18 +705,15 @@ input {
   cursor: pointer;
   transition: all 0.25s ease;
 }
-
 .send_button button:hover {
   color: #0c343d;
   background: white;
 }
-
 .send_button button:after {
   content: "\f003";
   font-family: "FontAwesome";
 }
-
-.send_button .onclic {
+.send_button button.onclic {
   width: 40px;
   border-color: #FF5252;
   border-width: 3px;
@@ -762,25 +721,21 @@ input {
   border-left-color: #0c343d;
   animation: rotating 2s 0.25s linear infinite;
 }
-
-.send_button .onclic:after {
+.send_button button.onclic:after {
   content: "";
 }
-
-.send_button .onclic:hover {
+.send_button button.onclic:hover {
   color: white;
   background: #0c343d;
 }
-
-.send_button .validate:after {
-  font-family: "FontAwesome";
-  content: "\f00c";
-}
-
-.send_button .validate {
+.send_button button.validate {
   font-size: 13px;
   color: #0c343d;
   background: white;
+}
+.send_button button.validate:after {
+  font-family: "FontAwesome";
+  content: "\f00c";
 }
 
 @keyframes rotating {
@@ -791,8 +746,7 @@ input {
     transform: rotate(360deg);
   }
 }
-/*---------------------Circular Action animation */
-/** Reference https://tympanus.net/codrops/2012/04/17/rotating-words-with-css-animations/ **/
+/* ---------------- Circular Action animation ---------------- */
 .rw-wrapper {
   width: 90%;
   position: relative;
@@ -819,49 +773,42 @@ input {
   -ms-animation: rotateWord 8s linear infinite 1s;
   animation: rotateWord 8s linear infinite 1s;
 }
-
 .rw-words-1 span:nth-child(2) {
   -webkit-animation-delay: 2s;
   -ms-animation-delay: 2s;
   animation-delay: 2s;
   color: #45818e;
 }
-
 .rw-words-1 span:nth-child(3) {
   -webkit-animation-delay: 3s;
   -ms-animation-delay: 3s;
   animation-delay: 3s;
   color: #45818e;
 }
-
 .rw-words-1 span:nth-child(4) {
   -webkit-animation-delay: 4s;
   -ms-animation-delay: 4s;
   animation-delay: 4s;
   color: #45818e;
 }
-
 .rw-words-1 span:nth-child(5) {
   -webkit-animation-delay: 5s;
   -ms-animation-delay: 5s;
   animation-delay: 5s;
   color: #45818e;
 }
-
 .rw-words-1 span:nth-child(6) {
   -webkit-animation-delay: 6s;
   -ms-animation-delay: 6s;
   animation-delay: 6s;
   color: #45818e;
 }
-
 .rw-words-1 span:nth-child(7) {
   -webkit-animation-delay: 7s;
   -ms-animation-delay: 7s;
   animation-delay: 7s;
   color: #45818e;
 }
-
 .rw-words-1 span:nth-child(8) {
   -webkit-animation-delay: 8s;
   -ms-animation-delay: 8s;
@@ -964,7 +911,7 @@ input {
     font-size: 9px;
   }
 }
-/** --------Minimal styles for auth header & modal --------**/
+/* ---------------- Auth header & modal ---------------- */
 #authHeader {
   position: fixed;
   top: 0;
@@ -974,19 +921,16 @@ input {
   gap: 12px;
   z-index: 1100;
 }
-
-#avatar {
+#authHeader #avatar {
   width: 40px;
   height: 40px;
   margin: 8px;
   cursor: pointer;
 }
-
 #authHeader .profile {
   position: relative;
 }
-
-#authHeader .menu {
+#authHeader .profile .menu {
   position: absolute;
   right: 0;
   display: none;
@@ -996,11 +940,9 @@ input {
   min-width: 200px;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
 }
-
 #authHeader .profile:hover .menu {
   display: block;
 }
-
 #authHeader #logoutBtn {
   background: none;
   border: none;
@@ -1009,7 +951,7 @@ input {
   cursor: pointer;
 }
 
-/* Modal container stays the same */
+/* Modal container */
 .modal {
   position: fixed;
   inset: 0;
@@ -1029,16 +971,13 @@ input {
   height: 360px;
   transform-style: preserve-3d;
   transition: transform 700ms cubic-bezier(0.2, 0.7, 0.1, 1);
-  perspective: 2000px; /* perspective on the same element is fine here */
+  perspective: 2000px;
 }
-
-/* When #flip is the URL hash target, rotate the card */
 #flip:target {
   transform: rotateY(180deg);
 }
-
-/* Faces fill the whole card */
-.front, .back {
+#flip .front,
+#flip .back {
   position: absolute;
   top: 0;
   left: 0;
@@ -1054,12 +993,10 @@ input {
   display: grid;
   grid-template-rows: auto 1fr auto;
 }
-
-.front {
+#flip .front {
   transform: rotateY(0deg);
 }
-
-.back {
+#flip .back {
   transform: rotateY(180deg);
   background: linear-gradient(180deg, #ffffff 0%, #f7f9ff 100%);
 }
@@ -1086,13 +1023,13 @@ input {
 #signUpForm label, #signInForm label {
   margin: 1rem 0 0;
 }
-
 #signUpForm p, #signInForm p {
   margin: 0.5rem 0 0;
   font-size: x-large;
   font-weight: 400;
 }
 
+/* ---------------- Favourites ---------------- */
 .heart-btn {
   border: 0;
   color: #FF5252;
@@ -1101,14 +1038,12 @@ input {
   font-size: 18px;
   line-height: 1;
 }
-
 .heart-btn[aria-pressed=true] {
   color: #FF5252;
   border: 0;
 }
-
 .heart-btn:focus {
   outline: none;
 }
 
-/*# sourceMappingURL=data:application/json;charset=utf-8,%7B%22version%22:3,%22sourceRoot%22:%22%22,%22sources%22:%5B%22../scss/main.scss%22%5D,%22names%22:%5B%5D,%22mappings%22:%22AAGA;AAEQ;AAER;EACI;EACA;EACA;EACA;;;AAGJ;EACI;EACA;;;AAGJ;EACI;EACA;;;AAGJ;EACI;EACA;;;AAGJ;EACI;EACA;EACA;EACA;EACA;EACA;EACA;EACA;EACA;;;AAGJ;EACI;EACA;EACA;;;AAGJ;EACI;EACA;;;AAGJ;EACI;EACA;EACA;EACA;EACA;EACA;EACA;EACA;EACA;;;AAGJ;EACI;EACA;EACA;EACA;;;AAGJ;EACI;EACA;EACA;EACA;EACA;EACA;;;AAGJ;AAEA;EACI;;;AAGJ;EACI;;;AAGJ;EACI;EACA;EACA;EACA;EACA;EACA;EACA;EACA;EACA;EACA;EACA;;;AAGJ;EACI;EACA;EACA;EACA;EACA;;;AAGJ;EACI;EACA;EACA;EACA;EACA;EACA;EACA;EACA;EACA;;;AAGJ;AAEA;EACI;EACA;EACA;EACA;EACA;EACA;EACA;;;AAGJ;EACI;EACA;EACA;EACA;EACA;EACA;;;AAGJ;EACI;EACA;EACA;EACA;;;AAGJ;EACI;;;AAGJ;EACI;EACA;;;AAGJ;AAEA;EACI;EACA;EACA;EACA;EACA;EACA;EACA;;;AAGJ;EACI;EACA;EACA;EACA;EACA;EACA;EACA;EACA;EACA;EACA;;;AAGJ;EACI;;;AAGJ;EACI;EACA;EACA;EACA;EACA;EACA;EACA;EACA;;;AAGJ;EACI;EACA;EACA;EACA;EACA;EACA;EACA;;;AAGJ;EACI;EACA;EACA;;;AAGJ;EACI;EACA;EACA;EACA;EACA;EACA;;;AAGJ;EACI;EACA;EACA;EACA;EACA;;;AAGJ;EACI;EACA;EACA;;;AAGJ;EACI;;;AAGJ;EACI;EACA;EACA;EACA;EACA;EACA;EACA;EACA;;;AAGJ;EACI;EACA;EACA;EACA;EACA;EACA;;;AAGJ;EACI;EACA;EACA;EACA;EACA;EACA;;;AAGJ;EACI;EACA;EACA;EACA;;;AAGJ;EACI;;;AAGJ;EACI;EACA;EACA;;;AAGJ;EACI;;;AAGJ;EACI;IACA;;EAEA;IACA;IACA;;;AAIJ;EACI;IACA;IACA;IACA;;EAEA;IACA;IACA;IACA;;EAEA;IACI;;EAEJ;IACA;IACA;IACA;;;AAIJ;AAEA;EACI;IAAU;;EACV;IAAU;;EACV;IAAiB;;;AAGrB;EACI;IAAQ;IAAiB;;EACzB;IAAc;;EACd;IAAW;;EACX;IAAW;;EACX;IAAsB;;EACtB;IAAwB;;EACxB;IAAU;;EACV;IAAM;;EACN;IAAQ;;EACR;IAAiB;;EACjB;IAAsD;;;AAG1D;EACI;IAAQ;IAAiB;;EACzB;IAAc;;EACd;IAAW;;EACX;IAAsD;IAAe;;EACrE;IAAiB;;EACjB;IAAgB;;EAChB;IAAa;;EACb;IAAoB;;EACpB;IAAQ;IAA0B;;EAClC;IAAU;IAAwB;;EAClC;IAAM;IAAwB;;EAC9B;IAAsB;;EACtB;IACI;IACA;IACA;IACA;IACA;IACA;IACA;IACA;;EAEJ;IACI;IACA;IACA;IACA;IACA;IACA;IACA;IACA;;EAEJ;IACI;IACA;IACA;IACA;IACA;IACA;IACA;IACA;;;AAKR;AAEA;EACI;EACA;EACA;;;AAGJ;EACI;;;AAGJ;EACI;EACA;EACA;EACA;EACA;;;AAGJ;EACI;EACA;EACA;EACA;EACA;EACA;;;AAGJ;EACI;EACA;EACA;EACA;EACA;EACA;;;AAGJ;EACI;;;AAGJ;EACI;;;AAGJ;EACI;;;AAGJ;EACI;;;AAGJ;EACI;;;AAGJ;EACI;;;AAGJ;EACI;;;AAGJ;EACI;;;AAGJ;AAEA;EACI;EACA;EACA;EACA;;;AAGJ;EACI;EACA;EACA;;;AAGJ;EACI;EACA;;;AAGJ;EACI;;;AAGJ;EACI;EACA;EACA;EACA;;;AAGJ;EACI;EACA;EACA;;;AAGJ;EACE;EACA;;;AAGF;EACI;EACA;EACA;EACA;EACA;EACA;EACA;EACA;;;AAGJ;EACI;EACA;EACA;EACA;;;AAIJ;EACI;;;AAGJ;EACI;;;AAGJ;EACE;EACA;EACA;EACA;;;AAGF;EACE;;;AAGF;EACE;;;AAGF;AAEA;EACI;EACA;EACA;EACA;EACA;EACA;EACA;EACA,YACI;;;AAQR;EACI;;;AAGJ;EACI;EACA;EACA;EACA;EACA;EACA;EACA;EACA;;;AAGJ;EACI;EACA;EACA;;;AAGJ;EACI;EACA;EACA;;;AAGJ;EACI;;;AAGJ;EACI;EACA;EACA;EACA;EACA;;;AAGJ;EACI;;;AAGJ;EACI;EACA;EACA;EACA;EACA;;;AAGJ;AAEA;EACI;EACA;EACA;;;AAGJ;EACI;EACA;EACA;EACA;EACA;EACA;EACA;EACA;EACA;EACA;;;AAGJ;EACI;;;AAGJ;EACI;EACA;;;AAGJ;EACI;EACA;;;AAGJ;EACI;;;AAIJ;AAEA;EACI;EACA;EACA;EACA;;;AAGJ;EACI;;;AAGJ;EACI;EACA;;;AAGJ;EACI;EACA;EACA;;;AAGJ;EACI;EACA;;;AAGJ;EACI;EACA;;;AAGJ;EACI;EACA;EACA;EACA;EACA;EACA;;;AAGJ;EACI;;;AAGJ;EACI;EACA;EACA;EACA;EACA;EACA;EACA;EACA;EACA;;;AAGJ;EACI;EACA;;;AAGJ;EACI;EACA;;;AAGJ;EACI;EACA;EACA;EACA;EACA;EACA;;;AAGJ;EACI;;;AAGJ;EACI;EACA;;;AAGJ;EACI;EACA;;;AAGJ;EACI;EACA;EACA;;;AAGJ;EACE;IACE;;EAEF;IACE;;;AAKJ;AACA;AAEA;EACC;EACA;EACA;EACA;EACG;;;AAGJ;EACC;;;AAGD;EACC;EACA;;;AAED;EACC;EACA;EACA;EACA;EACA;EACA;EACA;;;AAED;EACI;EACH;EACA;EACA;;;AAED;EACI;EACH;EACA;EACA;;;AAED;EACI;EACH;EACA;EACA;;;AAED;EACI;EACH;EACA;EACA;;;AAED;EACI;EACH;EACA;EACA;;;AAED;EACI;EACH;EACA;EACA;;;AAED;EACI;EACH;EACA;EACA;;;AAED;EACI;IAAK;;EACL;IAAK;IAAY;;EACpB;IAAK;IAAY;;EACd;IAAM;IAAY;;EACrB;IAAM;IAAY;;EAClB;IAAM;;EACH;IAAO;;;AAEX;EACI;IAAK;;EACL;IAAK;IAAY;;EACpB;IAAK;IAAY;;EACd;IAAM;IAAY;;EACrB;IAAM;IAAY;;EAClB;IAAM;;EACH;IAAO;;;AAEX;EACI;IAAK;;EACL;IAAK;IAAY;IAAsC;;EAC1D;IAAK;IAAY;IAAoC;;EAClD;IAAM;IAAY;IAAoC;;EACzD;IAAM;IAAY;IAAqC;;EACvD;IAAM;;EACH;IAAO;;;AAEX;EACC;IAAe;;;AAEhB;EACC;IAAe;;;AAIhB;AACA;EACI;EACA;EACA;EACA;EACA;EACA;EACA;;;AAGJ;EACI;EACA;EACA;EACA;;;AAGJ;EACI;;;AAGJ;EACI;EACA;EACA;EACA;EACA;EACA;EACA;EACA;;;AAGJ;EACI;;;AAGJ;EACI;EACA;EACA;EACA;EACA;;;AAGJ;AACA;EACE;EACA;EACA;EACA;EACA;EACA;EACA;;;AAGF;AACA;EACE;EACA;EACA;EAEA;EACA;EAEA;EACA;EACA;;;AAGF;AACA;EACE;;;AAGF;AACA;EACE;EACA;EAAQ;EACR;EAAa;EACb;EACA;EACA;EACA;EACA;EACA;EACA;EACA;EACA;;;AAGF;EAAS;;;AACT;EAAS;EAA4B;;;AAErC;EACE;IAAO;;EACP;IAAO;;;AAGT;EACI;;;AAGJ;EACI;EACA;EACA;EACA;;;AAGJ;EACI;;;AAGJ;EACI;EACA;EACA;;;AAIJ;EACI;EACA;EACA;EACA;EACA;EACA;;;AAEJ;EACI;EACA;;;AAGJ;EACI%22,%22file%22:%22main.css%22%7D */
+/*# sourceMappingURL=data:application/json;charset=utf-8,%7B%22version%22:3,%22sourceRoot%22:%22%22,%22sources%22:%5B%22../scss/main.scss%22,%22../scss/_variables.scss%22,%22../scss/_mixins.scss%22%5D,%22names%22:%5B%5D,%22mappings%22:%22AAGQ;AAGR;AACA;EACE;EACA;EACA;EACA;;;AAEF;EACE,YCRa;EDSb;;;AAGF;AACA;EACI;EACA;;;AAGJ;EACI;EACA;;;AAGJ;EACI,aC7BS;ED8BT;EACA;EACA;EE/BF;EACA,+BDGa;ECFb,uBDEa;ECDb;EACA;;;AF+BF;EACI,aCrCS;EDsCT;EACA;;;AAGJ;EACI,aC3CS;ED4CT;;;AAGJ;EACI,aChDS;EDiDT;EACA;EACA;EElDF;EACA,+BDGa;ECFb,uBDEa;ECDb;EACA;;;AFkDF;EACI,aCvDY;EDwDZ;EACA;EACA;;;AAGJ;EACI;EACA;EACA;EACA;EACA;EACA;;;AAGJ;AACA;EACI;;;AAGJ;EACI;;;AAGJ;EACI;EACA;EACA;EACA,aCpFS;EDqFT;EACA;EErFF;EACA,+BDGa;ECFb,uBDEa;ECDb;EACA;;;AFqFF;EACI;EACA;EACA;EACA,aC7FY;ED8FZ;;;AAGJ;EACI;EACA;EACA;EACA;EACA;EACA;;;AAEJ;AACA;EACI;EACA;EACA;EACA;EACA;EACA;EACA;;AAEA;EACI;EACA;EACA;EACA;;AACA;EAAW;;AAGf;EACI;EACA;;;AAIR;EACI;EElIF;EACA,+BDGa;ECFb,uBDEa;ECDb;EACA;;;AFkIF;AACA;EACA;EACI;EACA;EACA;EACA;EACA;EACA;;AAEA;EACI;EACA;EACA;EACA;EACA;EACA;EACA,aCvJQ;EDwJR;;AAEA;EACI;EACA;EACA;EACA;;AAIR;EACI;EACA;EACA;;AAEA;EACI;EACA;EACA;EACA;EACA;EACA;EACA;EACA,aC/KI;EDgLJ;;AAIA;EACI;EACA;EACA;EACA;;AAGJ;EAAoB;;AAI9B;EAAU,YCnLG;;AD2Hf;AA0DE;;AACA;EACE;IAA0C;;EAC1C;IAAS;IAAc;;EAGrB;IAAQ;IAAoB;IAAU;;EACtC;IAAI;IAAa;IAAgB;;EACjC;IACE;;EACA;IAAW;IAAgB;IAAa;;;;AAMhD;AACA;EACI;EACA;EACA;EACA;EACA;EACA;EACA;;AACA;EAAU;;;AAGd;EACI;EACA;EACA;EACA,aCjOY;EDkOZ;EACA;EACA;;AAEA;EACI;EACA;EACA;;;AAIR;EE7OE;EACA,+BDGa;ECFb,uBDEa;ECDb;EACA;EF2OE;;;AAGJ;EACI;EACA;EACA;EACA;EACA;;;AAGJ;EACI;EACA;EACA,kBClPW;EDmPX;EACA,YCnPW;EDoPX;;AAEA;EACI;EACA;EACA;EACA;EACA;EACA;;AAEA;EACI;EACA;EACA;;;AAKZ;AACA;EACE;IAAW;;EACX;IAAW;;EACX;IAAkB;;;AAEpB;EACE;IAAS;IAAiB;;EAC1B;IAAe;;EACf;IAAY;;EACZ;IAAY;;EACZ;IAAuB;;EACvB;IAAyB;;EACzB;IAAW;;EACX;IAAO;;EACP;IAAS;;EACT;IAAkB;;EAClB;IAAuD;;;AAEzD;EACE;IAAS;IAAiB;;EAC1B;IAAe;;EACf;IAAY;;EACZ;IAAuD;IAAe;;EAEpE;IAAK;;EACL;IAAI;;EAEN;IAAc;;EACd;IAAqB;;EACrB;IAAS;IAA2B;;EACpC;IAAW;IAAwB;;EACnC;IAAO;IAAwB;;EAC/B;IAAuB;;EAEvB;IACE;IAAc;IAAU;IAAiB;IAAY;IAAQ;IAC7D;IAAoB;;EAGtB;IACE;IAAoB;IAAU;IAA8B;IAAwB;IAAc;IAAe;;EAEnH;IAAiB;IAAa;;EAC9B;IAAiB;;;AAGnB;AACA;EACE;EAAgB;EAAe;;AAE/B;EAAM;EAAa;EAAe;EAAc;EAAiB;;AACjE;EAAK;EAAiB;EAAc;EAAa;EAAoB;EAAU;;AAC/E;EAAK;EAAkB;EAAe;EAAc;EAAoB;EAAoB;;;AAG9F;EAAqB;;;AAEP;EAAI;;AAAuB;EAAK;;;AAE9C;EAAW,kBCzUI;;;AD0Uf;EAAW,kBCzUI;;;AD0Uf;EAAW,kBCzUI;;;AD0Uf;EAAW;;;AACX;EAAW;;;AACX;EAAW,kBC3UI;;;AD6Uf;AACA;EACI;EACA;EACA;EACA,kBClVW;;ADoVX;EACI;EACA,aC7VK;ED8VL;;AAEA;EACI,OC9VG;ED+VH;;AAIR;EACI;EACA;EACA,aC3WK;ECCX;EACA,+BDGa;ECFb,uBDEa;ECDb;EACA;;AF0WE;EACI;EACA,aChXQ;EDiXR;EACA;;;AAIR;EACI;EACA;EACA;;AAEA;EACI;EACA;;;AAIR;EAAO;;;AAEP;EACI;EACA;EACA;EACA;;;AAGJ;EAA+B;;;AAC/B;EAAiC;;;AAEjC;EACI;EACA;EACA;EACA;;;AAGJ;EAAkC;;;AAClC;EAA2C;;;AAE3C;AACA;EACI;EACA;EACA;EACA;EACA;EACA;EACA;EACA,YACI;;AAOJ;EAA8B;;;AAGlC;EACI;EACA;EACA,aC/aS;ECCX;EACA,+BDGa;ECFb,uBDEa;ECDb;EACA;;;AF8aF;EACI;EACA;EACA,kBC1aW;;AD4aX;EACI;EACA;EACA;;;AAIR;EAAW;;;AACX;EACI;EACA;EACA;EACA;EACA;;;AAGJ;EACI;;AAEA;EACI;EACA;EACA;EACA;EACA;;;AAIR;AACA;EACI;EACA;EACA,aCxdS;;AD0dT;EACI;EACA;EACA,OCvdO;EDwdP;EACA;EACA;EACA;EACA;EACA;EACA;;AAEA;EAAe;;AAEf;EACI;EACA;;AAGJ;EACI,kBCxeG;EDyeH;;AAEA;EAAU,YC1eP;;;AD+ef;AACA;EACI,kBClfW;EDmfX;EACA;EACA;;;AAGJ;EACI;;AAEA;EACI;EACA;;;AAIR;EACI;EACA;EACA;;AAEA;EACI;EACA;;AAEA;EACI;EACA,OC7gBG;;;ADkhBf;EACI;EACA;EACA;EACA,aC1hBY;ED2hBZ;EACA;;;AAGJ;EACI;;AAEA;EACI;EACA;EACA;EACA;EACA,YCliBO;EDmiBP;EACA;EACA;EACA;;AAEA;EACI,OCziBG;ED0iBH;;AAGJ;EACI;EACA;;AAGJ;EACI;EACA,cCrjBG;EDsjBH;EACA;EACA,mBCvjBG;EDwjBH;;AAEA;EAAU;;AACV;EACI;EACA,YC7jBD;;ADikBP;EACI;EACA,OCnkBG;EDokBH;;AAEA;EACI;EACA;;;AAMhB;EAAsB;IAAO;;EAA2B;IAAK;;;AAE7D;AACA;EACI;EACA;EACA;EACA;EACA;;;AAEJ;EAAe;;;AACf;EACI;EACA;;;AAGF;EACE;EACA;EACA;EACA,OChmBW;EDimBX;EACA;EACA;;AAEA;EAAiB;EAA6B;EAAyB;EAAqB,OCrmBjF;;ADsmBX;EAAiB;EAA6B;EAAyB;EAAqB,OCtmBjF;;ADumBX;EAAiB;EAA6B;EAAyB;EAAqB,OCvmBjF;;ADwmBX;EAAiB;EAA6B;EAAyB;EAAqB,OCxmBjF;;ADymBX;EAAiB;EAA6B;EAAyB;EAAqB,OCzmBjF;;AD0mBX;EAAiB;EAA6B;EAAyB;EAAqB,OC1mBjF;;AD2mBX;EAAiB;EAA6B;EAAyB;EAAqB,OC3mBjF;;;AD+mBf;EACE;IAAK;;EACL;IAAK;IAAY;;EACjB;IAAK;IAAY;;EACjB;IAAM;IAAY;;EAClB;IAAM;IAAY;;EAClB;IAAM;;EACN;IAAO;;;AAET;EACE;IAAK;;EACL;IAAK;IAAY;;EACjB;IAAK;IAAY;;EACjB;IAAM;IAAY;;EAClB;IAAM;IAAY;;EAClB;IAAM;;EACN;IAAO;;;AAET;EACE;IAAK;;EACL;IAAK;IAAY;IAAsC;;EACvD;IAAK;IAAY;IAAoC;;EACrD;IAAM;IAAY;IAAoC;;EACtD;IAAM;IAAY;IAAqC;;EACvD;IAAM;;EACN;IAAO;;;AAET;EAAsC;IAAe;;;AACrD;EAAsC;IAAe;;;AAErD;AACA;EACI;EACA;EACA;EACA;EACA;EACA;EACA;;AAEA;EACI;EACA;EACA;EACA;;AAGJ;EACI;;AAEA;EACI;EACA;EACA;EACA;EACA;EACA;EACA;EACA;;AAGJ;EAAgB;;AAGpB;EACI;EACA;EACA,OCrrBO;EDsrBP;EACA;;;AAIR;AACA;EACI;EACA;EACA;EACA;EACA;EACA;EACA;;;AAGJ;AACA;EACI;EACA;EACA;EACA;EACA;EACA;EACA;EACA;;AAEA;EAAW;;AAEX;AAAA;EAEI;EACA;EACA;EACA;EACA;EACA;EACA;EACA;EACA;EACA;EACA;EACA;EACA;EACA;;AAGJ;EAAS;;AAET;EACI;EACA;;;AAIR;EAAkB;IAAO;;EAA6B;IAAK;;;AAE3D;EAAuB,OC/uBR;;;ADivBf;EACI,kBClvBW;EDmvBX;EACA;EACA;;;AAGF;EAAQ;;AACR;EACI;EACA;EACA;;;AAIN;AACA;EACI;EACA,OCnwBW;EDowBX;EACA;EACA;EACA;;AAEA;EACI,OC1wBO;ED2wBP;;AAGJ;EAAU%22,%22file%22:%22main.css%22%7D */
