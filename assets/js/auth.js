@@ -1,12 +1,12 @@
 // ======================================================
-// auth.js — Firebase Auth (compat) + flip Sign-in/Sign-up + Firestore favourites
+// auth.js — Firebase Auth (compat) + flip Sign-in/Sign-up modal
+// (No Firestore favourites logic; owned by favorites.js)
 // ======================================================
 
 const firebaseConfig = {
   apiKey: "AIzaSyB6r0uy6cTwo7KKbI-HGW9E_OX2Z0dDgtc",
   authDomain: "circeco-bf511.firebaseapp.com",
   projectId: "circeco-bf511",
-  // storageBucket not needed for this app
   messagingSenderId: "141138113054",
   appId: "1:141138113054:web:9edc9ce0553984f8c3b40f"
 };
@@ -14,9 +14,10 @@ const firebaseConfig = {
 // --- Firebase (compat) init ---
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
-const db   = firebase.firestore();
+// Optional: you can initialise firestore here if other parts need it, but do NOT
+// perform favourites reads/writes in this file.
+firebase.firestore();
 
-// Persist session locally (default is LOCAL, but explicit is nice)
 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(() => {});
 
 // ======================================================
@@ -27,11 +28,12 @@ const loginBtn      = document.getElementById("loginBtn");
 const logoutBtn     = document.getElementById("logoutBtn");
 const profileMenu   = document.getElementById("profileMenu");
 const avatarImg     = document.getElementById("avatar");
+const emailEl       = document.getElementById("userEmail");
 
 // Flip container
 const flipEl        = document.getElementById("flip");
 
-// Forms & fields (unique IDs per face!)
+// Forms & fields
 const signInForm    = document.getElementById("signInForm");
 const signInEmail   = document.getElementById("signInEmail");
 const signInPass    = document.getElementById("signInPass");
@@ -44,53 +46,46 @@ const signUpPass    = document.getElementById("signUpPass");
 const signUpError   = document.getElementById("signUpError");
 const signUpSubmit  = document.getElementById("signUpSubmit");
 
-const toSignupLink  = document.getElementById("toSignup"); // href="#flip" (flip to back)
-const toSigninLink  = document.getElementById("toSignin"); // href="#"     (flip to front)
+const toSignupLink  = document.getElementById("toSignup"); // href="#flip"
+const toSigninLink  = document.getElementById("toSignin"); // href="#"
 
 // ======================================================
 // Modal helpers + flip control
 // ======================================================
 
-// Helper: clear the URL hash without scrolling
 function clearHash() {
   history.replaceState(null, "", location.pathname + location.search);
 }
-
-// Force the card to show the SIGN-IN face (front) visually
 function forceFront() {
-  if (flipEl) flipEl.style.transform = "rotateY(0deg)"; // inline style wins over :target
+  if (flipEl) flipEl.style.transform = "rotateY(0deg)";
 }
-
-// Allow CSS :target to control the flip (remove our override)
 function allowCssFlip() {
-  if (flipEl) flipEl.style.transform = ""; // remove inline override
+  if (flipEl) flipEl.style.transform = "";
 }
 
 function showAuth() {
   if (!authModal) return;
-
-  // Always open on SIGN IN (front)
-  clearHash();     // ensure #flip is not targeted
-  forceFront();    // visually guarantee front face
-
-  // reset both forms
+  clearHash();
+  forceFront();
   if (signInError) signInError.textContent = "";
   if (signUpError) signUpError.textContent = "";
   if (signInSubmit) signInSubmit.disabled = false;
   if (signUpSubmit) signUpSubmit.disabled = false;
   if (signInPass)  signInPass.value = "";
   if (signUpPass)  signUpPass.value = "";
-
   authModal.style.display = "flex";
 }
 
 function hideAuth() {
   if (!authModal) return;
   authModal.style.display = "none";
-  // ensure next open starts at Sign in face
   clearHash();
   forceFront();
 }
+
+// Expose modal opener for map/favorites modules
+window.circeco = window.circeco || {};
+window.circeco.openAuthModal = showAuth;
 
 // Open/close
 loginBtn  && loginBtn.addEventListener("click", showAuth);
@@ -101,14 +96,12 @@ authModal && authModal.addEventListener("click", (e) => {
   if (e.target === authModal) hideAuth();
 });
 
-// IMPORTANT: let the anchors change hash for CSS flip, but sync our override
+// Flip links
 toSignupLink && toSignupLink.addEventListener("click", () => {
-  // Going to Sign-up: allow CSS :target to rotate the card
-  allowCssFlip();
-  // (no preventDefault—href="#flip" should set the hash)
+  allowCssFlip(); // allow CSS :target to rotate
+  // href="#flip" will set the hash
 });
 toSigninLink && toSigninLink.addEventListener("click", (e) => {
-  // Back to Sign-in: keep URL clean and force front
   e.preventDefault();
   clearHash();
   forceFront();
@@ -118,7 +111,7 @@ toSigninLink && toSigninLink.addEventListener("click", (e) => {
 // Submit handlers
 // ======================================================
 
-// SIGN IN (front)
+// SIGN IN
 signInForm && signInForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   if (signInError)  signInError.textContent = "";
@@ -134,7 +127,6 @@ signInForm && signInForm.addEventListener("submit", async (e) => {
   } catch (err) {
     console.error("SIGNIN error:", err.code, err.message);
     if (err.code === "auth/user-not-found") {
-      // Suggest signup: flip to back, prefill email there
       allowCssFlip();
       location.hash = "#flip";
       if (signUpEmail) signUpEmail.value = email;
@@ -149,7 +141,7 @@ signInForm && signInForm.addEventListener("submit", async (e) => {
   }
 });
 
-// SIGN UP (back)
+// SIGN UP
 signUpForm && signUpForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   if (signUpError)  signUpError.textContent = "";
@@ -165,7 +157,6 @@ signUpForm && signUpForm.addEventListener("submit", async (e) => {
   } catch (err) {
     console.error("SIGNUP error:", err.code, err.message);
     if (err.code === "auth/email-already-in-use") {
-      // Suggest sign in: go to front, prefill email
       clearHash();
       forceFront();
       if (signInEmail) signInEmail.value = email;
@@ -181,87 +172,25 @@ signUpForm && signUpForm.addEventListener("submit", async (e) => {
 });
 
 // ======================================================
-// Header state rendering
+// Header state rendering (UI only)
 // ======================================================
-const emailEl = document.getElementById("userEmail");
-
-auth.onAuthStateChanged(async (user) => {
+auth.onAuthStateChanged((user) => {
   if (user) {
     if (loginBtn)    loginBtn.style.display = "none";
     if (profileMenu) profileMenu.style.display = "";
     if (avatarImg)   avatarImg.src = "assets/img/avatar.png";
-    if (emailEl)     emailEl.textContent = user.email;   // 👈 set email
-
-    try { await loadFavourites(user.uid); } catch (e) { console.error(e); }
+    if (emailEl)     emailEl.textContent = user.email;
   } else {
     if (profileMenu) profileMenu.style.display = "none";
     if (loginBtn)    loginBtn.style.display = "";
-    if (emailEl)     emailEl.textContent = "";           // 👈 clear on logout
-    try { clearFavouritesFromMap(); } catch {}
-    try { renderFavouritesDropdown([]); } catch {}
+    if (emailEl)     emailEl.textContent = "";
   }
+
+  // Tell favourites module (centralised owner) about auth changes
+  try {
+    window.dispatchEvent(new CustomEvent('favorites:auth', {
+      detail: { user: user ? { uid: user.uid, email: user.email || null } : null }
+    }));
+  } catch {}
 });
 
-
-// ======================================================
-// Firestore helpers for favourites
-// ======================================================
-async function saveFavouriteSpot(uid, spot) {
-  if (!uid) throw new Error("UID mancante");
-  if (typeof spot?.lat !== "number" || typeof spot?.lng !== "number")
-    throw new Error("Coordinate non valide");
-
-  return db.collection("users").doc(uid).collection("favourites").add({
-    name: spot.name || "Senza nome",
-    lat: spot.lat,
-    lng: spot.lng,
-    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-  });
-}
-
-async function loadFavourites(uid) {
-  if (!uid) return [];
-  const snap = await db.collection("users").doc(uid).collection("favourites")
-    .orderBy("createdAt", "desc").get();
-  const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-
-  if (typeof window.renderFavouritesOnMap === "function") window.renderFavouritesOnMap(items);
-  if (typeof renderFavouritesDropdown === "function") renderFavouritesDropdown(items);
-  return items;
-}
-
-async function deleteFavourite(uid, favId) {
-  if (!uid || !favId) return;
-  return db.collection("users").doc(uid).collection("favourites").doc(favId).delete();
-}
-
-// Public API for mapbox.js
-window.saveFavouriteSpot = async (spot) => {
-  const user = auth.currentUser;
-  if (!user) { showAuth(); return; }
-  await saveFavouriteSpot(user.uid, spot);
-  await loadFavourites(user.uid);
-};
-
-window.deleteFavouriteSpot = async (favId) => {
-  const user = auth.currentUser;
-  if (!user) return;
-  await deleteFavourite(user.uid, favId);
-  await loadFavourites(user.uid);
-};
-
-// Safe stubs (avoid errors if map hooks aren't defined yet)
-window.renderFavouritesOnMap  = window.renderFavouritesOnMap  || function(){};
-window.clearFavouritesFromMap = window.clearFavouritesFromMap || function(){};
-
-// ======================================================
-// Firestore Rules (for reference)
-// ======================================================
-// rules_version = '2';
-// service cloud.firestore {
-//   match /databases/{database}/documents {
-//     match /users/{uid}/favourites/{docId} {
-//       allow read, write: if request.auth != null && request.auth.uid == uid;
-//     }
-//   }
-// }
