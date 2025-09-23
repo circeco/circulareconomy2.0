@@ -1,305 +1,87 @@
-/* assets/js/favorites.js  (UK spelling for Firestore paths)
+/* ======================================================
+   assets/js/favorites.js  (UK spelling)
+   - Firebase auth + Firestore "favourites"
+   - mountHeartButton(place|feature) for popups/list
+   - Client cache + updates Mapbox 'favorites' source
+   - Hearts (popup+list) stay in sync
    Requires:
-   - firebase-app-compat.js, firebase-auth-compat.js, firebase-firestore-compat.js
-   - auth.js must initialize Firebase app first
-   - Optional HTML for a side panel: #favourites-panel, #favourites-list, #fav-auth-hint
-   - Provides:
-       window.circeco.mountHeartButton(btn, place)
-       window.circeco.favorites.bindMapSource({ map, sourceId: 'favorites' })
-       window.circeco.favorites.getAll()
-       window.circeco.favorites.isFavorite(placeId)
-     (Alias: window.circeco.favourites points to the same object)
-*/
-
+     - firebase-app-compat.js, firebase-auth-compat.js, firebase-firestore-compat.js
+     - auth.js must initialise the Firebase app
+   ====================================================== */
 (() => {
   'use strict';
 
+  // Prevent double init
+  window.circeco = window.circeco || {};
+  window.circeco.modules = window.circeco.modules || {};
+  if (window.circeco.modules.favoritesInitialized) return;
+  window.circeco.modules.favoritesInitialized = true;
+
   const fb = window.firebase;
   if (!fb || !fb.apps || !fb.apps.length) {
-    console.error('[favorites] Firebase not initialized. Ensure auth.js runs first.');
+    console.error('[favourites] Firebase not initialised.');
     return;
   }
-
   const auth = fb.auth();
   const db   = fb.firestore();
 
-  // ---------- Firestore helpers (UK path) ----------
-  function favDoc(uid, placeId) {
-    return db.collection('users').doc(uid).collection('favourites').doc(String(placeId));
+  // ---------- utils ----------
+  function normString(s) {
+    return String(s || '').trim().toLowerCase().replace(/\s+/g, ' ').replace(/[,\.;:]+$/, '');
   }
-
-  async function saveFavourite(uid, place) {
-    // place = { id, name, coords:{lat,lng}, address? }
-    if (!place || !place.id || !place.name || !place.coords) throw new Error('INVALID_PLACE');
-
-    const payload = {
-      name: place.name,
-      coords: { lat: Number(place.coords.lat), lng: Number(place.coords.lng) },
-      address: place.address || '',
-      serverCreatedAt: fb.firestore.FieldValue.serverTimestamp(),
-      clientCreatedAt: new Date()
-    };
-    // Idempotent write
-    await favDoc(uid, place.id).set(payload, { merge: true });
-  }
-
-  async function removeFavourite(uid, placeId) {
-    await favDoc(uid, placeId).delete();
-  }
-
-  async function isFavourite(uid, placeId) {
-    const snap = await favDoc(uid, placeId).get();
-    return snap.exists;
-  }
-
-  // ---------- Optional panel DOM ----------
-  const panelEl = document.getElementById('favourites-panel');
-  const listEl  = document.getElementById('favourites-list');
-  const hintEl  = document.getElementById('fav-auth-hint');
-
-  function ensurePanelVisible() {
-    if (panelEl && panelEl.style.display !== 'block') panelEl.style.display = 'block';
-  }
-
-  function escapeHtml(s) {
-    return String(s || '').replace(/[&<>"']/g, (m) =>
-      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m])
-    );
-  }
-
-  function centerMap(coords) {
-    try {
-      if (window.circeco?.map && coords) {
-        window.circeco.map.flyTo({ center: [coords.lng, coords.lat], zoom: 14 });
-      }
-    } catch (e) {}
-  }
-
-  function openAuthModalFallback() {
-    const m = document.getElementById('authModal');
-    if (m) m.style.display = 'flex';
-  }
-
-  // ---------- Heart registry + sync ----------
-  const heartRegistry = new Map(); // placeId -> Set<HTMLButtonElement>
-  function registerHeart(placeId, btn) {
-    if (!placeId || !btn) return;
-    if (!heartRegistry.has(placeId)) heartRegistry.set(placeId, new Set());
-    heartRegistry.get(placeId).add(btn);
-  }
-  function updateHearts(placeId, isFav) {
-    const set = heartRegistry.get(placeId);
-    if (!set) return;
-    set.forEach(btn => {
-      btn.setAttribute('aria-pressed', isFav ? 'true' : 'false');
-      btn.textContent = isFav ? '♥' : '♡';
-    });
-  }
-
-  // ---------- Render favourites panel ----------
-  function renderFavourites(items) {
-    if (!panelEl || !listEl) return;
-    ensurePanelVisible();
-    listEl.innerHTML = '';
-
-    items.sort((a, b) => {
-      const as = a.serverCreatedAt?.seconds ?? 0;
-      const bs = b.serverCreatedAt?.seconds ?? 0;
-      if (bs !== as) return bs - as;
-      const ac = (a.clientCreatedAt ? new Date(a.clientCreatedAt).getTime() : 0);
-      const bc = (b.clientCreatedAt ? new Date(b.clientCreatedAt).getTime() : 0);
-      return bc - ac;
-    });
-
-    items.forEach((f) => {
-      const li = document.createElement('li');
-
-      const go = document.createElement('button');
-      go.className = 'btn btn-sm btn-outline-secondary';
-      go.title = 'Center map here';
-      go.textContent = '📍';
-      go.addEventListener('click', () => centerMap(f.coords));
-
-      const label = document.createElement('div');
-      label.style.flex = '1';
-      const name = escapeHtml(f.name);
-      const sub  = escapeHtml(f.address || `${Number(f.coords?.lat).toFixed(4)}, ${Number(f.coords?.lng).toFixed(4)}`);
-      label.innerHTML = `<strong>${name}</strong><br><small>${sub}</small>`;
-
-      const del = document.createElement('button');
-      del.className = 'btn btn-sm btn-outline-danger';
-      del.title = 'Remove';
-      del.textContent = '✕';
-      del.addEventListener('click', async () => {
-        const u = auth.currentUser;
-        if (!u) return;
-        try {
-          await removeFavourite(u.uid, f.id);
-          updateHearts(f.id, false);
-          window.dispatchEvent(new CustomEvent('favorites:changed', { detail: { placeId: f.id, isFav: false } }));
-        } catch (e) {
-          console.error('[favorites] delete failed', e);
-        }
-      });
-
-      li.appendChild(go);
-      li.appendChild(label);
-      li.appendChild(del);
-      listEl.appendChild(li);
-    });
-  }
-
-  // ---------- Live listener bound to auth state ----------
-  let unsubscribe = null;
-  let cachedFavourites = []; // array of {id, name, coords:{lat,lng}, address, serverCreatedAt?, clientCreatedAt?}
-
-  function emitAuthEvent(user) {
-    try {
-      window.dispatchEvent(new CustomEvent('favorites:auth', { detail: { user: user ? { uid: user.uid, email: user.email || null } : null }}));
-    } catch (_) {}
-  }
-
-  auth.onAuthStateChanged((user) => {
-    if (hintEl) {
-      hintEl.textContent = user ? '' : 'Sign in to save';
+  function isFiniteNum(n){ return typeof n === 'number' && isFinite(n); }
+  function computePlaceKey({ name, address, coords, legacyId }) {
+    const n = normString(name);
+    const a = normString(address);
+    if (n && a) return `nameaddr|${n}|${a}`;
+    if (coords && isFiniteNum(coords.lng) && isFiniteNum(coords.lat)) {
+      return `coords|${coords.lng.toFixed(6)},${coords.lat.toFixed(6)}`;
     }
-
-    emitAuthEvent(user);
-
-    if (unsubscribe) { unsubscribe(); unsubscribe = null; }
-
-    cachedFavourites = [];
-    if (user) {
-      unsubscribe = db.collection('users')
-        .doc(user.uid)
-        .collection('favourites')                   // 👈 UK path
-        .orderBy('serverCreatedAt', 'desc')
-        .onSnapshot(
-          (snap) => {
-            const items = [];
-            snap.forEach((d) => items.push({ id: d.id, ...d.data() }));
-            cachedFavourites = items;
-            renderFavourites(items);
-            try {
-              window.dispatchEvent(new CustomEvent('favorites:update', { detail: { items } }));
-            } catch (_) {}
-          },
-          (err) => {
-            console.error('[favorites] Snapshot error', err);
-            cachedFavourites = [];
-            renderFavourites([]);
-            try {
-              window.dispatchEvent(new CustomEvent('favorites:update', { detail: { items: [] } }));
-            } catch (_) {}
-          }
-        );
-    } else {
-      ensurePanelVisible();
-      renderFavourites([]);
-      try {
-        window.dispatchEvent(new CustomEvent('favorites:update', { detail: { items: [] } }));
-      } catch (_) {}
-    }
-  });
-
-  // ---------- Public: heart button ----------
-  async function mountHeartButton(btnEl, place) {
-    // place must be: { id, name, coords:{lat,lng}, address? }
-    if (!btnEl || !place || !place.id) return;
-
-    btnEl.classList.add('heart-btn');
-    btnEl.setAttribute('aria-label', 'Save to favourites');
-    btnEl.setAttribute('aria-pressed', 'false');
-    btnEl.textContent = '♡';
-
-    registerHeart(place.id, btnEl);
-
-    const u = auth.currentUser;
-    if (u) {
-      try {
-        const exists = await isFavourite(u.uid, place.id);
-        btnEl.setAttribute('aria-pressed', exists ? 'true' : 'false');
-        btnEl.textContent = exists ? '♥' : '♡';
-      } catch (_) {}
-    }
-
-    btnEl.addEventListener('click', async (ev) => {
-      ev.stopPropagation();
-      ev.preventDefault();
-
-      const user = auth.currentUser;
-      if (!user) {
-        if (window.circeco?.openAuthModal) window.circeco.openAuthModal(); else openAuthModalFallback();
-        try { window.dispatchEvent(new Event('favorites:auth-required')); } catch (_) {}
-        return;
-      }
-
-      const pressed = btnEl.getAttribute('aria-pressed') === 'true';
-
-      if (pressed) {
-        // optimistic remove
-        btnEl.setAttribute('aria-pressed', 'false');
-        btnEl.textContent = '♡';
-        try {
-          await removeFavourite(user.uid, place.id);
-          updateHearts(place.id, false);
-          window.dispatchEvent(new CustomEvent('favorites:changed', { detail: { placeId: place.id, isFav: false } }));
-        } catch (e) {
-          btnEl.setAttribute('aria-pressed', 'true');
-          btnEl.textContent = '♥';
-          console.error('[favorites] remove failed', e);
-        }
-      } else {
-        // optimistic save
-        btnEl.setAttribute('aria-pressed', 'true');
-        btnEl.textContent = '♥';
-        try {
-          await saveFavourite(user.uid, place);
-          updateHearts(place.id, true);
-          window.dispatchEvent(new CustomEvent('favorites:changed', { detail: { placeId: place.id, isFav: true } }));
-        } catch (e) {
-          btnEl.setAttribute('aria-pressed', 'false');
-          btnEl.textContent = '♡';
-          if (e && e.code === 'permission-denied') {
-            console.warn('Permission denied saving favourites. Are you signed in (and email verified, if required)?');
-          }
-          console.error('[favorites] save failed', e);
-        }
-      }
-    });
+    if (legacyId) return `id|${String(legacyId)}`;
+    return null;
   }
-
-  // Optional helper: Mapbox feature → place
   function buildPlaceFromFeature(feat) {
     try {
       const coords = Array.isArray(feat?.geometry?.coordinates)
         ? { lng: Number(feat.geometry.coordinates[0]), lat: Number(feat.geometry.coordinates[1]) }
         : { lng: Number(feat?.center?.[0]), lat: Number(feat?.center?.[1]) };
 
-      return {
-        id: String(
-          feat?.id
-          || feat?.properties?.id
-          || `${feat?.layer?.id || 'feat'}:${feat?.properties?.STORE_NAME || feat?.properties?.name || feat?.text || 'unknown'}:${coords.lng},${coords.lat}`
-        ),
-        name: feat?.properties?.STORE_NAME || feat?.text || feat?.properties?.name || 'Unknown place',
-        coords,
-        address: feat?.properties?.ADDRESS_LINE1 || feat?.place_name || feat?.properties?.address || '',
-      };
-    } catch (_) {
-      return null;
-    }
+      const name = feat?.properties?.STORE_NAME
+        || feat?.properties?.NAME
+        || feat?.text
+        || 'Unknown place';
+
+      const address = feat?.properties?.ADDRESS_LINE1
+        || feat?.properties?.ADDRESS
+        || feat?.place_name
+        || '';
+
+      const legacyId = String(
+        feat?.id
+        || feat?.properties?.id
+        || `${feat?.layer?.id || 'feat'}:${name}:${coords.lng},${coords.lat}`
+      );
+
+      const place = { name, address, coords, legacyId };
+      place.key = computePlaceKey(place);
+      return place;
+    } catch { return null; }
   }
 
-  // ---------- Mapbox integration (kept) ----------
-  let boundMap = null;
-  let boundSourceId = null;
+  // ---------- Firestore (UK) ----------
+  function favCol(uid){ return db.collection('users').doc(uid).collection('favourites'); }
+  function favDoc(uid, key){ return favCol(uid).doc(String(key)); }
 
-  function favouriteRecordToFeature(rec){
+  // ---------- cache + map source ----------
+  const cache = new Map(); // key -> { key,name,address,coords,... }
+  const cacheList = () => Array.from(cache.values());
+
+  function toFeature(rec){
+    if (!rec?.coords) return null;
     return {
-      id: rec.id,
+      id: rec.key,
       type: 'Feature',
-      geometry: { type: 'Point', coordinates: [Number(rec.coords.lng), Number(rec.coords.lat)] },
+      geometry: { type:'Point', coordinates: [Number(rec.coords.lng), Number(rec.coords.lat)] },
       properties: {
         STORE_NAME: rec.name || 'Unknown place',
         ADDRESS_LINE1: rec.address || '',
@@ -310,49 +92,200 @@
     };
   }
 
-  function pushFavouritesToMapSource() {
-    if (!boundMap || !boundSourceId) return;
+  function pushToMapSource(){
+    const map = window.circeco?.map;
+    if (!map) return;
     try {
-      const src = boundMap.getSource(boundSourceId);
+      const src = map.getSource('favorites');
       if (!src) return;
-      const feats = (cachedFavourites || [])
-        .filter(r => r?.coords && typeof r.coords.lng !== 'undefined' && typeof r.coords.lat !== 'undefined')
-        .map(favouriteRecordToFeature);
-      src.setData({ type:'FeatureCollection', features: feats });
-    } catch (e) {
-      console.warn('[favorites] Could not update bound map source', e);
+      src.setData({
+        type: 'FeatureCollection',
+        features: cacheList().map(toFeature).filter(Boolean)
+      });
+    } catch(e){ console.warn('[favourites] map source update failed', e); }
+  }
+
+  function emitUpdate(){
+    try { window.dispatchEvent(new CustomEvent('favorites:update', { detail: { items: cacheList() } })); } catch {}
+  }
+  function emitAuth(user){
+    try { window.dispatchEvent(new CustomEvent('favorites:auth', { detail: { user: user ? { uid:user.uid, email:user.email||null } : null } })); } catch {}
+  }
+
+  // ---------- heart registry ----------
+  const heartRegistry = new Map(); // key -> Set<button>
+  function registerHeart(key, btn){
+    if (!key || !btn) return;
+    if (!heartRegistry.has(key)) heartRegistry.set(key, new Set());
+    heartRegistry.get(key).add(btn);
+  }
+  function setHeart(btn, fav){
+    btn.setAttribute('aria-pressed', fav ? 'true' : 'false');
+    btn.textContent = fav ? '♥' : '♡';
+  }
+  function updateHearts(key, fav){
+    const set = heartRegistry.get(key);
+    if (!set) return;
+    set.forEach(btn => setHeart(btn, fav));
+  }
+
+  // ---------- public: mount heart ----------
+  async function mountHeartButton(btnEl, placeInput){
+    if (!btnEl || !placeInput) return;
+
+    let place = placeInput;
+    if (placeInput.geometry || placeInput.properties) {
+      const built = buildPlaceFromFeature(placeInput);
+      if (!built) return;
+      place = built;
+    } else if (!place.key) {
+      const legacyId = place.legacyId || place.id || null;
+      place.key = computePlaceKey({ ...place, legacyId });
     }
+    if (!place?.key) {
+      btnEl.classList.add('heart-btn');
+      btnEl.setAttribute('disabled','true');
+      btnEl.setAttribute('data-tip','Cannot save this place');
+      btnEl.textContent = '♡';
+      return;
+    }
+
+    btnEl.classList.add('heart-btn');
+    btnEl.setAttribute('aria-label','Save to favourites');
+    btnEl.setAttribute('aria-pressed','false');
+    btnEl.textContent = '♡';
+
+    registerHeart(place.key, btnEl);
+    setHeart(btnEl, cache.has(place.key));
+
+    btnEl.addEventListener('click', async (ev) => {
+      ev.stopPropagation();
+      ev.preventDefault();
+
+      const user = auth.currentUser;
+      if (!user) {
+        if (window.circeco?.openAuthModal) return window.circeco.openAuthModal();
+        const m = document.getElementById('authModal'); if (m) m.style.display='flex';
+        return;
+      }
+
+      const pressed = btnEl.getAttribute('aria-pressed') === 'true';
+      if (pressed) {
+        // optimistic remove
+        setHeart(btnEl, false);
+        updateHearts(place.key, false);
+        cache.delete(place.key);
+        pushToMapSource(); emitUpdate();
+
+        try {
+          await favDoc(user.uid, place.key).delete();
+        } catch(e) {
+          // revert on failure
+          cache.set(place.key, { key:place.key, name:place.name, address:place.address||'', coords:place.coords });
+          pushToMapSource(); emitUpdate();
+          setHeart(btnEl, true);
+          updateHearts(place.key, true);
+          console.error('[favourites] remove failed', e);
+        }
+      } else {
+        // optimistic add
+        setHeart(btnEl, true);
+        updateHearts(place.key, true);
+        cache.set(place.key, { key:place.key, name:place.name, address:place.address||'', coords:place.coords });
+        pushToMapSource(); emitUpdate();
+
+        try {
+          await favDoc(user.uid, place.key).set({
+            key: place.key,
+            name: place.name,
+            address: place.address || '',
+            coords: { lat: Number(place.coords.lat), lng: Number(place.coords.lng) },
+            serverCreatedAt: fb.firestore.FieldValue.serverTimestamp(),
+            clientCreatedAt: new Date()
+          }, { merge: true });
+        } catch(e) {
+          // revert on failure
+          cache.delete(place.key);
+          pushToMapSource(); emitUpdate();
+          setHeart(btnEl, false);
+          updateHearts(place.key, false);
+          console.error('[favourites] save failed', e);
+        }
+      }
+    });
   }
 
-  function bindMapSource({ map, sourceId = 'favorites' }) {
-    boundMap = map || null;
-    boundSourceId = sourceId || null;
-    pushFavouritesToMapSource();
-    const handler = () => pushFavouritesToMapSource();
-    window.addEventListener('favorites:update', handler);
-    return () => window.removeEventListener('favorites:update', handler);
-  }
+  // ---------- live listener ----------
+  let unsub = null;
+  auth.onAuthStateChanged((user) => {
+    emitAuth(user);
 
-  // ---------- Expose public API ----------
-  window.circeco = window.circeco || {};
-  window.circeco.mountHeartButton = mountHeartButton;
-  window.circeco.buildPlaceFromFeature = buildPlaceFromFeature;
+    if (unsub) { try { unsub(); } catch{} unsub = null; }
+    cache.clear(); pushToMapSource(); emitUpdate();
 
-  // Keep "favorites" namespace for compatibility, but use UK path internally
-  window.circeco.favorites = {
-    getAll: () => cachedFavourites.slice(),
-    isFavorite: async (placeId) => {
-      const u = auth.currentUser;
-      if (!u) return false;
-      return isFavourite(u.uid, placeId);
-    },
-    bindMapSource
-  };
-  // UK alias if you want to reference it elsewhere
+    try {
+      const favLink = document.getElementById('favorites-toggle');
+      if (favLink) {
+        if (user) {
+          favLink.removeAttribute('aria-disabled');
+          favLink.removeAttribute('data-tip');
+        } else {
+          favLink.setAttribute('aria-disabled','true');
+          favLink.setAttribute('data-tip','Sign in to save favourites');
+          const map = window.circeco?.map;
+          if (map && map.getLayer('favorites') && map.getLayoutProperty('favorites','visibility')==='visible') {
+            map.setLayoutProperty('favorites','visibility','none');
+            favLink.classList.remove('active');
+          }
+        }
+      }
+    } catch {}
+
+    if (!user) return;
+
+    unsub = favCol(user.uid)
+      .orderBy('serverCreatedAt', 'desc')
+      .onSnapshot(
+        (snap) => {
+          cache.clear();
+          snap.forEach(d => {
+            const data = d.data() || {};
+            const coords = data.coords && isFiniteNum(data.coords.lat) && isFiniteNum(data.coords.lng)
+              ? data.coords
+              : (isFiniteNum(data.lat) && isFiniteNum(data.lng) ? { lat:data.lat, lng:data.lng } : null);
+
+            const name = data.name || 'Unknown place';
+            const address = data.address || '';
+            const legacyId = d.id;
+            const key = data.key || computePlaceKey({ name, address, coords, legacyId });
+            if (!key) return;
+
+            cache.set(key, { key, name, address, coords, serverCreatedAt: data.serverCreatedAt || null });
+          });
+
+          pushToMapSource(); emitUpdate();
+
+          // update all known hearts
+          heartRegistry.forEach((btns, key) => {
+            const isFav = cache.has(key);
+            btns.forEach(btn => setHeart(btn, isFav));
+          });
+        },
+        (err) => {
+          console.error('[favourites] snapshot error', err);
+          cache.clear(); pushToMapSource(); emitUpdate();
+        }
+      );
+  });
+
+  // ---------- public API ----------
+  window.circeco.favorites = window.circeco.favorites || {};
+  window.circeco.favorites.mountHeartButton = mountHeartButton;
+  window.circeco.favorites.buildPlaceFromFeature = buildPlaceFromFeature;
+  window.circeco.favorites.computePlaceKey = computePlaceKey;
   window.circeco.favourites = window.circeco.favorites;
 
-  // Signal ready
-  try { window.dispatchEvent(new Event('favorites-ready')); } catch (_) {}
+  try { window.dispatchEvent(new Event('favorites-ready')); } catch {}
 })();
 
 
