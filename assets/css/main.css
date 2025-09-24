@@ -1,79 +1,5 @@
+/* components */
 @import url("https://fonts.googleapis.com/css?family=Bebas+Neue|Chathura:100,300,400,700,800|Economica:400,400i,700,700i|Khand:300,400,500,600,700|Londrina+Outline");
-/* Scrollbars */
-::-webkit-scrollbar {
-  width: 5px;
-  height: 3px;
-  border-left: 0;
-  background: rgba(0, 0, 0, 0.1);
-}
-
-::-webkit-scrollbar-thumb {
-  background: #FF5252;
-  border-radius: 0px;
-}
-
-/* Base */
-html {
-  scroll-behavior: smooth;
-  scroll-snap-type: y proximity;
-}
-
-body {
-  margin: 0 !important;
-  font-family: "Khand", sans-serif !important;
-}
-
-h2 {
-  font-family: "Bebas Neue", cursive;
-  font-size: 50px !important;
-  text-align: center;
-  padding-top: 15% !important;
-  text-decoration-line: underline;
-  -webkit-text-decoration-color: #FF5252;
-  text-decoration-color: #FF5252;
-  -webkit-text-decoration-skip: ink;
-  text-decoration-skip: ink;
-}
-
-h3 {
-  font-family: "Bebas Neue", cursive;
-  font-size: 40px !important;
-  text-align: center;
-}
-
-h4 {
-  font-family: "Bebas Neue", cursive;
-  font-size: 30px !important;
-}
-
-h5 {
-  font-family: "Bebas Neue", cursive;
-  font-size: 20px !important;
-  text-align: center;
-  margin: 3% !important;
-  text-decoration-line: underline;
-  -webkit-text-decoration-color: #FF5252;
-  text-decoration-color: #FF5252;
-  -webkit-text-decoration-skip: ink;
-  text-decoration-skip: ink;
-}
-
-p {
-  font-family: "Chathura", sans-serif;
-  text-align: center;
-  font-size: 30px;
-  line-height: 0.8;
-}
-
-#row {
-  display: flex;
-  -ms-flex-wrap: wrap;
-  flex-wrap: wrap;
-  margin-right: 0;
-  margin-left: 0;
-  padding: 0;
-}
-
 /* ---------------- Title section ---------------- */
 #title_section {
   scroll-snap-align: start;
@@ -122,7 +48,7 @@ p {
   transform: translateX(-50%) translateY(-50%);
   list-style: none;
   text-align: center;
-  width: fit-content;
+  width: max-content;
 }
 .text li {
   float: left;
@@ -145,6 +71,156 @@ p {
   text-decoration-color: #FF5252;
   -webkit-text-decoration-skip: ink;
   text-decoration-skip: ink;
+}
+
+/* ---------------- Title section responsive ---------------- */
+@media screen and (max-width: 900px) {
+  #subtitle {
+    font-size: 30px;
+    margin-bottom: 20%;
+  }
+  #red-wood {
+    height: 220px;
+  }
+}
+@media screen and (max-width: 450px) {
+  #title_div {
+    height: 500px;
+  }
+  .text {
+    transform: translateX(-55%) translateY(-60%);
+    left: 55%;
+    width: 80%;
+  }
+  .text.hidden li.ghost {
+    opacity: 1;
+    max-width: max-content;
+  }
+}
+/* ---------------- Auth header & modal ---------------- */
+#authHeader {
+  position: fixed;
+  top: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 1100;
+}
+#authHeader #avatar {
+  width: 40px;
+  height: 40px;
+  margin: 8px;
+  cursor: pointer;
+}
+#authHeader .profile {
+  position: relative;
+}
+#authHeader .profile .menu {
+  position: absolute;
+  right: 0;
+  display: none;
+  background: #fff;
+  border-radius: 8px;
+  padding: 0.5rem;
+  min-width: 200px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+}
+#authHeader .profile:hover .menu {
+  display: block;
+}
+#authHeader #logoutBtn {
+  background: none;
+  border: none;
+  color: #FF5252;
+  font-size: small;
+  cursor: pointer;
+}
+
+@media screen and (max-width: 600px) {
+  #authHeader {
+    right: 40px;
+  }
+  #loginBtn {
+    margin: 4px;
+  }
+}
+/* Modal container */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1200;
+}
+
+/* Flip card */
+#flip {
+  animation: init 600ms cubic-bezier(0.26, 1, 0.3, 1);
+  background-color: transparent;
+  position: relative;
+  width: min(360px, 92vw);
+  height: 360px;
+  transform-style: preserve-3d;
+  transition: transform 700ms cubic-bezier(0.2, 0.7, 0.1, 1);
+  perspective: 2000px;
+}
+#flip:target {
+  transform: rotateY(180deg);
+}
+#flip .front,
+#flip .back {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  background: #fff;
+  padding: 1rem;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+}
+#flip .front {
+  transform: rotateY(0deg);
+}
+#flip .back {
+  transform: rotateY(180deg);
+  background: linear-gradient(180deg, #ffffff 0%, #f7f9ff 100%);
+}
+
+@keyframes init {
+  from {
+    transform: rotateY(90deg);
+  }
+  to {
+    transform: rotateY(0);
+  }
+}
+#toSignin, #toSignup {
+  color: #FF5252;
+}
+
+#signInSubmit, #signUpSubmit {
+  background-color: #FF5252;
+  border: unset;
+  width: 80%;
+  margin: auto;
+}
+
+#signUpForm label, #signInForm label {
+  margin: 1rem 0 0;
+}
+#signUpForm p, #signInForm p {
+  margin: 0.5rem 0 0;
+  font-size: x-large;
+  font-weight: 400;
 }
 
 /* ---------------- Navbar ---------------- */
@@ -211,6 +287,10 @@ p {
   .topnav a#icon {
     float: right;
     display: block;
+    padding: 0 1%;
+  }
+  .topnav #logo {
+    margin: 4px;
   }
   .topnav.responsive #icon {
     position: absolute;
@@ -298,188 +378,6 @@ p {
   background-color: #ddd;
   color: black;
   text-decoration: none;
-}
-
-/* ---------------- Resizing codes ---------------- */
-@media screen and (min-width: 450px) {
-  #maplist {
-    width: 20%;
-  }
-  #sidebar {
-    width: 98% !important;
-  }
-  #circular_atlas {
-    padding-top: 5% !important;
-  }
-}
-@media screen and (max-width: 900px) {
-  .title {
-    font-size: 50px;
-    padding: 0px;
-  }
-  #subtitle, p {
-    font-size: 30px;
-  }
-  .topnav a {
-    font-size: 24px !important;
-  }
-  #red-wood {
-    height: 220px;
-  }
-  .rw-wrapper h2, span {
-    font-size: 30px !important;
-  }
-  #circular_action h4, p {
-    font-size: 24px !important;
-  }
-  #sidebar {
-    width: 98% !important;
-  }
-  .map {
-    width: 75% !important;
-  }
-  .atlas {
-    padding: 10% 2% 20% !important;
-  }
-  #circular_atlas {
-    padding-top: 15% !important;
-  }
-  #reuse, #refuse, #reduce, #repair, #remanu, #recycle {
-    height: 200px;
-  }
-}
-@media screen and (max-width: 450px) {
-  .title {
-    font-size: 40px;
-    padding: 0px;
-  }
-  #subtitle, p {
-    font-size: 30px;
-  }
-  #red-wood {
-    height: 180px;
-  }
-  #reuse, #refuse, #reduce, #repair, #remanu, #recycle {
-    height: 120px;
-    width: 90%;
-  }
-  .circactions h4 {
-    top: 20% !important;
-  }
-  .circactions p {
-    top: 5% !important;
-  }
-  .rw-wrapper {
-    width: 60% !important;
-  }
-  #circular_atlas h4 {
-    font-size: 18px !important;
-  }
-  .atlas {
-    display: block !important;
-    padding-top: 2% !important;
-  }
-  #sidebar {
-    width: 100% !important;
-    margin: 30% auto 0 !important;
-  }
-  #map {
-    scroll-snap-align: end;
-    width: 100% !important;
-  }
-  .mapboxgl-ctrl-group {
-    visibility: hidden;
-  }
-  .overlay {
-    height: 100%;
-    width: 0;
-    position: fixed;
-    z-index: 2;
-    top: 0;
-    left: 0;
-    overflow-x: hidden;
-    transition: 0.5s;
-  }
-  #search_button, #close_button {
-    position: absolute;
-    right: 0;
-    background-repeat: no-repeat;
-    background-size: cover;
-    margin: 10px;
-    padding: 20px;
-    z-index: 1;
-  }
-  #search_button {
-    right: 10px;
-    background-image: url("../img/search_button.jpg");
-  }
-  #close_button {
-    background-image: url("../img/close_button.jpg");
-  }
-}
-/* ---------------- Circaction section ---------------- */
-.circactions {
-  padding: 5% 2%;
-  display: flex;
-  flex-wrap: wrap;
-}
-.circactions div {
-  clear: both;
-  height: 300px;
-  width: 220px;
-  margin: 2% auto;
-  border: unset !important;
-}
-.circactions h4 {
-  font-size: 18px;
-  color: white;
-  padding: 5%;
-  text-align: center;
-  top: 40%;
-  position: relative;
-}
-.circactions p {
-  text-align: left;
-  margin: 2% 5%;
-  color: white;
-  visibility: hidden;
-  position: absolute;
-  top: 10%;
-}
-
-#circular_action p {
-  margin: 2% 5%;
-}
-
-.card:hover p {
-  visibility: visible;
-}
-.card:hover h4 {
-  visibility: hidden;
-}
-
-#refuse {
-  background-color: #0c343d;
-}
-
-#reduce {
-  background-color: #134f5c;
-}
-
-#reuse {
-  background-color: #45818e;
-}
-
-#repair {
-  background-color: #76a5af;
-}
-
-#remanu {
-  background-color: #a2c4c9;
-}
-
-#recycle {
-  background-color: #d0e0e3;
 }
 
 /* ---------------- Mapbox section ---------------- */
@@ -652,6 +550,23 @@ input {
   background: #134f5c;
 }
 
+/* ---------------- Favourites ---------------- */
+.heart-btn {
+  border: 0;
+  color: #FF5252;
+  background: transparent;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+}
+.heart-btn[aria-pressed=true] {
+  color: #FF5252;
+  border: 0;
+}
+.heart-btn:focus {
+  outline: none;
+}
+
 /* ---------------- Footer ---------------- */
 #actual-footer {
   background-color: #0c343d;
@@ -746,7 +661,247 @@ input {
     transform: rotate(360deg);
   }
 }
-/* ---------------- Circular Action animation ---------------- */
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 3px;
+  border-left: 0;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #FF5252;
+  border-radius: 0px;
+}
+
+/* Base */
+html {
+  scroll-behavior: smooth;
+  scroll-snap-type: y proximity;
+}
+
+body {
+  margin: 0 !important;
+  font-family: "Khand", sans-serif !important;
+}
+
+h2 {
+  font-family: "Bebas Neue", cursive;
+  font-size: 50px !important;
+  text-align: center;
+  padding-top: 15% !important;
+  text-decoration-line: underline;
+  -webkit-text-decoration-color: #FF5252;
+  text-decoration-color: #FF5252;
+  -webkit-text-decoration-skip: ink;
+  text-decoration-skip: ink;
+}
+
+h3 {
+  font-family: "Bebas Neue", cursive;
+  font-size: 40px !important;
+  text-align: center;
+}
+
+h4 {
+  font-family: "Bebas Neue", cursive;
+  font-size: 30px !important;
+}
+
+h5 {
+  font-family: "Bebas Neue", cursive;
+  font-size: 20px !important;
+  text-align: center;
+  margin: 3% !important;
+  text-decoration-line: underline;
+  -webkit-text-decoration-color: #FF5252;
+  text-decoration-color: #FF5252;
+  -webkit-text-decoration-skip: ink;
+  text-decoration-skip: ink;
+}
+
+p {
+  font-family: "Chathura", sans-serif;
+  text-align: center;
+  font-size: 30px;
+  line-height: 0.8;
+}
+
+#row {
+  display: flex;
+  -ms-flex-wrap: wrap;
+  flex-wrap: wrap;
+  margin-right: 0;
+  margin-left: 0;
+  padding: 0;
+}
+
+/* ---------------- Resizing codes ---------------- */
+@media screen and (min-width: 450px) {
+  #maplist {
+    width: 20%;
+  }
+  #sidebar {
+    width: 98% !important;
+  }
+  #circular_atlas {
+    padding-top: 5% !important;
+  }
+}
+@media screen and (max-width: 900px) {
+  p {
+    font-size: 30px;
+  }
+  .topnav a {
+    font-size: 24px !important;
+  }
+  .rw-wrapper h2, span {
+    font-size: 30px !important;
+  }
+  #circular_action h4, p {
+    font-size: 24px !important;
+  }
+  #sidebar {
+    width: 98% !important;
+  }
+  .map {
+    width: 75% !important;
+  }
+  .atlas {
+    padding: 10% 2% 20% !important;
+  }
+  #circular_atlas {
+    padding-top: 15% !important;
+  }
+  #reuse, #refuse, #reduce, #repair, #remanu, #recycle {
+    height: 200px;
+  }
+}
+@media screen and (max-width: 450px) {
+  #reuse, #refuse, #reduce, #repair, #remanu, #recycle {
+    height: 120px;
+    width: 90%;
+  }
+  .circactions h4 {
+    top: 20% !important;
+  }
+  .circactions p {
+    top: 5% !important;
+  }
+  .rw-wrapper {
+    width: 60% !important;
+  }
+  #circular_atlas h4 {
+    font-size: 18px !important;
+  }
+  .atlas {
+    display: block !important;
+    padding-top: 2% !important;
+  }
+  #sidebar {
+    width: 100% !important;
+    margin: 30% auto 0 !important;
+  }
+  #map {
+    scroll-snap-align: end;
+    width: 100% !important;
+  }
+  .mapboxgl-ctrl-group {
+    visibility: hidden;
+  }
+  .overlay {
+    height: 100%;
+    width: 0;
+    position: fixed;
+    z-index: 2;
+    top: 0;
+    left: 0;
+    overflow-x: hidden;
+    transition: 0.5s;
+  }
+  #search_button, #close_button {
+    position: absolute;
+    right: 0;
+    background-repeat: no-repeat;
+    background-size: cover;
+    margin: 10px;
+    padding: 20px;
+    z-index: 1;
+  }
+  #search_button {
+    right: 10px;
+    background-image: url("../img/search_button.jpg");
+  }
+  #close_button {
+    background-image: url("../img/close_button.jpg");
+  }
+}
+/* ---------------- CircAction section ---------------- */
+.circactions {
+  padding: 5% 2%;
+  display: flex;
+  flex-wrap: wrap;
+}
+.circactions div {
+  clear: both;
+  height: 300px;
+  width: 220px;
+  margin: 2% auto;
+  border: unset !important;
+}
+.circactions h4 {
+  font-size: 18px;
+  color: white;
+  padding: 5%;
+  text-align: center;
+  top: 40%;
+  position: relative;
+}
+.circactions p {
+  text-align: left;
+  margin: 2% 5%;
+  color: white;
+  visibility: hidden;
+  position: absolute;
+  top: 10%;
+}
+
+#circular_action p {
+  margin: 2% 5%;
+}
+
+.card:hover p {
+  visibility: visible;
+}
+.card:hover h4 {
+  visibility: hidden;
+}
+
+#refuse {
+  background-color: #0c343d;
+}
+
+#reduce {
+  background-color: #134f5c;
+}
+
+#reuse {
+  background-color: #45818e;
+}
+
+#repair {
+  background-color: #76a5af;
+}
+
+#remanu {
+  background-color: #a2c4c9;
+}
+
+#recycle {
+  background-color: #d0e0e3;
+}
+
+/* ---------------- CircAction animation ---------------- */
 .rw-wrapper {
   width: 90%;
   position: relative;
@@ -911,139 +1066,5 @@ input {
     font-size: 9px;
   }
 }
-/* ---------------- Auth header & modal ---------------- */
-#authHeader {
-  position: fixed;
-  top: 0;
-  right: 0;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  z-index: 1100;
-}
-#authHeader #avatar {
-  width: 40px;
-  height: 40px;
-  margin: 8px;
-  cursor: pointer;
-}
-#authHeader .profile {
-  position: relative;
-}
-#authHeader .profile .menu {
-  position: absolute;
-  right: 0;
-  display: none;
-  background: #fff;
-  border-radius: 8px;
-  padding: 0.5rem;
-  min-width: 200px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
-}
-#authHeader .profile:hover .menu {
-  display: block;
-}
-#authHeader #logoutBtn {
-  background: none;
-  border: none;
-  color: #FF5252;
-  font-size: small;
-  cursor: pointer;
-}
 
-/* Modal container */
-.modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  z-index: 1200;
-}
-
-/* Flip card */
-#flip {
-  animation: init 600ms cubic-bezier(0.26, 1, 0.3, 1);
-  background-color: transparent;
-  position: relative;
-  width: min(360px, 92vw);
-  height: 360px;
-  transform-style: preserve-3d;
-  transition: transform 700ms cubic-bezier(0.2, 0.7, 0.1, 1);
-  perspective: 2000px;
-}
-#flip:target {
-  transform: rotateY(180deg);
-}
-#flip .front,
-#flip .back {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  text-align: center;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-  border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-  background: #fff;
-  padding: 1rem;
-  display: grid;
-  grid-template-rows: auto 1fr auto;
-}
-#flip .front {
-  transform: rotateY(0deg);
-}
-#flip .back {
-  transform: rotateY(180deg);
-  background: linear-gradient(180deg, #ffffff 0%, #f7f9ff 100%);
-}
-
-@keyframes init {
-  from {
-    transform: rotateY(90deg);
-  }
-  to {
-    transform: rotateY(0);
-  }
-}
-#toSignin, #toSignup {
-  color: #FF5252;
-}
-
-#signInSubmit, #signUpSubmit {
-  background-color: #FF5252;
-  border: unset;
-  width: 80%;
-  margin: auto;
-}
-
-#signUpForm label, #signInForm label {
-  margin: 1rem 0 0;
-}
-#signUpForm p, #signInForm p {
-  margin: 0.5rem 0 0;
-  font-size: x-large;
-  font-weight: 400;
-}
-
-/* ---------------- Favourites ---------------- */
-.heart-btn {
-  border: 0;
-  color: #FF5252;
-  background: transparent;
-  cursor: pointer;
-  font-size: 18px;
-  line-height: 1;
-}
-.heart-btn[aria-pressed=true] {
-  color: #FF5252;
-  border: 0;
-}
-.heart-btn:focus {
-  outline: none;
-}
-
-/*# sourceMappingURL=data:application/json;charset=utf-8,%7B%22version%22:3,%22sourceRoot%22:%22%22,%22sources%22:%5B%22../scss/main.scss%22,%22../scss/_variables.scss%22,%22../scss/_mixins.scss%22%5D,%22names%22:%5B%5D,%22mappings%22:%22AAGQ;AAGR;AACA;EACE;EACA;EACA;EACA;;;AAEF;EACE,YCRa;EDSb;;;AAGF;AACA;EACI;EACA;;;AAGJ;EACI;EACA;;;AAGJ;EACI,aC7BS;ED8BT;EACA;EACA;EE/BF;EACA,+BDGa;ECFb,uBDEa;ECDb;EACA;;;AF+BF;EACI,aCrCS;EDsCT;EACA;;;AAGJ;EACI,aC3CS;ED4CT;;;AAGJ;EACI,aChDS;EDiDT;EACA;EACA;EElDF;EACA,+BDGa;ECFb,uBDEa;ECDb;EACA;;;AFkDF;EACI,aCvDY;EDwDZ;EACA;EACA;;;AAGJ;EACI;EACA;EACA;EACA;EACA;EACA;;;AAGJ;AACA;EACI;;;AAGJ;EACI;;;AAGJ;EACI;EACA;EACA;EACA,aCpFS;EDqFT;EACA;EErFF;EACA,+BDGa;ECFb,uBDEa;ECDb;EACA;;;AFqFF;EACI;EACA;EACA;EACA,aC7FY;ED8FZ;;;AAGJ;EACI;EACA;EACA;EACA;EACA;EACA;;;AAEJ;AACA;EACI;EACA;EACA;EACA;EACA;EACA;EACA;;AAEA;EACI;EACA;EACA;EACA;;AACA;EAAW;;AAGf;EACI;EACA;;;AAIR;EACI;EElIF;EACA,+BDGa;ECFb,uBDEa;ECDb;EACA;;;AFkIF;AACA;EACA;EACI;EACA;EACA;EACA;EACA;EACA;;AAEA;EACI;EACA;EACA;EACA;EACA;EACA;EACA,aCvJQ;EDwJR;;AAEA;EACI;EACA;EACA;EACA;;AAIR;EACI;EACA;EACA;;AAEA;EACI;EACA;EACA;EACA;EACA;EACA;EACA;EACA,aC/KI;EDgLJ;;AAIA;EACI;EACA;EACA;EACA;;AAGJ;EAAoB;;AAI9B;EAAU,YCnLG;;AD2Hf;AA0DE;;AACA;EACE;IAA0C;;EAC1C;IAAS;IAAc;;EAGrB;IAAQ;IAAoB;IAAU;;EACtC;IAAI;IAAa;IAAgB;;EACjC;IACE;;EACA;IAAW;IAAgB;IAAa;;;;AAMhD;AACA;EACI;EACA;EACA;EACA;EACA;EACA;EACA;;AACA;EAAU;;;AAGd;EACI;EACA;EACA;EACA,aCjOY;EDkOZ;EACA;EACA;;AAEA;EACI;EACA;EACA;;;AAIR;EE7OE;EACA,+BDGa;ECFb,uBDEa;ECDb;EACA;EF2OE;;;AAGJ;EACI;EACA;EACA;EACA;EACA;;;AAGJ;EACI;EACA;EACA,kBClPW;EDmPX;EACA,YCnPW;EDoPX;;AAEA;EACI;EACA;EACA;EACA;EACA;EACA;;AAEA;EACI;EACA;EACA;;;AAKZ;AACA;EACE;IAAW;;EACX;IAAW;;EACX;IAAkB;;;AAEpB;EACE;IAAS;IAAiB;;EAC1B;IAAe;;EACf;IAAY;;EACZ;IAAY;;EACZ;IAAuB;;EACvB;IAAyB;;EACzB;IAAW;;EACX;IAAO;;EACP;IAAS;;EACT;IAAkB;;EAClB;IAAuD;;;AAEzD;EACE;IAAS;IAAiB;;EAC1B;IAAe;;EACf;IAAY;;EACZ;IAAuD;IAAe;;EAEpE;IAAK;;EACL;IAAI;;EAEN;IAAc;;EACd;IAAqB;;EACrB;IAAS;IAA2B;;EACpC;IAAW;IAAwB;;EACnC;IAAO;IAAwB;;EAC/B;IAAuB;;EAEvB;IACE;IAAc;IAAU;IAAiB;IAAY;IAAQ;IAC7D;IAAoB;;EAGtB;IACE;IAAoB;IAAU;IAA8B;IAAwB;IAAc;IAAe;;EAEnH;IAAiB;IAAa;;EAC9B;IAAiB;;;AAGnB;AACA;EACE;EAAgB;EAAe;;AAE/B;EAAM;EAAa;EAAe;EAAc;EAAiB;;AACjE;EAAK;EAAiB;EAAc;EAAa;EAAoB;EAAU;;AAC/E;EAAK;EAAkB;EAAe;EAAc;EAAoB;EAAoB;;;AAG9F;EAAqB;;;AAEP;EAAI;;AAAuB;EAAK;;;AAE9C;EAAW,kBCzUI;;;AD0Uf;EAAW,kBCzUI;;;AD0Uf;EAAW,kBCzUI;;;AD0Uf;EAAW;;;AACX;EAAW;;;AACX;EAAW,kBC3UI;;;AD6Uf;AACA;EACI;EACA;EACA;EACA,kBClVW;;ADoVX;EACI;EACA,aC7VK;ED8VL;;AAEA;EACI,OC9VG;ED+VH;;AAIR;EACI;EACA;EACA,aC3WK;ECCX;EACA,+BDGa;ECFb,uBDEa;ECDb;EACA;;AF0WE;EACI;EACA,aChXQ;EDiXR;EACA;;;AAIR;EACI;EACA;EACA;;AAEA;EACI;EACA;;;AAIR;EAAO;;;AAEP;EACI;EACA;EACA;EACA;;;AAGJ;EAA+B;;;AAC/B;EAAiC;;;AAEjC;EACI;EACA;EACA;EACA;;;AAGJ;EAAkC;;;AAClC;EAA2C;;;AAE3C;AACA;EACI;EACA;EACA;EACA;EACA;EACA;EACA;EACA,YACI;;AAOJ;EAA8B;;;AAGlC;EACI;EACA;EACA,aC/aS;ECCX;EACA,+BDGa;ECFb,uBDEa;ECDb;EACA;;;AF8aF;EACI;EACA;EACA,kBC1aW;;AD4aX;EACI;EACA;EACA;;;AAIR;EAAW;;;AACX;EACI;EACA;EACA;EACA;EACA;;;AAGJ;EACI;;AAEA;EACI;EACA;EACA;EACA;EACA;;;AAIR;AACA;EACI;EACA;EACA,aCxdS;;AD0dT;EACI;EACA;EACA,OCvdO;EDwdP;EACA;EACA;EACA;EACA;EACA;EACA;;AAEA;EAAe;;AAEf;EACI;EACA;;AAGJ;EACI,kBCxeG;EDyeH;;AAEA;EAAU,YC1eP;;;AD+ef;AACA;EACI,kBClfW;EDmfX;EACA;EACA;;;AAGJ;EACI;;AAEA;EACI;EACA;;;AAIR;EACI;EACA;EACA;;AAEA;EACI;EACA;;AAEA;EACI;EACA,OC7gBG;;;ADkhBf;EACI;EACA;EACA;EACA,aC1hBY;ED2hBZ;EACA;;;AAGJ;EACI;;AAEA;EACI;EACA;EACA;EACA;EACA,YCliBO;EDmiBP;EACA;EACA;EACA;;AAEA;EACI,OCziBG;ED0iBH;;AAGJ;EACI;EACA;;AAGJ;EACI;EACA,cCrjBG;EDsjBH;EACA;EACA,mBCvjBG;EDwjBH;;AAEA;EAAU;;AACV;EACI;EACA,YC7jBD;;ADikBP;EACI;EACA,OCnkBG;EDokBH;;AAEA;EACI;EACA;;;AAMhB;EAAsB;IAAO;;EAA2B;IAAK;;;AAE7D;AACA;EACI;EACA;EACA;EACA;EACA;;;AAEJ;EAAe;;;AACf;EACI;EACA;;;AAGF;EACE;EACA;EACA;EACA,OChmBW;EDimBX;EACA;EACA;;AAEA;EAAiB;EAA6B;EAAyB;EAAqB,OCrmBjF;;ADsmBX;EAAiB;EAA6B;EAAyB;EAAqB,OCtmBjF;;ADumBX;EAAiB;EAA6B;EAAyB;EAAqB,OCvmBjF;;ADwmBX;EAAiB;EAA6B;EAAyB;EAAqB,OCxmBjF;;ADymBX;EAAiB;EAA6B;EAAyB;EAAqB,OCzmBjF;;AD0mBX;EAAiB;EAA6B;EAAyB;EAAqB,OC1mBjF;;AD2mBX;EAAiB;EAA6B;EAAyB;EAAqB,OC3mBjF;;;AD+mBf;EACE;IAAK;;EACL;IAAK;IAAY;;EACjB;IAAK;IAAY;;EACjB;IAAM;IAAY;;EAClB;IAAM;IAAY;;EAClB;IAAM;;EACN;IAAO;;;AAET;EACE;IAAK;;EACL;IAAK;IAAY;;EACjB;IAAK;IAAY;;EACjB;IAAM;IAAY;;EAClB;IAAM;IAAY;;EAClB;IAAM;;EACN;IAAO;;;AAET;EACE;IAAK;;EACL;IAAK;IAAY;IAAsC;;EACvD;IAAK;IAAY;IAAoC;;EACrD;IAAM;IAAY;IAAoC;;EACtD;IAAM;IAAY;IAAqC;;EACvD;IAAM;;EACN;IAAO;;;AAET;EAAsC;IAAe;;;AACrD;EAAsC;IAAe;;;AAErD;AACA;EACI;EACA;EACA;EACA;EACA;EACA;EACA;;AAEA;EACI;EACA;EACA;EACA;;AAGJ;EACI;;AAEA;EACI;EACA;EACA;EACA;EACA;EACA;EACA;EACA;;AAGJ;EAAgB;;AAGpB;EACI;EACA;EACA,OCrrBO;EDsrBP;EACA;;;AAIR;AACA;EACI;EACA;EACA;EACA;EACA;EACA;EACA;;;AAGJ;AACA;EACI;EACA;EACA;EACA;EACA;EACA;EACA;EACA;;AAEA;EAAW;;AAEX;AAAA;EAEI;EACA;EACA;EACA;EACA;EACA;EACA;EACA;EACA;EACA;EACA;EACA;EACA;EACA;;AAGJ;EAAS;;AAET;EACI;EACA;;;AAIR;EAAkB;IAAO;;EAA6B;IAAK;;;AAE3D;EAAuB,OC/uBR;;;ADivBf;EACI,kBClvBW;EDmvBX;EACA;EACA;;;AAGF;EAAQ;;AACR;EACI;EACA;EACA;;;AAIN;AACA;EACI;EACA,OCnwBW;EDowBX;EACA;EACA;EACA;;AAEA;EACI,OC1wBO;ED2wBP;;AAGJ;EAAU%22,%22file%22:%22main.css%22%7D */
+/*# sourceMappingURL=data:application/json;charset=utf-8,%7B%22version%22:3,%22sourceRoot%22:%22%22,%22sources%22:%5B%22../scss/main.scss%22,%22../scss/_title-section.scss%22,%22../scss/_variables.scss%22,%22../scss/_mixins.scss%22,%22../scss/_auth.scss%22,%22../scss/_navbar.scss%22,%22../scss/_mapbox.scss%22,%22../scss/_footer.scss%22%5D,%22names%22:%5B%5D,%22mappings%22:%22AAGA;AAOQ;ACPR;AACA;EACE;;;AAGF;EACE;;;AAGF;EACE;EACA;EACA;EACA,aCfW;EDgBX;EACA;EEhBA;EACA,+BDGa;ECFb,uBDEa;ECDb;EACA;;;AFgBF;EACE;EACA;EACA;EACA,aCxBc;EDyBd;;;AAGF;EACE;EACA;EACA;EACA;EACA;EACA;;;AAGF;AACA;EACE;EACA;EACA;EACA;EACA;EACA;EACA;;AAEA;EACE;EACA;EACA;EACA;;AAEA;EAAW;;AAGb;EACE;EACA;;;AAIJ;EACE;EE/DA;EACA,+BDGa;ECFb,uBDEa;ECDb;EACA;;;AF+DF;AACA;EAEI;IAAY;IAAiB;;EAC7B;IAAY;;;AAGhB;EACI;IACI;;EAGJ;IACI;IACA;IACA;;EAEA;IACI;IACA;;;AGrFZ;AACA;EACE;EACA;EACA;EACA;EACA;EACA;EACA;;AAEA;EACE;EACA;EACA;EACA;;AAGF;EACE;;AAEA;EACE;EACA;EACA;EACA;EACA;EACA;EACA;EACA;;AAGF;EAAgB;;AAGlB;EACE;EACA;EACA,OFlCW;EEmCX;EACA;;;AAIJ;EACE;IAAc;;EACd;IAAY;;;AAGd;AACA;EACE;EACA;EACA;EACA;EACA;EACA;EACA;;;AAGF;AACA;EACE;EACA;EACA;EACA;EACA;EACA;EACA;EACA;;AAEA;EAAW;;AAEX;AAAA;EAEE;EACA;EACA;EACA;EACA;EACA;EACA;EACA;EACA;EACA;EACA;EACA;EACA;EACA;;AAGF;EAAS;;AAET;EACE;EACA;;;AAIJ;EAAkB;IAAO;;EAA6B;IAAK;;;AAE3D;EAAuB,OFjGR;;;AEmGf;EACE,kBFpGa;EEqGb;EACA;EACA;;;AAGA;EAAQ;;AACR;EACE;EACA;EACA;;;ACjHJ;AACA;EACE;EACA;EACA;EACA;EACA;EACA;EACA;;AAEA;EACE;EACA;EACA;EACA;EACA;EACA;EACA,aHlBY;EGmBZ;;AAEA;EACE;EACA;EACA;EACA;;AAIJ;EACE;EACA;EACA;;AAEA;EACE;EACA;EACA;EACA;EACA;EACA;EACA;EACA,aH1CU;EG2CV;;AAI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%22,%22file%22:%22main.css%22%7D */
