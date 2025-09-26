@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.angular/
+.tmp/
+.env
+.env.*
+!.env.template
+.DS_Store
+*.log
