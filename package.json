@@ -4,7 +4,7 @@
   "description": "NOTE: The map feature on this website might not working if you are using Internet Explorer as browser!",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1", 
+    "test": "echo \"Error: no test specified\" && exit 1",
     "sass": "sass assets/scss/main.scss assets/css/main.css --style=expanded --embed-source-map --error-css",
     "sass:watch": "npm run sass -- --watch",
     "sass:prod": "sass assets/scss/main.scss assets/css/main.css --style=compressed --no-source-map"
@@ -13,6 +13,12 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "sass": "^1.92.1"
+    "@tailwindcss/forms": "^0.5.10",
+    "@tailwindcss/line-clamp": "^0.4.4",
+    "@tailwindcss/typography": "^0.5.19",
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.6",
+    "sass": "^1.92.1",
+    "tailwindcss": "^4.1.13"
   }
 }
