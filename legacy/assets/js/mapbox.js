@@ -39,9 +39,14 @@
   const map = new mapboxgl.Map({
     container: 'map',
     style: 'mapbox://styles/circeco/ck5zjodry0ujw1ioaiqvk9kjs',
-    center: STOCKHOLM, zoom: 10, maxBounds: BOUNDS
+    center: STOCKHOLM,
+    zoom: 10,
+    maxBounds: BOUNDS
   });
   map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
+
+  // Ignore empty sprite lookups coming from any stray symbol layer
+  map.on('styleimagemissing', (e) => { if (!e.id) return; /* optionally load custom sprites here */ });
 
   window.circeco.map = map;
   if (!window.circeco.openAuthModal) {
@@ -180,8 +185,10 @@
 
   // -------------------- Map sources & layers --------------------
   map.on('load', function () {
+    // Absolute URL so it works from any routed page
     const DATA_URL = new URL('assets/data/circular_places.geojson', document.baseURI).toString();
 
+    // Places source + index build (for richer popups/list)
     map.addSource('places', { type:'geojson', data: DATA_URL });
     fetch(DATA_URL).then(r=>r.json()).then(fc => { buildIndex(fc); rebuildListSoon(); }).catch(()=>{});
 
@@ -192,6 +199,7 @@
       filter: buildPlacesFilterExpression()
     });
 
+    // Favorites source + layer
     map.addSource('favorites', { type:'geojson', data:{ type:'FeatureCollection', features: [] } });
     map.addLayer({
       id: 'favorites', type:'circle', source:'favorites',
@@ -199,7 +207,7 @@
       paint:{ 'circle-radius':5, 'circle-color':'#FF5252' }
     });
 
-    // Single popup globally
+    // Single popup for both layers
     map.on('click', (e) => {
       const layers = existingQueryLayerIds({ visibleOnly:true });
       if (!layers.length) return;
@@ -390,4 +398,3 @@
     });
   }
 })();
-

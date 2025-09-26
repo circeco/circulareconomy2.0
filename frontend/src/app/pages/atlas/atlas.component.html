@@ -1,39 +1,101 @@
-<!-- src/app/pages/map/map.page.html -->
-<div class="relative h-[100dvh] w-full bg-white">
-  <!-- Map container (placeholder bg until we add Mapbox) -->
-  <div #map class="absolute inset-0 bg-gradient-to-br from-slate-100 to-slate-200"></div>
-
-  <!-- Floating actions (top-right) -->
-  <div class="absolute right-3 top-3 z-10 grid gap-2">
-    <button class="rounded-full p-2 bg-white/95 border shadow hover:bg-white" aria-label="Use my location">⌖</button>
-    <button class="rounded-full p-2 bg-white/95 border shadow hover:bg-white" aria-label="Filters">☰</button>
-  </div>
-
-  <!-- Bottom sheet -->
-  <section
-    class="absolute inset-x-0 bottom-0 z-10 rounded-t-2xl bg-white/95 backdrop-blur shadow-xl border-t
-           p-3 pb-[calc(16px+var(--safe-bottom))] lg:static lg:h-full lg:w-[380px] lg:border-l lg:rounded-none lg:backdrop-blur-0 lg:bg-white"
-    role="region" aria-label="Results">
-    <div class="mx-auto h-1.5 w-10 rounded-full bg-neutral-300 mb-3 lg:hidden" aria-hidden="true"></div>
-
-    <!-- Filter chips -->
-    <div class="flex gap-2 overflow-x-auto pb-2">
-      <button class="px-3 py-2 rounded-full border text-sm whitespace-nowrap">All</button>
-      <button class="px-3 py-2 rounded-full border text-sm whitespace-nowrap">Repair</button>
-      <button class="px-3 py-2 rounded-full border text-sm whitespace-nowrap">Reuse</button>
-      <button class="px-3 py-2 rounded-full border text-sm whitespace-nowrap">Recycle</button>
+<section>
+  <div id="title_section" class="section scroll">
+    <div id="title_div">
+      <ul id="underline" class="text hidden title">
+        <li id="underline">CIRC</li>
+        <li id="underline" class="ghost">ULAR</li>
+        <li id="underline" class="ghost">|</li>
+        <li id="underline">ECO</li>
+        <li id="underline" class="ghost">SYSTEM</li>
+      </ul>
     </div>
+    <div id="subtitle">alternative solutions for sustainable consumption</div>
+  </div>
+  <div class="row" id="red-wood"></div>
+</section>
 
-    <!-- Results list -->
-    <ul class="divide-y max-h-72 overflow-y-auto lg:max-h-[calc(100dvh-180px)]">
-      <li class="py-3">
-        <h3 class="font-medium">Sample Place</h3>
-        <p class="text-sm text-neutral-600">Short description goes here</p>
-      </li>
-      <li class="py-3">
-        <h3 class="font-medium">Another Place</h3>
-        <p class="text-sm text-neutral-600">More info…</p>
-      </li>
-    </ul>
-  </section>
-</div>
+<section class="section scroll" id="circular_action">
+  <div class="rw-wrapper">
+    <h2 class="rw-sentence">
+      <span>Circular Action</span>
+      <div class="rw-words rw-words-1">
+        <span>Refuse</span>
+        <span>Rethink</span>
+        <span>Reduce</span>
+        <span>Reuse</span>
+        <span>Repair</span>
+        <span>Refurbish</span>
+        <span>Reporpouse</span>
+        <span>Recycle</span>
+      </div>
+    </h2>
+  </div>
+  <p>
+    reusing, reparing or sharing are examples of circular actions that help to build circular systems by
+    SLOWING AND CLOSING LOOPS of materials and products minimasing resources input and waste
+  </p>
+
+  <div class="circactions">
+    <div class="card" id="refuse">
+      <h4>REFUSE - RETHINK</h4>
+      <p>
+        Make overconsumption unappealing and unnecessary <br />Reduce redundancy <br />Make product use more
+        intensive with multifunctional products and long-lasting design <br />Rethinking ownership towards
+        sharing systems
+      </p>
+    </div>
+    <div class="card" id="reduce">
+      <h4>REDUCE</h4>
+      <p>
+        Phase-out waste, harmful emissions and the use of non-renewable resources throughout the supply chain,
+        while increasing efficiency in product manufacturing, distribution and use
+      </p>
+    </div>
+    <div class="card" id="reuse">
+      <h4>REUSE</h4>
+      <p>
+        Extend usage time by one or several users until the product or material reaches the end of its
+        service-life and its condition does not allow to fulfil the product or material original function
+      </p>
+    </div>
+    <div class="card" id="repair">
+      <h4>REPAIR - REFURBISH</h4>
+      <p>
+        Mantain product functionality for longer through reparing and refurbishing so that the product or
+        material can be used in its original functionl
+      </p>
+    </div>
+    <div class="card" id="remanu">
+      <h4>REMANUFACTURE - REPURPOSE</h4>
+      <p>
+        Use materials from a discarded product for making new product that have the same function <br />Use a
+        product or its part for a new product with a different function, also upcycling
+      </p>
+    </div>
+    <div class="card" id="recycle">
+      <h4>RECYCLE</h4>
+      <p>
+        Process material from a discarded product that in part can be used to create a new product with a
+        function that has a lower or same quality, also downcycling
+      </p>
+    </div>
+  </div>
+</section>
+
+<section class="section scroll" id="circular_atlas">
+  <h4>CIRCULAR ATLAS: Find circular solutions in your area!</h4>
+  <div class="atlas">
+    <div id="maplist" class="overlay">
+      <span id="close_button" class="closebtn" (click)="onMapListBtn()"></span>
+      <div id="sidebar">
+        <fieldset>
+          <input id="feature-filter" type="text" placeholder="Filter results by name" />
+        </fieldset>
+        <nav id="selectlayers"></nav>
+        <div id="listings" class="listings"></div>
+      </div>
+    </div>
+    <span id="search_button" (click)="onMapListBtn()"></span>
+    <div id="map" class="map" #map></div>
+  </div>
+</section>

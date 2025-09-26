@@ -1,0 +1,208 @@
+@use "variables" as *;
+@use "mixins" as *;
+
+/* components */
+@use "title-section";
+@use "auth";
+@use "navbar";
+@use "mapbox";
+@use "footer";
+
+@import url('https://fonts.googleapis.com/css?family=Bebas+Neue|Chathura:100,300,400,700,800|Economica:400,400i,700,700i|Khand:300,400,500,600,700|Londrina+Outline');
+
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 3px;
+  border-left: 0;
+  background: rgba(0, 0, 0, 0.1);
+}
+::-webkit-scrollbar-thumb {
+  background: $color-accent;
+  border-radius: 0px;
+}
+
+/* Base */
+html {
+  scroll-behavior: smooth;
+  scroll-snap-type: y proximity;
+}
+
+body {
+  margin: 0 !important;
+  font-family: $font-khand !important;
+}
+
+h2 {
+  font-family: $font-bebas;
+  font-size: 50px !important;
+  text-align: center;
+  padding-top: 15% !important;
+  @include underline-accent($color-accent);
+}
+
+h3 {
+  font-family: $font-bebas;
+  font-size: 40px !important;
+  text-align: center;
+}
+
+h4 {
+  font-family: $font-bebas;
+  font-size: 30px !important;
+}
+
+h5 {
+  font-family: $font-bebas;
+  font-size: 20px !important;
+  text-align: center;
+  margin: 3% !important;
+  @include underline-accent($color-accent);
+}
+
+p {
+  font-family: $font-chathura;
+  text-align: center;
+  font-size: 30px;
+  line-height: 0.8;
+}
+
+#row {
+  display: flex;
+  -ms-flex-wrap: wrap;
+  flex-wrap: wrap;
+  margin-right: 0;
+  margin-left: 0;
+  padding: 0;
+}
+
+/* ---------------- Resizing codes ---------------- */
+@media screen and (min-width: 450px){
+  #maplist { width: 20% }
+  #sidebar { width: 98% !important }
+  #circular_atlas { padding-top: 5% !important }
+}
+
+@media screen and (max-width: 900px){
+  p { font-size: 30px }
+  .topnav a { font-size: 24px !important }
+  .rw-wrapper h2, span { font-size: 30px !important }
+  #circular_action h4, p { font-size: 24px !important }
+  #sidebar { width: 98% !important }
+  .map { width: 75% !important }
+  .atlas { padding: 10% 2% 20% !important }
+  #circular_atlas { padding-top: 15% !important }
+  #reuse, #refuse, #reduce, #repair, #remanu, #recycle { height: 200px }
+}
+
+@media screen and (max-width: 450px){
+  #reuse, #refuse, #reduce, #repair, #remanu, #recycle { height: 120px; width: 90% }
+  .circactions {
+    h4 { top: 20% !important }
+    p { top: 5% !important }
+  }
+  .rw-wrapper { width: 60% !important }
+  #circular_atlas h4 { font-size: 18px !important }
+  .atlas { display: block !important; padding-top: 2% !important }
+  #sidebar { width: 100% !important; margin: 30% auto 0 !important }
+  #map { scroll-snap-align: end; width: 100% !important }
+  .mapboxgl-ctrl-group { visibility: hidden; }
+
+  .overlay {
+    height: 100%; width: 0; position: fixed; z-index: 2; top: 0; left: 0;
+    overflow-x: hidden; transition: 0.5s;
+  }
+
+  #search_button, #close_button {
+    position: absolute; right: 0; background-repeat: no-repeat; background-size: cover; margin: 10px; padding: 20px; z-index: 1;
+  }
+  #search_button { right: 10px; background-image: url("../img/search_button.jpg"); }
+  #close_button  { background-image: url("../img/close_button.jpg"); }
+}
+
+
+/* ---------------- CircAction section ---------------- */
+.circactions {
+  padding: 5% 2%; display: flex; flex-wrap: wrap;
+
+  div { clear: both; height: 300px; width: 220px; margin: 2% auto; border: unset !important; }
+  h4 { font-size: 18px; color: white; padding: 5%; text-align: center; top: 40%; position: relative; }
+  p  { text-align: left; margin: 2% 5%; color: white; visibility: hidden; position: absolute; top: 10%; }
+}
+
+#circular_action p { margin: 2% 5%; }
+
+.card:hover { p { visibility: visible; } h4 { visibility: hidden; } }
+
+#refuse  { background-color: $brand-deep; }
+#reduce  { background-color: $brand-mid; }
+#reuse   { background-color: $brand-teal; }
+#repair  { background-color: #76a5afff; }
+#remanu  { background-color: #a2c4c9ff; }
+#recycle { background-color: $blue-gray; }
+
+
+/* ---------------- CircAction animation ---------------- */
+.rw-wrapper {
+  width: 90%;
+  position: relative;
+  font-family: 'Bree Serif';
+  padding: 10px;
+  text-align: center;
+}
+.rw-sentence { margin: 0; }
+.rw-words {
+  display: inline;
+  text-indent: 10px;
+}
+.rw-words-1 {
+  span {
+    position: absolute; 
+    opacity: 0; 
+    overflow: hidden; 
+    color: $brand-teal;
+    -webkit-animation: rotateWord 8s linear infinite 1s;
+    -ms-animation: rotateWord 8s linear infinite 1s;
+    animation: rotateWord 8s linear infinite 1s;
+
+    &:nth-child(2) { -webkit-animation-delay: 2s; -ms-animation-delay: 2s; animation-delay: 2s; color: $brand-teal; }
+    &:nth-child(3) { -webkit-animation-delay: 3s; -ms-animation-delay: 3s; animation-delay: 3s; color: $brand-teal; }
+    &:nth-child(4) { -webkit-animation-delay: 4s; -ms-animation-delay: 4s; animation-delay: 4s; color: $brand-teal; }
+    &:nth-child(5) { -webkit-animation-delay: 5s; -ms-animation-delay: 5s; animation-delay: 5s; color: $brand-teal; }
+    &:nth-child(6) { -webkit-animation-delay: 6s; -ms-animation-delay: 6s; animation-delay: 6s; color: $brand-teal; }
+    &:nth-child(7) { -webkit-animation-delay: 7s; -ms-animation-delay: 7s; animation-delay: 7s; color: $brand-teal; }
+    &:nth-child(8) { -webkit-animation-delay: 8s; -ms-animation-delay: 8s; animation-delay: 8s; color: $brand-teal; }
+  }
+}
+
+@-webkit-keyframes rotateWord {
+  0% { opacity: 0; }
+  2% { opacity: 0; -webkit-transform: translateY(-30px); }
+  5% { opacity: 1; -webkit-transform: translateY(0px);}
+  17% { opacity: 1; -webkit-transform: translateY(0px); }
+  20% { opacity: 0; -webkit-transform: translateY(30px); }
+  80% { opacity: 0; }
+  100% { opacity: 0; }
+}
+@-ms-keyframes rotateWord {
+  0% { opacity: 0; }
+  2% { opacity: 0; -ms-transform: translateY(-30px); }
+  5% { opacity: 1; -ms-transform: translateY(0px);}
+  17% { opacity: 1; -ms-transform: translateY(0px); }
+  20% { opacity: 0; -ms-transform: translateY(30px); }
+  80% { opacity: 0; }
+  100% { opacity: 0; }
+}
+@keyframes rotateWord {
+  0% { opacity: 0; }
+  2% { opacity: 0; -webkit-transform: translateY(-30px); transform: translateY(-30px); }
+  5% { opacity: 1; -webkit-transform: translateY(0px); transform: translateY(0px);}
+  17% { opacity: 1; -webkit-transform: translateY(0px); transform: translateY(0px); }
+  20% { opacity: 0; -webkit-transform: translateY(30px); transform: translateY(30px); }
+  80% { opacity: 0; }
+  100% { opacity: 0; }
+}
+@media screen and (max-width: 768px){ .rw-sentence { font-size: 18px; } }
+@media screen and (max-width: 320px){ .rw-sentence { font-size: 9px; } }
+

@@ -1,0 +1,948 @@
+{
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "properties": {
+                "STORE_NAME": "Nu & Då",
+                "ADDRESS_LINE1": "Norrtullsgatan 31",
+                "CITY": "Stockholm",
+                "DESCRIPTION": "Second hand, vintage, thriftclothes shop",
+                "STORE_TYPE": "Reuse to sell and buy",
+                "WEB": "www.nuochdasecondhand.se",
+                "LABEL": "reuse",
+                "CATEGORIES": [
+                    "apparel"
+                ]
+            },
+            "geometry": {
+                "coordinates": [
+                    18.049067,
+                    59.344625
+                ],
+                "type": "Point"
+            },
+            "id": "57cf94f014ca7e308a1489d111c20a95"
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "STORE_NAME": "Myrorna",
+                "ADDRESS_LINE1": "Norrtullsgatan 9",
+                "CITY": "Stockholm",
+                "WEB": "www.myrorna.se",
+                "DESCRIPTION": "Second hand, vintage, thriftclothes, books, music and home shop",
+                "STORE_TYPE": "Reuse to give and to buy",
+                "LABEL": "reuse",
+                "CATEGORIES": [
+                    "apparel"
+                ]
+            },
+            "geometry": {
+                "coordinates": [
+                    18.051966,
+                    59.341692
+                ],
+                "type": "Point"
+            },
+            "id": "707325b035f826de33776fbbbc8fb0d1"
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "STORE_NAME": "Stockholm Stadsmission",
+                "ADDRESS_LINE1": "Hagagatan 3",
+                "CITY": "Stockholm",
+                "DESCRIPTION": "Second hand, vintage, thriftclothes shop",
+                "STORE_TYPE": "Reuse to give and to buy",
+                "WEB": "www.stadsmissionen.se",
+                "LABEL": "reuse",
+                "CATEGORIES": [
+                    "apparel"
+                ]
+            },
+            "geometry": {
+                "coordinates": [
+                    18.05276,
+                    59.343905
+                ],
+                "type": "Point"
+            },
+            "id": "979afaf0c942437589619043f7e81261"
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "ADDRESS_LINE1": "Nybrogatan 44",
+                "CITY": "Stockholm",
+                "STORE_NAME": "Arkivet",
+                "DESCRIPTION": "High street second hand clothes women only shop",
+                "STORE_TYPE": "Reuse to sell and buy",
+                "WEB": "www.arkivetsthlm.se",
+                "LABEL": "reuse",
+                "CATEGORIES": [
+                    "apparel"
+                ]
+            },
+            "geometry": {
+                "coordinates": [
+                    18.080633,
+                    59.338598
+                ],
+                "type": "Point"
+            },
+            "id": "9aa95035fe7fb393435dd158491a8bd1"
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "STORE_NAME": "Stockholm Stadsmission",
+                "ADDRESS_LINE1": "Handenterminalen 5",
+                "CITY": "Stockholm",
+                "DESCRIPTION": "Second hand, vintage, thriftclothes, books, music and home shop",
+                "STORE_TYPE": "Reuse to give and to buy",
+                "WEB": "www.stadsmissionen.se",
+                "CATEGORIES": [
+                    "apparel"
+                ]
+            },
+            "geometry": {
+                "coordinates": [
+                    18.135607,
+                    59.167472
+                ],
+                "type": "Point"
+            },
+            "id": "address.1377521889852386"
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "STORE_NAME": "Stockholm Stadsmission",
+                "ADDRESS_LINE1": "Årstaängsvägen 21c, 117 43 Stockholm, Sweden",
+                "CITY": "Stockholm",
+                "DESCRIPTION": "Second hand, vintage, thriftclothes shop",
+                "STORE_TYPE": "Reuse to give and to buy",
+                "WEB": "www.stadsmissionen.se",
+                "LABEL": "reuse",
+                "CATEGORIES": [
+                    "apparel"
+                ]
+            },
+            "geometry": {
+                "coordinates": [
+                    18.027996,
+                    59.309302
+                ],
+                "type": "Point"
+            },
+            "id": "address.1480996137242224"
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "STORE_NAME": "Myrorna",
+                "ADDRESS_LINE1": "Storholmsgatan 29",
+                "CITY": "Stockholm",
+                "DESCRIPTION": "Second hand, vintage, thriftclothes, books, music and home shop",
+                "STORE_TYPE": "Reuse to give and to buy",
+                "WEB": "www.myrorna.se",
+                "LABEL": "reuse",
+                "CATEGORIES": [
+                    "apparel"
+                ]
+            },
+            "geometry": {
+                "coordinates": [
+                    17.908286,
+                    59.273969
+                ],
+                "type": "Point"
+            },
+            "id": "address.184335916626382"
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "STORE_NAME": "Myrorna",
+                "ADDRESS_LINE1": "Götgatan 79, 116 62",
+                "CITY": "Stockholm",
+                "DESCRIPTION": "Second hand, vintage, thriftclothes, books, music and home shop",
+                "STORE_TYPE": "Reuse to give and to buy",
+                "WEB": "www.myrorna.se",
+                "LABEL": "reuse",
+                "CATEGORIES": [
+                    "apparel"
+                ]
+            },
+            "geometry": {
+                "coordinates": [
+                    18.075348,
+                    59.310779
+                ],
+                "type": "Point"
+            },
+            "id": "address.219442859565502"
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "STORE_NAME": "Stockholm Stadsmission",
+                "ADDRESS_LINE1": "Bibliotekstorget 8c",
+                "CITY": "Stockholm",
+                "DESCRIPTION": "Second hand, vintage, thriftclothes, books, music and home shop",
+                "STORE_TYPE": "Reuse to give and to buy",
+                "WEB": "www.stockholmstadsmission.se",
+                "LABEL": "reuse",
+                "CATEGORIES": [
+                    "apparel",
+                    "home"
+                ],
+                "STORE_TYPES": [
+                    "Reuse to buy",
+                    "Reuse to give and to buy"
+                ]
+            },
+            "geometry": {
+                "coordinates": [
+                    18.001647,
+                    59.359597
+                ],
+                "type": "Point"
+            },
+            "id": "address.3144405419634824"
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "STORE_NAME": "Stockholm Stadsmission",
+                "ADDRESS_LINE1": "Vännäsgången 9-13",
+                "CITY": "Stockholm",
+                "DESCRIPTION": "Second hand, vintage, thriftclothes, books, music and home shop",
+                "STORE_TYPE": "Reuse to give and to buy",
+                "WEB": "www.stadsmissionen.se",
+                "LABEL": "reuse",
+                "CATEGORIES": [
+                    "apparel"
+                ]
+            },
+            "geometry": {
+                "coordinates": [
+                    17.874491,
+                    59.362078
+                ],
+                "type": "Point"
+            },
+            "id": "address.3854580159806890"
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "STORE_NAME": "Myrorna",
+                "ADDRESS_LINE1": "Adolf Fredriks Kyrkogata 5",
+                "CITY": "Stockholm",
+                "DESCRIPTION": "Second hand, vintage, thriftclothes, books, music and home shop",
+                "STORE_TYPE": "Reuse to give and to buy",
+                "WEB": "www.myrorna.se",
+                "LABEL": "reuse",
+                "CATEGORIES": [
+                    "apparel",
+                    "electronics-books-music"
+                ],
+                "STORE_TYPES": [
+                    "Reuse to buy and to give",
+                    "Reuse to give and to buy"
+                ]
+            },
+            "geometry": {
+                "coordinates": [
+                    18.061059,
+                    59.337438
+                ],
+                "type": "Point"
+            },
+            "id": "address.392497734640206"
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "STORE_NAME": "Stockholm Stadsmission",
+                "ADDRESS_LINE1": "Siroccogatan 20",
+                "CITY": "Stockholm",
+                "DESCRIPTION": "Second hand, vintage, thriftclothes, books, music and home shop",
+                "STORE_TYPE": "Reuse to give and to buy",
+                "WEB": "www.stadsmissionen.se",
+                "LABEL": "reuse",
+                "CATEGORIES": [
+                    "apparel"
+                ]
+            },
+            "geometry": {
+                "coordinates": [
+                    18.125507,
+                    59.305093
+                ],
+                "type": "Point"
+            },
+            "id": "address.4184598072589672"
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "STORE_NAME": "Stockholm Stadsmission",
+                "ADDRESS_LINE1": "Karlsbodavägen 14",
+                "CITY": "Stockholm",
+                "DESCRIPTION": "Second hand, vintage, thriftclothes shop",
+                "STORE_TYPE": "Reuse to give and to buy",
+                "WEB": "www.stadsmissionen.se",
+                "LABEL": "reuse",
+                "CATEGORIES": [
+                    "apparel"
+                ]
+            },
+            "geometry": {
+                "coordinates": [
+                    17.961575,
+                    59.355528
+                ],
+                "type": "Point"
+            },
+            "id": "address.4350899501283414"
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "STORE_NAME": "Stockholm Stadsmission",
+                "ADDRESS_LINE1": "Murmästarvägen 1",
+                "CITY": "Stockholm",
+                "DESCRIPTION": "Second hand, vintage, thriftclothes shop",
+                "STORE_TYPE": "Reuse to give and to buy",
+                "WEB": "www.stadsmissionen.se",
+                "LABEL": "reuse",
+                "CATEGORIES": [
+                    "apparel"
+                ]
+            },
+            "geometry": {
+                "coordinates": [
+                    17.938984,
+                    59.286089
+                ],
+                "type": "Point"
+            },
+            "id": "address.469893381620990"
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "STORE_NAME": "Stockholm Stadsmission",
+                "ADDRESS_LINE1": "Köpmangatan 15",
+                "CITY": "Stockholm",
+                "DESCRIPTION": "Second hand, vintage, antiques, thriftclothes, books, music and home shop",
+                "STORE_TYPE": "Reuse to give and to buy",
+                "WEB": "www.stadsmissionen.se",
+                "LABEL": "reuse",
+                "CATEGORIES": [
+                    "apparel"
+                ]
+            },
+            "geometry": {
+                "coordinates": [
+                    18.071679,
+                    59.325074
+                ],
+                "type": "Point"
+            },
+            "id": "address.5180676915849198"
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "STORE_NAME": "Stockholm Stadsmission",
+                "ADDRESS_LINE1": "Hornsgatan 58",
+                "CITY": "Stockholm",
+                "DESCRIPTION": "Second hand, vintage, thriftclothes, books, music and home shop",
+                "STORE_TYPE": "Reuse to give and to buy",
+                "WEB": "www.stadsmissionen.se",
+                "LABEL": "reuse",
+                "CATEGORIES": [
+                    "apparel"
+                ]
+            },
+            "geometry": {
+                "coordinates": [
+                    18.061555,
+                    59.318885
+                ],
+                "type": "Point"
+            },
+            "id": "address.548928770035394"
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "STORE_NAME": "Stockholm Stadsmission",
+                "ADDRESS_LINE1": "Liljeholmstorget 7",
+                "CITY": "Stockholm",
+                "DESCRIPTION": "Second hand, vintage, thriftclothes, books, music and home shop",
+                "STORE_TYPE": "Reuse to give and to buy",
+                "WEB": "www.stadsmissionen.se",
+                "LABEL": "reuse",
+                "CATEGORIES": [
+                    "apparel"
+                ]
+            },
+            "geometry": {
+                "coordinates": [
+                    18.023981,
+                    59.309383
+                ],
+                "type": "Point"
+            },
+            "id": "address.5491447803821286"
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "STORE_NAME": "Myrorna",
+                "ADDRESS_LINE1": "Kolargatan 2",
+                "CITY": "Stockholm",
+                "DESCRIPTION": "Second hand, vintage, thriftclothes, books, music and home shop",
+                "STORE_TYPE": "Reuse to give and to buy",
+                "WEB": "www.myrorna.se",
+                "LABEL": "reuse",
+                "CATEGORIES": [
+                    "apparel",
+                    "electronics-books-music",
+                    "home"
+                ],
+                "STORE_TYPES": [
+                    "Reuse to buy and to give",
+                    "Reuse to give and to buy"
+                ]
+            },
+            "geometry": {
+                "coordinates": [
+                    18.105527,
+                    59.353877
+                ],
+                "type": "Point"
+            },
+            "id": "address.5703659821308222"
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "STORE_NAME": "Stockholm Stadsmission",
+                "ADDRESS_LINE1": "Skånegatan 75",
+                "CITY": "Stockholm",
+                "DESCRIPTION": "Second hand, vintage, thriftclothes, books, music and home shop",
+                "STORE_TYPE": "Reuse to give and to buy",
+                "WEB": "www.stadsmissionen.se",
+                "LABEL": "reuse",
+                "CATEGORIES": [
+                    "apparel"
+                ]
+            },
+            "geometry": {
+                "coordinates": [
+                    18.082153,
+                    59.312719
+                ],
+                "type": "Point"
+            },
+            "id": "address.5780279199342456"
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "STORE_NAME": "Stockholm Stadsmission",
+                "ADDRESS_LINE1": "Storforsgränd 1",
+                "CITY": "Stockholm",
+                "DESCRIPTION": "Second hand, vintage, thriftclothes shop",
+                "STORE_TYPE": "Reuse to give and to buy",
+                "WEB": "www.stadsmissionen.se",
+                "LABEL": "reuse",
+                "CATEGORIES": [
+                    "apparel"
+                ]
+            },
+            "geometry": {
+                "coordinates": [
+                    18.092371,
+                    59.242732
+                ],
+                "type": "Point"
+            },
+            "id": "address.6661485229833974"
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "STORE_NAME": "Stockholm Stadsmission",
+                "ADDRESS_LINE1": "Strandgatan 6-8",
+                "CITY": "Stockholm",
+                "DESCRIPTION": "Second hand, vintage, thriftclothes, books, music and home shop",
+                "STORE_TYPE": "Reuse to give and to buy",
+                "WEB": "www.stadsmissionen.se",
+                "LABEL": "reuse",
+                "CATEGORIES": [
+                    "apparel"
+                ]
+            },
+            "geometry": {
+                "coordinates": [
+                    17.62822,
+                    59.192939
+                ],
+                "type": "Point"
+            },
+            "id": "address.6740850538069460"
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "STORE_NAME": "Stockholm Stadsmission",
+                "ADDRESS_LINE1": "Hantverkargatan 78",
+                "CITY": "Stockholm",
+                "DESCRIPTION": "Second hand, vintage, thriftclothes, books, music and home shop",
+                "STORE_TYPE": "Reuse to give and to buy",
+                "WEB": "www.stadsmissionen.se",
+                "LABEL": "reuse",
+                "CATEGORIES": [
+                    "apparel"
+                ]
+            },
+            "geometry": {
+                "coordinates": [
+                    18.031615,
+                    59.331068
+                ],
+                "type": "Point"
+            },
+            "id": "address.6770348228063060"
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "STORE_NAME": "Stockholm Stadsmission",
+                "ADDRESS_LINE1": "Tomtbergavägen 3",
+                "CITY": "Stockholm",
+                "DESCRIPTION": "Second hand, vintage, thriftclothes, books, music and home shop",
+                "STORE_TYPE": "Reuse to give and to buy",
+                "WEB": "www.stadsmissionen.se",
+                "LABEL": "reuse",
+                "CATEGORIES": [
+                    "apparel"
+                ]
+            },
+            "geometry": {
+                "coordinates": [
+                    17.828116,
+                    59.245012
+                ],
+                "type": "Point"
+            },
+            "id": "address.7586249025296676"
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "STORE_NAME": "Myrorna",
+                "ADDRESS_LINE1": "Sturegatan 36",
+                "CITY": "Stockholm",
+                "DESCRIPTION": "Second hand, vintage, thriftclothes, books, music and home shop",
+                "STORE_TYPE": "Reuse to give and to buy",
+                "WEB": "www.myrorna.se",
+                "LABEL": "reuse",
+                "CATEGORIES": [
+                    "apparel"
+                ]
+            },
+            "geometry": {
+                "coordinates": [
+                    17.965066,
+                    59.364272
+                ],
+                "type": "Point"
+            },
+            "id": "address.7852109309745154"
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "STORE_NAME": "Myrorna",
+                "ADDRESS_LINE1": "Fleminggatan 89",
+                "CITY": "Stockholm",
+                "DESCRIPTION": "Second hand, vintage, thriftclothes, books, music and home shop",
+                "STORE_TYPE": "Reuse to give and to buy",
+                "WEB": "www.myrorna.se",
+                "LABEL": "reuse",
+                "CATEGORIES": [
+                    "apparel"
+                ]
+            },
+            "geometry": {
+                "coordinates": [
+                    18.031179,
+                    59.334526
+                ],
+                "type": "Point"
+            },
+            "id": "address.8207368129240738"
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "STORE_NAME": "Myrorna",
+                "ADDRESS_LINE1": "Glimmervägen 13",
+                "CITY": "Stockholm",
+                "DESCRIPTION": "Second hand, vintage, thriftclothes, books, music and home shop",
+                "STORE_TYPE": "Reuse to give and to buy",
+                "WEB": "www.myrorna.se",
+                "CATEGORIES": [
+                    "apparel"
+                ]
+            },
+            "geometry": {
+                "coordinates": [
+                    17.937904,
+                    59.435619
+                ],
+                "type": "Point"
+            },
+            "id": "address.8548251352417566"
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "STORE_NAME": "Arkivet",
+                "ADDRESS_LINE1": "Norrtullsgatan 33",
+                "CITY": "Stockholm",
+                "DESCRIPTION": "High street second hand clothes women only shop",
+                "STORE_TYPE": "Reuse to sell and buy",
+                "WEB": "www.arkivetsthlm.se",
+                "LABEL": "reuse",
+                "CATEGORIES": [
+                    "apparel"
+                ]
+            },
+            "geometry": {
+                "coordinates": [
+                    18.048981,
+                    59.344738
+                ],
+                "type": "Point"
+            },
+            "id": "ff6159bd3108a49470ade12cee837b53"
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "ADDRESS_LINE1": "Riddargatan 29",
+                "CITY": "Stockholm",
+                "DESCRIPTION": "Second hand bikes that are refurbished with recycled bike pieces also reparing of bikes ",
+                "STORE_NAME": "Second Hand Bike",
+                "STORE_TYPE": "Reuse & Repair to buy and to give",
+                "WEB": "www.secondhandbike.se/",
+                "CATEGORIES": [
+                    "cycling-sports"
+                ]
+            },
+            "geometry": {
+                "coordinates": [
+                    18.086106,
+                    59.332653
+                ],
+                "type": "Point"
+            },
+            "id": "0d14b334dff60a7b305592b65e271f1a"
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "ADDRESS_LINE1": "Döbelnsgatan 52",
+                "CITY": "Stockholm",
+                "STORE_NAME": "iRecycle - Begagnade Cyklar",
+                "STORE_TYPE": "Reuse & Repair to buy and to give",
+                "DESCRIPTION": "Second hand bikes that are refurbished with recycled bike pieces also reparing of bikes ",
+                "WEB": "www.irecycle.se",
+                "CATEGORIES": [
+                    "cycling-sports"
+                ]
+            },
+            "geometry": {
+                "coordinates": [
+                    18.056998,
+                    59.34578
+                ],
+                "type": "Point"
+            },
+            "id": "20207c844f9587370dcfd4069cf0c7e8"
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "ADDRESS_LINE1": "Kemistvägen 3",
+                "CITY": "Täby",
+                "DESCRIPTION": "Second hand high quality repaired and restored computer and mobiles",
+                "STORE_NAME": "Inrego",
+                "STORE_TYPE": "Reuse to buy",
+                "WEB": "www.inrego.com",
+                "CATEGORIES": [
+                    "electronics-books-music"
+                ]
+            },
+            "geometry": {
+                "coordinates": [
+                    18.083854,
+                    59.449677
+                ],
+                "type": "Point"
+            },
+            "id": "10c11ab6efc93f4b8aba5fd8a85834e8"
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "ADDRESS_LINE1": "Tegnérgatan 17",
+                "CITY": "Stockholm",
+                "DESCRIPTION": "Second hand books",
+                "STORE_NAME": "Halléns Antikvariat",
+                "STORE_TYPE": "Reuse to buy",
+                "WEB": "www.antikvariat.net",
+                "CATEGORIES": [
+                    "electronics-books-music"
+                ]
+            },
+            "geometry": {
+                "coordinates": [
+                    18.062175,
+                    59.340021
+                ],
+                "type": "Point"
+            },
+            "id": "6ff8cc7f3483493f1c8455b2a696f35b"
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "ADDRESS_LINE1": "Folkungagatan 48",
+                "CITY": "Stockholm",
+                "DESCRIPTION": "Renting tools service ",
+                "STORE_NAME": "Don för person",
+                "STORE_TYPE": "Renting service",
+                "WEB": "www.donforperson.se",
+                "CATEGORIES": [
+                    "home"
+                ]
+            },
+            "geometry": {
+                "coordinates": [
+                    18.073003,
+                    59.314012
+                ],
+                "type": "Point"
+            },
+            "id": "02702de09f3bc146752ee39f5767cb48"
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "STORE_NAME": "ReTuna",
+                "ADDRESS_LINE1": "Folkestaleden 7",
+                "CITY": "Eskilstuna",
+                "DESCRIPTION": "Department store with several shops and initiative for reuse, remake and recover of material and items ",
+                "STORE_TYPE": "Second life textile for new design appprel, but also second hand shop",
+                "WEB": "www.retuna.se",
+                "CATEGORIES": [
+                    "home"
+                ]
+            },
+            "geometry": {
+                "coordinates": [
+                    16.451184,
+                    59.388439
+                ],
+                "type": "Point"
+            },
+            "id": "1dd93b890617f384d655794cb327e5a2"
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "ADDRESS_LINE1": "Frejgatan 62",
+                "CITY": "Stockholm",
+                "DESCRIPTION": "Second hand furniture",
+                "STORE_NAME": "Rekomo",
+                "STORE_TYPE": "Reuse to buy",
+                "WEB": "www.rekomo.se/",
+                "CATEGORIES": [
+                    "home"
+                ]
+            },
+            "geometry": {
+                "coordinates": [
+                    18.040017,
+                    59.343084
+                ],
+                "type": "Point"
+            },
+            "id": "29db4c5528daca65f64f4066e1092f37"
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "ADDRESS_LINE1": "Sibyllegatan 6",
+                "CITY": "Stockholm",
+                "DESCRIPTION": "Second hand furniture",
+                "STORE_NAME": "Modernity",
+                "STORE_TYPE": "Second hand ",
+                "WEB": "www.modernity.se",
+                "CATEGORIES": [
+                    "home"
+                ]
+            },
+            "geometry": {
+                "coordinates": [
+                    18.08004,
+                    59.335933
+                ],
+                "type": "Point"
+            },
+            "id": "5f073e6ad43ed2f73ce3211d3902664f"
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "ADDRESS_LINE1": "Nybrogatan 36",
+                "CITY": "Stockholm",
+                "DESCRIPTION": "Renting tools service ",
+                "STORE_NAME": "Don för person",
+                "STORE_TYPE": "Renting service",
+                "WEB": "www.donforperson.se",
+                "CATEGORIES": [
+                    "home"
+                ]
+            },
+            "geometry": {
+                "coordinates": [
+                    18.079867,
+                    59.337636
+                ],
+                "type": "Point"
+            },
+            "id": "67361de561cd59e57bd10b4ff82f50fe"
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "STORE_NAME": "Stockholm Retro",
+                "ADDRESS_LINE1": "Sankt Eriksgatan 103",
+                "CITY": "Stockholm",
+                "DESCRIPTION": "Homeware ",
+                "STORE_TYPE": "Reuse to buy",
+                "WEB": "www.stockholmretro.se",
+                "CATEGORIES": [
+                    "home"
+                ]
+            },
+            "geometry": {
+                "coordinates": [
+                    18.039047,
+                    59.34422
+                ],
+                "type": "Point"
+            },
+            "id": "8458a48085d113aacefe2a98a9be0d16"
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "ADDRESS_LINE1": "Bondegatan 44",
+                "CITY": "Stockholm",
+                "DESCRIPTION": "Second hand furniture",
+                "STORE_NAME": "Southern Treasury",
+                "STORE_TYPE": "Reuse to buy",
+                "WEB": "www.facebook.com/sodersretro.se",
+                "CATEGORIES": [
+                    "home"
+                ]
+            },
+            "geometry": {
+                "coordinates": [
+                    18.083079,
+                    59.313265
+                ],
+                "type": "Point"
+            },
+            "id": "9d58abcbe551af9019fbd3b9ff67043f"
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "ADDRESS_LINE1": "Fredsgatan 1",
+                "CITY": "Sundyberg",
+                "DESCRIPTION": "Second hand homware, forniture and Antik",
+                "STORE_NAME": "Verdandi Second Hand",
+                "STORE_TYPE": "Reuse to buy",
+                "WEB": "www.verdandi.org",
+                "CATEGORIES": [
+                    "home"
+                ]
+            },
+            "geometry": {
+                "coordinates": [
+                    17.961588,
+                    59.364291
+                ],
+                "type": "Point"
+            },
+            "id": "ad9f182f4756620bca34d0a864b7af1f"
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "ADDRESS_LINE1": "Hammarby allé 92",
+                "CITY": "Stockholm",
+                "DESCRIPTION": "Homeware & Home furnishing",
+                "STORE_NAME": "Refurn",
+                "STORE_TYPE": "Reuse to buy",
+                "WEB": "www.refurn.se",
+                "CATEGORIES": [
+                    "home"
+                ]
+            },
+            "geometry": {
+                "coordinates": [
+                    18.099707,
+                    59.302948
+                ],
+                "type": "Point"
+            },
+            "id": "b58d59f89ea76703d550d9e7b6a7d0a2"
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "ADDRESS_LINE1": "Eva Bonniers gata 5",
+                "CITY": "Hägersten",
+                "DESCRIPTION": "Retro furniture",
+                "STORE_NAME": "Fruängens retro",
+                "STORE_TYPE": "Reuse to buy",
+                "WEB": "",
+                "CATEGORIES": [
+                    "home"
+                ]
+            },
+            "geometry": {
+                "coordinates": [
+                    17.960722,
+                    59.285998
+                ],
+                "type": "Point"
+            },
+            "id": "bc087b9e75f5aa6ae60a432b1d5934bb"
+        }
+    ]
+}
