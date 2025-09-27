@@ -1,0 +1,33 @@
+<!-- Unique class to avoid legacy .modal {display:none} -->
+<div class="auth-modal" *ngIf="auth.modalOpen()" (click)="closeByBackdrop($event)">
+  <!-- Flip container: legacy-compatible structure -->
+  <div id="flip" [class.flipped]="flipping()">
+    <!-- FRONT: SIGN IN -->
+    <form id="signInForm" class="front" [formGroup]="signInForm" (ngSubmit)="doSignIn()">
+      <h5 class="mb-3">Sign in</h5>
+      <label for="signInEmail">Email</label>
+      <input id="signInEmail" type="email" class="form-control" formControlName="email" required />
+      <label for="signInPass">Password</label>
+      <input id="signInPass" type="password" class="form-control" formControlName="password" required />
+      <div class="error" *ngIf="error()">{{ error() }}</div>
+      <button id="signInSubmit" class="btn btn-primary btn-sm" [disabled]="loading()">Sign in</button>
+      <p>Don’t have an account?
+        <a id="toSignup" href="#" (click)="$event.preventDefault(); flipping.set(true)">Create one</a>
+      </p>
+    </form>
+
+    <!-- BACK: SIGN UP -->
+    <form id="signUpForm" class="back" [formGroup]="signUpForm" (ngSubmit)="doSignUp()">
+      <h5 class="mb-3">Create account</h5>
+      <label for="signUpEmail">Email</label>
+      <input id="signUpEmail" type="email" class="form-control" formControlName="email" required />
+      <label for="signUpPass">Password</label>
+      <input id="signUpPass" type="password" class="form-control" formControlName="password" required />
+      <div class="error" *ngIf="error()">{{ error() }}</div>
+      <button id="signUpSubmit" class="btn btn-success btn-sm" [disabled]="loading()">Create account</button>
+      <p>Already have an account?
+        <a id="toSignin" href="#" (click)="$event.preventDefault(); flipping.set(false)">Sign in</a>
+      </p>
+    </form>
+  </div>
+</div>

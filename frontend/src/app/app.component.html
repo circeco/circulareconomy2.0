@@ -9,47 +9,28 @@
 
   <!-- 🔐 Auth controls (top-right) -->
   <div id="authHeader">
-    <button id="loginBtn" class="btn btn-sm btn-light">Sign in</button>
-    <div id="profileMenu" class="profile" style="display:none;">
-      <img id="avatar" alt="profile" />
-      <div class="menu">
-        <div class="dropdown-item" style="font-weight:600;">Welcome!</div>
-        <div id="userEmail" class="dropdown-item small text-muted"></div>
-        <div class="dropdown-divider" style="height:1px;background:#eee;margin:.25rem 0;"></div>
-        <button id="logoutBtn" class="dropdown-item">Sign out</button>
+    <!-- Logged in -->
+    <ng-container *ngIf="(user$ | async) as user; else loggedOut">
+      <div id="profileMenu" class="profile">
+        <img id="avatar" [src]="user.photoURL || 'assets/img/avatar.png'" alt="profile" />
+        <div class="menu">
+          <div class="dropdown-item" style="font-weight:600;">Welcome!</div>
+          <div id="userEmail" class="dropdown-item small text-muted">{{ user.email }}</div>
+          <div class="dropdown-divider" style="height:1px;background:#eee;margin:.25rem 0;"></div>
+          <button id="logoutBtn" class="dropdown-item" (click)="logout()">Sign out</button>
+        </div>
       </div>
-    </div>
+    </ng-container>
+
+    <!-- Logged out -->
+    <ng-template #loggedOut>
+      <button id="loginBtn" class="btn btn-sm btn-light" (click)="openLogin()">Sign in</button>
+    </ng-template>
   </div>
 
-  <!-- 🧰 login/signup flip modal -->
-  <div id="authModal" class="modal">
-    <div id="flip">
-      <!-- FRONT: SIGN IN -->
-      <form id="signInForm" class="front" autocomplete="on">
-        <h5 class="mb-3">Sign in</h5>
-        <label for="signInEmail">Email</label>
-        <input type="email" class="form-control" id="signInEmail" required />
-        <label for="signInPass">Password</label>
-        <input type="password" class="form-control" id="signInPass" required />
-        <div id="signInError" class="text-danger small" style="min-height:1.2em;"></div>
-        <button id="signInSubmit" type="submit" class="btn btn-primary btn-sm">Sign in</button>
-        <p>Don’t have an account? <a id="toSignup" href="#flip">Create one</a></p>
-      </form>
-
-      <!-- BACK: SIGN UP -->
-      <form id="signUpForm" class="back" autocomplete="on">
-        <h5 class="mb-3">Create account</h5>
-        <label for="signUpEmail">Email</label>
-        <input type="email" class="form-control" id="signUpEmail" required />
-        <label for="signUpPass">Password</label>
-        <input type="password" class="form-control" id="signUpPass" required />
-        <div id="signUpError" class="text-danger small" style="min-height:1.2em;"></div>
-        <button id="signUpSubmit" type="submit" class="btn btn-success btn-sm">Create account</button>
-        <p>Already have an account? <a id="toSignin" href="#">Sign in</a></p>
-      </form>
-    </div>
-  </div>
 </header>
+
+<app-login></app-login>
 
 <router-outlet></router-outlet>
 

@@ -1,7 +1,11 @@
-import { Component, AfterViewInit } from '@angular/core';
-import { RouterModule } from '@angular/router';
-import { CommonModule } from '@angular/common';
+import { Component, AfterViewInit, NgZone } from '@angular/core';
+import { CommonModule, NgIf, AsyncPipe } from '@angular/common';
+import { RouterOutlet } from '@angular/router';
+
 import { LegacyLoaderService } from './legacy-loader.service';
+import { AuthService } from './services/auth.service';
+import { FavoritesService } from './services/favorites.service'; // ⬅️ added
+import { LoginComponent } from './components/login/login.component';
 
 declare global {
   interface Window {
@@ -13,22 +17,37 @@ declare global {
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterOutlet, LoginComponent, NgIf, AsyncPipe],
   templateUrl: './app.component.html',
-  styleUrl: './app.component.scss',
+  styleUrls: ['./app.component.scss'],
 })
 export class AppComponent implements AfterViewInit {
-  constructor(private legacy: LegacyLoaderService) {}
+  constructor(
+    private legacy: LegacyLoaderService,
+    private zone: NgZone,
+    public auth: AuthService,
+    // Injecting this ensures the service constructor runs (global bridge, Firestore listener, map sync)
+    private _favorites: FavoritesService
+  ) {}
 
-  async ngAfterViewInit() {
-    try {
-      await this.legacy.loadAll();
-      // All legacy code has executed by now (including any $(document).ready handlers)
-    } catch (e) {
-      console.error(e);
-    }
+  /** Use a getter so we don’t access this.auth during field initialization */
+  get user$() {
+    return this.auth.user$;
   }
 
+  ngAfterViewInit(): void {
+    this.zone.runOutsideAngular(async () => {
+      try {
+        console.log('[legacy] loading…');
+        await this.legacy.loadAll();
+        console.log('[legacy] loaded.');
+      } catch (e) {
+        console.error('[legacy] failed:', e);
+      }
+    });
+  }
+
+  // Legacy hooks still in use
   onHamburger() { window.myFunction?.(); }
 
   onContactSubmit(e: Event) {
@@ -36,4 +55,8 @@ export class AppComponent implements AfterViewInit {
     const ok = window.sendMail ? window.sendMail(form) : true;
     if (!ok) e.preventDefault();
   }
+
+  // Angular auth controls
+  openLogin() { this.auth.openModal(); }
+  async logout() { await this.auth.signOutOnce(); }
 }

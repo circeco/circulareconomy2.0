@@ -58,9 +58,9 @@ export class LegacyLoaderService {
       'title.js',
       'overlay.js',
       'scrollspy.js',
-      'auth.js',
+      // 'auth.js',
       'sendEmail.js',
-      'favorites.js',
+      // 'favorites.js',
       'mapbox.js',
     ];
 
