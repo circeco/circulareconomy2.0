@@ -55,7 +55,7 @@ export class LegacyLoaderService {
     const base = 'assets/js/'; // no leading slash; toUrl() handles base href
     const files = [
       // 'navbar.js',
-      'title.js',
+      // 'title.js',
       // 'overlay.js',
       // 'scrollspy.js',
       // 'auth.js',

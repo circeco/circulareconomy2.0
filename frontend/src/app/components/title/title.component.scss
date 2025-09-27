@@ -1,0 +1,92 @@
+@use 'variables' as *; // assumes includePaths -> "src/assets/styles"
+@use 'mixins' as *;
+
+/* ---------------- Title section ---------------- */
+
+#title_section {
+  scroll-snap-align: start;
+}
+
+#title_div {
+  height: 400px;
+}
+
+.title {
+  font-size: 90px;
+  text-align: center;
+  cursor: pointer;
+  font-family: $font-bebas;
+  margin: 0 !important;
+  padding: 0;
+  @include underline-accent($color-accent);
+}
+
+#subtitle {
+  font-size: 40px;
+  margin: 10px auto 220px;
+  text-align: center;
+  font-family: $font-chathura;
+  line-height: 0.7;
+}
+
+#red-wood {
+  /* use absolute /assets path so it works from any component */
+  background: url("/assets/img/red-wood.jpg") center / cover no-repeat;
+  height: 300px;
+  width: 100%;
+  overflow: hidden;
+  margin: 0;
+  background-attachment: fixed;
+}
+
+/* Title animation */
+.text {
+  position: absolute;
+  top: 360px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-50%);
+  list-style: none;
+  text-align: center;
+  width: max-content;
+
+  li {
+    float: left;
+    opacity: 1;
+    transition: all 0.8s ease-in-out;
+    max-width: 2em;
+
+    &.spaced { padding-left: 0.5em; }
+  }
+
+  &.hidden li.ghost {
+    opacity: 0;
+    max-width: 0;
+  }
+}
+
+#underline {
+  margin: 0;
+  @include underline-accent($color-accent);
+}
+
+/* ---------------- Title section responsive ---------------- */
+@media screen and (max-width: 900px) {
+  // .title { font-size: 50px; padding: 0; }
+  #subtitle { font-size: 30px; margin-bottom: 20%; }
+  #red-wood { height: 220px; }
+}
+
+@media screen and (max-width: 450px) {
+  #title_div { height: 500px; }
+
+  .text {
+    transform: translateX(-55%) translateY(-60%);
+    left: 55%;
+    width: 80%;
+
+    &.hidden li.ghost {
+      opacity: 1;
+      max-width: max-content;
+    }
+  }
+}
