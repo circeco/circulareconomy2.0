@@ -1,4 +1,7 @@
-/* Root modal (avoid legacy .modal) */
+@use 'variables' as *;
+@use 'mixins' as *;
+
+
 .auth-modal {
   position: fixed;
   inset: 0;
@@ -41,9 +44,9 @@
 
 /* Small cosmetics matching your snippet */
 .error { color: #c62828; font-size: .9rem; min-height: 1.25em; margin: 6px 0; }
-#toSignin, #toSignup { color: #04AA6D; } /* adjust to your $color-accent if needed */
+#toSignin, #toSignup { color: $color-accent; } /* adjust to your $color-accent if needed */
 #signInSubmit, #signUpSubmit {
-  background-color: #04AA6D; /* adjust to your variable */
+  background-color: $color-accent; /* adjust to your variable */
   border: none; width: 80%; margin: auto;
 }
 #signUpForm, #signInForm {
