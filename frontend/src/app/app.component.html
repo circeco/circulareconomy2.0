@@ -1,34 +1,4 @@
-<header>
-  <div class="topnav" id="myTopnav">
-    <a class="active" href="#title_section" id="logo"></a>
-    <a href="#circular_action">Circular Action</a>
-    <a href="#circular_atlas">Circular Atlas</a>
-    <a href="#footer">Contact</a>
-    <a id="icon" (click)="onHamburger()">&#9776;</a>
-  </div>
-
-  <!-- 🔐 Auth controls (top-right) -->
-  <div id="authHeader">
-    <!-- Logged in -->
-    <ng-container *ngIf="(user$ | async) as user; else loggedOut">
-      <div id="profileMenu" class="profile">
-        <img id="avatar" [src]="user.photoURL || 'assets/img/avatar.png'" alt="profile" />
-        <div class="menu">
-          <div class="dropdown-item" style="font-weight:600;">Welcome!</div>
-          <div id="userEmail" class="dropdown-item small text-muted">{{ user.email }}</div>
-          <div class="dropdown-divider" style="height:1px;background:#eee;margin:.25rem 0;"></div>
-          <button id="logoutBtn" class="dropdown-item" (click)="logout()">Sign out</button>
-        </div>
-      </div>
-    </ng-container>
-
-    <!-- Logged out -->
-    <ng-template #loggedOut>
-      <button id="loginBtn" class="btn btn-sm btn-light" (click)="openLogin()">Sign in</button>
-    </ng-template>
-  </div>
-
-</header>
+<app-navbar></app-navbar>
 
 <app-login></app-login>
 

@@ -1,0 +1,35 @@
+<header>
+  <div class="topnav" id="myTopnav" [class.responsive]="menuOpen()">
+    <a id="logo" class="active" (click)="goTo('title_section')" [class.active]="activeSection() === 'title_section'"
+      role="button" tabindex="0" aria-label="Go to top"></a>
+
+    <a (click)="goTo('circular_action')" [class.active]="activeSection() === 'circular_action'" role="button"
+      tabindex="0">Circular Action</a>
+
+    <a (click)="goTo('circular_atlas')" [class.active]="activeSection() === 'circular_atlas'" role="button"
+      tabindex="0">Circular Atlas</a>
+
+    <a (click)="goTo('footer')" [class.active]="activeSection() === 'footer'" role="button" tabindex="0">Contact</a>
+
+    <a id="icon" (click)="toggleHamburger()" aria-label="Toggle menu">&#9776;</a>
+  </div>
+
+  <!-- 🔐 Auth controls (top-right) -->
+  <div id="authHeader">
+    <ng-container *ngIf="(auth.user$ | async) as user; else loggedOut">
+      <div id="profileMenu" class="profile">
+        <img id="avatar" [src]="user.photoURL || 'assets/img/avatar.png'" alt="profile" />
+        <div class="menu">
+          <div class="dropdown-item" style="font-weight:600;">Welcome!</div>
+          <div class="dropdown-item small text-muted">{{ user.email }}</div>
+          <div class="dropdown-divider" style="height:1px;background:#eee;margin:.25rem 0;"></div>
+          <button class="dropdown-item" (click)="logout()">Sign out</button>
+        </div>
+      </div>
+    </ng-container>
+
+    <ng-template #loggedOut>
+      <button id="loginBtn" class="btn btn-sm btn-light" (click)="openLogin()">Sign in</button>
+    </ng-template>
+  </div>
+</header>

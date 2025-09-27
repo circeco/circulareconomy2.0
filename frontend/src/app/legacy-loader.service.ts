@@ -54,10 +54,10 @@ export class LegacyLoaderService {
     // ---- 2) Local legacy scripts (served from public/assets/js) ----
     const base = 'assets/js/'; // no leading slash; toUrl() handles base href
     const files = [
-      'navbar.js',
+      // 'navbar.js',
       'title.js',
       // 'overlay.js',
-      'scrollspy.js',
+      // 'scrollspy.js',
       // 'auth.js',
       'sendEmail.js',
       // 'favorites.js',
