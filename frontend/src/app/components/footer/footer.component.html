@@ -1,0 +1,45 @@
+<footer class="section scroll" id="footer">
+  <div id="red-wood"></div>
+  <div class="row" id="actual-footer">
+    <div id="info-footer" class="col-12 col-sm-6">
+      <h5>circeco.org</h5>
+      <p>
+        Promoting a network of circular initiative that offer solutions alternative to the wasteful
+        take-make-disposal model
+        <br />Inspire consumers action towards circular initiative
+        <br />Support circular business models that reduce environmental impact from resource use and waste creation
+      </p>
+
+      <p id="author">
+        &copy; 2020 circeco.org - Made by
+        <a href="https://circeco.github.io/Piero_resume/" target="_blank" rel="noopener">PieroGrilli</a>
+      </p>
+    </div>
+
+    <div class="col-12 col-sm-6">
+      <h5>Get in touch!</h5>
+
+      <form #f="ngForm" (ngSubmit)="onSubmit(f)">
+        <input type="hidden" name="contact_number" />
+
+        <input type="text" name="name" id="name" class="form-control" placeholder="Name" required ngModel />
+
+        <input type="email" name="emailaddress" id="emailaddress" class="form-control" placeholder="Email Address"
+          required ngModel email />
+
+        <textarea rows="5" name="message" id="message" class="form-control" placeholder="Message" required
+          ngModel></textarea>
+
+        <div class="send_button">
+          <button type="submit" id="send_button" class="btn btn-primary" [disabled]="sending || !f.valid"
+            [class.onclic]="anim.onclic" [class.validate]="anim.validate">
+            {{ sending ? 'Sending…' : 'Send' }}
+          </button>
+        </div>
+
+        <p *ngIf="success" class="text-success mt-2">{{ success }}</p>
+        <p *ngIf="error" class="text-danger mt-2">{{ error }}</p>
+      </form>
+    </div>
+  </div>
+</footer>

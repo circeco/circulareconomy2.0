@@ -57,16 +57,16 @@ export class LegacyLoaderService {
       // 'navbar.js',
       // 'title.js',
       // 'overlay.js',
-      // 'scrollspy.js',
+      //  'scrollspy.js',
       // 'auth.js',
-      'sendEmail.js',
+      // 'sendEmail.js',
       // 'favorites.js',
       // 'mapbox.js',
     ];
 
-    for (const f of files) {
-      try { await this.loadScript(base + f); }
-      catch (e) { console.warn('[legacy] skip', f, e); }
-    }
+    // for (const f of files) {
+    //   try { await this.loadScript(base + f); }
+    //   catch (e) { console.warn('[legacy] skip', f, e); }
+    // }
   }
 }

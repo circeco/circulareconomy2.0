@@ -9,6 +9,7 @@ import { LoginComponent } from './components/login/login.component';
 import { MapComponent } from './components/map/map.component';
 import { NavbarComponent } from './components/navbar/navbar.component';
 import { TitleComponent } from './components/title/title.component';
+import { FooterComponent } from './components/footer/footer.component';
 
 declare global {
   interface Window {
@@ -20,7 +21,7 @@ declare global {
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, NavbarComponent, TitleComponent, MapComponent, LoginComponent, NgIf, AsyncPipe],
+  imports: [CommonModule, NavbarComponent, TitleComponent, MapComponent, LoginComponent, FooterComponent, NgIf, AsyncPipe],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
 })
