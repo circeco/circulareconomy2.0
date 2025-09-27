@@ -56,12 +56,12 @@ export class LegacyLoaderService {
     const files = [
       'navbar.js',
       'title.js',
-      'overlay.js',
+      // 'overlay.js',
       'scrollspy.js',
       // 'auth.js',
       'sendEmail.js',
       // 'favorites.js',
-      'mapbox.js',
+      // 'mapbox.js',
     ];
 
     for (const f of files) {

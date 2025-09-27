@@ -1,11 +1,13 @@
 import { Component, AfterViewInit, NgZone } from '@angular/core';
 import { CommonModule, NgIf, AsyncPipe } from '@angular/common';
-import { RouterOutlet } from '@angular/router';
+// import { RouterOutlet } from '@angular/router';
 
 import { LegacyLoaderService } from './legacy-loader.service';
 import { AuthService } from './services/auth.service';
-import { FavoritesService } from './services/favorites.service'; // ⬅️ added
+import { FavoritesService } from './services/favorites.service';
 import { LoginComponent } from './components/login/login.component';
+import { MapComponent } from './components/map/map.component';
+
 
 declare global {
   interface Window {
@@ -17,7 +19,7 @@ declare global {
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, LoginComponent, NgIf, AsyncPipe],
+  imports: [CommonModule, MapComponent, LoginComponent, NgIf, AsyncPipe],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
 })
@@ -25,8 +27,7 @@ export class AppComponent implements AfterViewInit {
   constructor(
     private legacy: LegacyLoaderService,
     private zone: NgZone,
-    public auth: AuthService,
-    // Injecting this ensures the service constructor runs (global bridge, Firestore listener, map sync)
+    public auth: AuthService,   // Injecting this ensures the service constructor runs (global bridge, Firestore listener, map sync)
     private _favorites: FavoritesService
   ) {}
 
