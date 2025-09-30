@@ -5,7 +5,7 @@ import { environment } from '../../../environments/environments'; // adjust if y
 declare const mapboxgl: any; // provided by CDN in index.html
 
 @Component({
-  selector: 'app-map',
+  selector: 'map',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './map.component.html',

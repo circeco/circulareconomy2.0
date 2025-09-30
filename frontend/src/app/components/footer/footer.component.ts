@@ -6,7 +6,7 @@ import { environment } from '../../../environments/environments';
 declare global { interface Window { emailjs?: any; } }
 
 @Component({
-  selector: 'app-footer',
+  selector: 'contact-footer',
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './footer.component.html',
