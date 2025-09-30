@@ -1,3 +1,13 @@
+
+@use "variables" as *;
+@use "mixins" as *;
+@use "mapbox" as *;
+@use "auth" as *;
+@use "title" as *;
+
+
+@import url('https://fonts.googleapis.com/css?family=Bebas+Neue|Chathura:100,300,400,700,800|Economica:400,400i,700,700i|Khand:300,400,500,600,700|Londrina+Outline');
+
 /* You can add global styles to this file, and also import other style files */
 @tailwind base;
 @tailwind components;
@@ -6,4 +16,122 @@
 /* Mobile safe-area we’ll use later */
 :root { --safe-bottom: env(safe-area-inset-bottom); }
 
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 3px;
+  border-left: 0;
+  background: rgba(0, 0, 0, 0.1);
+}
+::-webkit-scrollbar-thumb {
+  background: $color-accent;
+  border-radius: 0px;
+}
 
+/* Base */
+html {
+  scroll-behavior: smooth;
+  scroll-snap-type: y proximity;
+}
+
+body {
+  margin: 0 ;
+  font-family: $font-khand ;
+}
+
+h2 {
+  font-family: $font-bebas;
+  font-size: 50px;
+  text-align: center;
+  padding-top: 15%;
+  @include underline-accent($color-accent);
+}
+
+h3 {
+  font-family: $font-bebas;
+  font-size: 40px;
+  text-align: center;
+}
+
+h4 {
+  font-family: $font-bebas;
+  font-size: 30px;
+}
+
+h5 {
+  font-family: $font-bebas;
+  font-size: 20px ;
+  text-align: center;
+  margin: 3% ;
+  @include underline-accent($color-accent);
+}
+
+p {
+  font-family: $font-chathura;
+  text-align: center;
+  font-size: 30px;
+  line-height: 0.8;
+}
+
+#row {
+  display: flex;
+  -ms-flex-wrap: wrap;
+  flex-wrap: wrap;
+  margin-right: 0;
+  margin-left: 0;
+  padding: 0;
+}
+
+#red-wood {
+  background: url("/assets/img/red-wood.jpg") center / cover no-repeat;
+  height: 300px;
+  width: 100%;
+  overflow: hidden;
+  margin: 0;
+  background-attachment: fixed;
+}
+
+
+/* ---------------- Resizing codes ---------------- */
+@media screen and (min-width: 450px){
+  #maplist { width: 20% }
+  #sidebar { width: 98% !important }
+  #circular_atlas { padding-top: 5% !important }
+}
+
+@media screen and (max-width: 900px){
+  p { font-size: 30px }
+  .topnav a { font-size: 24px !important }
+  .rw-wrapper h2, span { font-size: 30px !important }
+  #circular_action h4, p { font-size: 24px !important }
+  #sidebar { width: 98% !important }
+  .map { width: 75% !important }
+  .atlas { padding: 10% 2% 20% !important }
+  #circular_atlas { padding-top: 15% !important }
+  #reuse, #refuse, #reduce, #repair, #remanu, #recycle { height: 200px }
+}
+
+@media screen and (max-width: 450px){
+  #reuse, #refuse, #reduce, #repair, #remanu, #recycle { height: 120px; width: 90% }
+  .circactions {
+    h4 { top: 20% !important }
+    p { top: 5% !important }
+  }
+  .rw-wrapper { width: 60% !important }
+  #circular_atlas h4 { font-size: 18px !important }
+  .atlas { display: block !important; padding-top: 2% !important }
+  #sidebar { width: 100% !important; margin: 30% auto 0 !important }
+  #map { scroll-snap-align: end; width: 100% !important }
+  .mapboxgl-ctrl-group { visibility: hidden; }
+
+  .overlay {
+    height: 100%; width: 0; position: fixed; z-index: 2; top: 0; left: 0;
+    overflow-x: hidden; transition: 0.5s;
+  }
+
+  #search_button, #close_button {
+    position: absolute; right: 0; background-repeat: no-repeat; background-size: cover; margin: 10px; padding: 20px; z-index: 1;
+  }
+  #search_button { right: 10px; background-image: url("/assets/img/search_button.jpg"); }
+  #close_button  { background-image: url("/assets/img/close_button.jpg"); }
+}
