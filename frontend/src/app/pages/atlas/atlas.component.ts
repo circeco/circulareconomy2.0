@@ -1,30 +1,20 @@
-// src/app/pages/map/map.page.ts
-import { AfterViewInit, Component, ElementRef, ViewChild } from '@angular/core';
+import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-
-declare global {
-  interface Window {
-    mapListBtn?: () => void;                         // from overlay.js
-    legacy?: { initMap?: (containerId?: string) => void }; // optional shim if you expose one
-  }
-}
+import { MapComponent } from '../../components/map/map.component';
 
 @Component({
-  selector: 'ce-atlas',
+  selector: 'app-atlas-page',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, MapComponent],
   templateUrl: './atlas.component.html',
+  styleUrls: ['./atlas.component.scss'],
 })
-export class Atlas implements AfterViewInit {
-  @ViewChild('map', { static: false }) mapEl?: ElementRef<HTMLDivElement>;
-
-  ngAfterViewInit() {
-    // If you wrap your map init into a callable function, invoke it here:
-    // window.legacy?.initMap?.(this.mapEl?.nativeElement?.id || 'map');
-    // Otherwise your existing mapbox.js (deferred) will likely run by itself.
-  }
-
+export class AtlasComponent {
   onMapListBtn() {
-    window.mapListBtn?.();
+    // Toggle your overlay (you can also forward to a public method on MapComponent via @ViewChild)
+    const el = document.getElementById('maplist');
+    if (!el) return;
+    const open = el.style.width && el.style.width !== '0px';
+    el.style.width = open ? '0' : '280px';
   }
 }
