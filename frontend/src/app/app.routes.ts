@@ -5,21 +5,15 @@ export const routes: Routes = [
   {
     path: '',
     loadComponent: () =>
-      import('./pages/atlas/atlas.component').then(m => m.Atlas),
+      import('./pages/landing/landing.component').then(m => m.LandingComponent),
+    pathMatch: 'full',
+    title: 'Circeco'
   },
   {
-    path: 'place/:id',
+    path: 'atlas',
     loadComponent: () =>
-      import('./pages/places/places.component').then(
-        m => m.Places
-      ),
-  },
-  {
-    path: 'profile',
-    loadComponent: () =>
-      import('./pages/profiles/profiles.component').then(
-        m => m.Profiles
-      ),
+      import('./pages/atlas/atlas.component').then(m => m.AtlasComponent),
+    title: 'Circular Atlas'
   },
   { path: '**', redirectTo: '' },
 ];
