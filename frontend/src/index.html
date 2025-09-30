@@ -1,28 +1,35 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <title>Circeco</title>
-    <base href="/" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <!-- Local CSS -->
-    <link rel="stylesheet" href="assets/css/main.css" />
+<head>
+  <meta charset="utf-8" />
+  <title>Circeco</title>
+  <base href="/" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <!-- Bootstrap & Font Awesome (CDN) -->
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" />
+  <!-- Local CSS -->
+  <!-- <link rel="stylesheet" href="assets/css/main.css" /> -->
 
-    <!-- Mapbox & Geocoder CSS (CDN) -->
-    <link rel="stylesheet" href="https://api.tiles.mapbox.com/mapbox-gl-js/v1.7.0/mapbox-gl.css" />
-    <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.2.0/mapbox-gl-geocoder.css" />
+  <!-- Bootstrap & Font Awesome (CDN) -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" />
 
-    <!-- Mapbox & Geocoder JS (CDN) — load before Angular boots -->
-    <script src="https://api.tiles.mapbox.com/mapbox-gl-js/v1.7.0/mapbox-gl.js"></script>
-    <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.2.0/mapbox-gl-geocoder.min.js"></script>
-  </head>
-  <body>
-    <app-root></app-root>
-  </body>
+  <!-- Mapbox & Geocoder CSS (CDN) -->
+  <link rel="stylesheet" href="https://api.tiles.mapbox.com/mapbox-gl-js/v1.7.0/mapbox-gl.css" />
+  <link rel="stylesheet"
+    href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.2.0/mapbox-gl-geocoder.css" />
+
+  <!-- Mapbox & Geocoder JS (CDN) — load before Angular boots -->
+  <script src="https://api.tiles.mapbox.com/mapbox-gl-js/v1.7.0/mapbox-gl.js"></script>
+  <script
+    src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.2.0/mapbox-gl-geocoder.min.js"></script>
+
+  <!-- EmailJS SDK (FooterComponent uses this) -->
+  <script src="https://cdn.jsdelivr.net/npm/emailjs-com@2.3.2/dist/email.min.js"></script>
+</head>
+
+<body>
+  <app-root></app-root>
+</body>
+
 </html>
-
