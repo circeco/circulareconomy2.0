@@ -79,13 +79,12 @@
 
 /* logo (kept outside .topnav to preserve specificity) */
 #logo {
-  background: url("/assets/img/navbar-logo.jpg") top / cover no-repeat;
-  height: 45px;
-  width: 55px;
-  overflow: hidden;
-  margin: 8px;
+  background: url(/assets/img/logo.svg) top / cover no-repeat;
+  height: 40px;
+  width: 40px;
+  margin: 10px;
   transition: 0.4s;
-  border-radius: .25rem;
+  border-radius: .5rem;
   &:hover { transform: scale(0.9, 0.9); }
 }
 
