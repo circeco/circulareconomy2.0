@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { DEMO_VIDEO_URL } from '../../config/media';
 
 
 @Component({
@@ -29,6 +30,8 @@ export class LandingComponent implements AfterViewInit, OnDestroy {
     private zone: NgZone,
     private router: Router
   ) {}
+
+  demoUrl = DEMO_VIDEO_URL;
 
   ngAfterViewInit(): void {
     const section = this.titleList.nativeElement.closest(

@@ -94,7 +94,9 @@
     <h3>CIRCULAR ATLAS: Find circular solutions in your area!
       <button class="btn btn-outline-primary" (click)="goToMapPage()">Explore! ➔</button>
     </h3>
-    <video src="/assets/img/demo/CircecoDemo.mp4" autoplay loop muted playsinline preload="none"></video>
+    <video controls preload="metadata" autoplay loop playsinline>
+      <source [src]="demoUrl" type="video/mp4"/>
+    </video>
 </section>
 
 <contact-footer></contact-footer>
