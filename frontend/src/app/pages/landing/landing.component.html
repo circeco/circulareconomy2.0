@@ -90,9 +90,11 @@
   </div>
 </section>
 
-<section class="section scroll" id="circular_atlas_demo">
+<section id="circular_atlas_demo" class="section scroll" >
     <h3>CIRCULAR ATLAS: Find circular solutions in your area!
-      <button class="btn btn-outline-primary" (click)="goToMapPage()">Explore! ➔</button>
+      <a (click)="goToMapPage()">
+        <img id="arrowto" [src]="'assets/img/arrowto.png'" alt="arrow" />
+      </a>
     </h3>
     <video controls preload="metadata" autoplay loop playsinline>
       <source [src]="demoUrl" type="video/mp4"/>
