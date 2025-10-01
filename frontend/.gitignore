@@ -40,3 +40,7 @@ testem.log
 # System files
 .DS_Store
 Thumbs.db
+frontend/src/assets/img/demo/CircecoDemo.mp4
+frontend/src/assets/img/demo/*.mp4
+frontend/src/assets/img/demo/*.mov
+frontend/src/assets/img/demo/*.avi
