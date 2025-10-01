@@ -14,11 +14,28 @@
 @tailwind utilities;
 
 /* Mobile safe-area we’ll use later */
-:root { --safe-bottom: env(safe-area-inset-bottom); }
+:root {
+  --safe-bottom: env(safe-area-inset-bottom);
+  --header-offset: 60px; /* keep in sync with headerOffset in the navbar TS */
+}
+
+/* Sections that should align to top */
+body.snap-landing #title_section,
+body.snap-landing #circular_action,
+body.snap-landing #circular_atlas_demo {
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+/* Footer/contact should snap with its bottom flush to viewport bottom */
+body.snap-landing #footer {
+  scroll-snap-align: end;
+  scroll-snap-stop: always; /* ensures the snap engages when near it */
+}
 
 /* Scrollbars */
 ::-webkit-scrollbar {
-  width: 5px;
+  width: 7px;
   height: 3px;
   border-left: 0;
   background: rgba(0, 0, 0, 0.1);
@@ -43,7 +60,7 @@ h2 {
   font-family: $font-bebas;
   font-size: 50px;
   text-align: center;
-  padding-top: 15%;
+  padding-top: 10%;
   @include underline-accent($color-accent);
 }
 
@@ -121,7 +138,7 @@ p {
   #circular_atlas h4 { font-size: 18px !important }
   .atlas { display: block !important; padding-top: 2% !important }
   #sidebar { width: 100% !important; margin: 30% auto 0 !important }
-  #map { scroll-snap-align: end; width: 100% !important }
+  #map { width: 100% !important }
   .mapboxgl-ctrl-group { visibility: hidden; }
 
   .overlay {
@@ -135,3 +152,4 @@ p {
   #search_button { right: 10px; background-image: url("/assets/img/search_button.jpg"); }
   #close_button  { background-image: url("/assets/img/close_button.jpg"); }
 }
+

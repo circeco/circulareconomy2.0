@@ -1,17 +1,30 @@
 <header>
-  <div class="topnav" id="myTopnav" [class.responsive]="menuOpen()">
-    <a id="logo" class="active" (click)="goTo('title_section')" [class.active]="activeSection() === 'title_section'"
-      role="button" tabindex="0" aria-label="Go to top"></a>
+  <div class="topnav" id="myTopnav" [class.responsive]="menuOpen()" [class.titleOnly]="!isLanding()">
+    <!-- Logo / Home -->
+    <a id="logo" class="active" (click)="goHome()" [attr.aria-label]="isLanding() ? 'Go to top' : 'Go to home'" role="button" tabindex="0"></a>
 
-    <a (click)="goTo('circular_action')" [class.active]="activeSection() === 'circular_action'" role="button"
-      tabindex="0">Circular Action</a>
+    <!-- Landing-only: section anchors with scroll + active underline -->
+    <ng-container *ngIf="isLanding(); else atlasTitleOnly">
+      <a (click)="goTo('circular_action')" [class.active]="activeSection() === 'circular_action'" role="button" tabindex="0">
+        Circular Action
+      </a>
 
-    <a (click)="goTo('circular_atlas')" [class.active]="activeSection() === 'circular_atlas'" role="button"
-      tabindex="0">Circular Atlas</a>
+      <a (click)="goTo('circular_atlas_demo')" [class.active]="activeSection() === 'circular_atlas_demo'" role="button" tabindex="0">
+        Circular Atlas
+      </a>
 
-    <a (click)="goTo('footer')" [class.active]="activeSection() === 'footer'" role="button" tabindex="0">Contact</a>
+      <a (click)="goTo('footer')" [class.active]="activeSection() === 'footer'" role="button" tabindex="0">
+        Contact
+      </a>
 
-    <a id="icon" (click)="toggleHamburger()" aria-label="Toggle menu">&#9776;</a>
+      <a id="icon" (click)="toggleHamburger()" aria-label="Toggle menu">&#9776;</a>
+    </ng-container>
+
+    <!-- Atlas-only: centered title, no section anchors -->
+    <ng-template #atlasTitleOnly>
+      <h4 class="nav-title" aria-label="Page title">CIRCULAR ATLAS: Find circular solutions in your area!</h4>
+      <a id="icon" (click)="toggleHamburger()" aria-label="Toggle menu">&#9776;</a>
+    </ng-template>
   </div>
 
   <!-- 🔐 Auth controls (top-right) -->

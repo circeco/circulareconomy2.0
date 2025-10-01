@@ -10,6 +10,7 @@
   top: 0;
   z-index: 2;
   opacity: 0.9;
+  height: 60px;
 
   a {
     float: left;
@@ -26,6 +27,7 @@
       color: white;
       text-decoration: none;
       border-radius: .2rem;
+      cursor: pointer;
     }
   }
 
@@ -77,7 +79,6 @@
   }
 }
 
-/* logo (kept outside .topnav to preserve specificity) */
 #logo {
   background: url(/assets/img/logo.svg) top / cover no-repeat;
   height: 40px;
@@ -86,22 +87,6 @@
   transition: 0.4s;
   border-radius: .5rem;
   &:hover { transform: scale(0.9, 0.9); }
-}
-
-#loginBtn {
-  padding: 0 10px;
-  font-size: 30px;
-  margin: 8px;
-  font-family: $font-chathura;
-  font-weight: 700;
-  background-color: unset;
-  border: unset;
-
-  &:hover {
-    background-color: #041215;
-    color: white;
-    text-decoration: none;
-  }
 }
 
 .active {
@@ -141,3 +126,41 @@
   }
 }
 
+/* ===================== ADDITIONS ===================== */
+
+/* Keep active underline styling scoped to topnav anchors too (helps specificity) */
+.topnav a.active {
+  @include underline-accent($color-accent);
+}
+
+/* --------- Title-only variant (Atlas page) --------- */
+.topnav.titleOnly {
+  /* neutralize floats from default anchor styles */
+  a { float: none; }
+  /* center the title while keeping logo pinned left */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  #logo {
+    position: absolute;
+    left: 8px;
+  }
+
+  .nav-title {
+    font-family: "Bebas Neue", cursive;
+    font-size: 30px;
+    margin-bottom: 0;
+  }
+
+  #icon {
+    position: absolute;
+    right: 0;
+    top: 0;
+    display: none; // hidden on desktop
+  }
+
+  @media screen and (max-width: 600px) {
+    #icon { display: block; padding: 0 1%; }
+  }
+}
