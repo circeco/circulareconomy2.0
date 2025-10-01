@@ -6,15 +6,16 @@
   background-color: $brand-deep;
   margin: 0;
   color: white;
-  padding: 10% 2% 5%;
+  padding: 5% 2%;
 }
 
 #info-footer {
-  padding: 0 10% 20px;
+  padding: 0;
 
   p {
-    line-height: 1.5;
-    padding-top: 20px;
+    line-height: 1.2;
+    padding-left: 20%;
+    text-align: left;
   }
 }
 
