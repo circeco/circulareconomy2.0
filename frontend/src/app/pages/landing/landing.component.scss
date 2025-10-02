@@ -1,17 +1,55 @@
 @use "variables" as *;
 @use "mixins" as *;
+@use './_title' as *;
 
 
 /* ---------------- CircAction section ---------------- */
 .circactions {
-  padding: 5% 2%; display: flex; flex-wrap: wrap;
+  display: inline-flex;
+  margin: 0 auto;
+  padding: 2%;
+  flex-wrap: wrap;
+  justify-content: center;
 
-  div { clear: both; height: 300px; width: 220px; margin: 2% auto; border: unset !important; }
-  h4 { font-size: 18px; color: white; padding: 5%; text-align: center; top: 40%; position: relative; }
-  p  { text-align: left; margin: 2% 5%; color: white; visibility: hidden; position: absolute; top: 10%; }
+  div {
+    clear: both;
+    min-height: 300px;
+    max-height: 26vh;
+    min-width: 200px;
+    max-width: 15%;
+    margin: 30px 10px;
+    border: unset;
+    box-shadow: $strong-shadow;
+  }
+
+  h4 {
+    font-size: x-large;
+    color: white;
+    padding: 5%;
+    text-align: right;
+    top: 40%;
+    position: relative;
+  }
+
+  p {
+    font-size: 28px;
+    text-align: left;
+    margin: 2% 5%;
+    color: white;
+    visibility: hidden;
+    position: absolute;
+    top: 10%;
+    text-shadow: 1px 1px 2px rgb(150, 150, 150);
+  }
 }
 
-#circular_action p { margin: 2% 5%; }
+#circular_action {
+  min-height: 100vh;
+  text-align: center;
+  p {  text-shadow: 1px 1px 2px rgb(150, 150, 150); padding: 0 5%}
+  h2 { padding-top: 10%;}
+  span { text-shadow: 1px 1px 2px rgb(150, 150, 150);}
+}
 
 .card:hover { p { visibility: visible; } h4 { visibility: hidden; } }
 
@@ -46,13 +84,13 @@
     -ms-animation: rotateWord 8s linear infinite 1s;
     animation: rotateWord 8s linear infinite 1s;
 
-    &:nth-child(2) { -webkit-animation-delay: 2s; -ms-animation-delay: 2s; animation-delay: 2s; color: $brand-teal; }
-    &:nth-child(3) { -webkit-animation-delay: 3s; -ms-animation-delay: 3s; animation-delay: 3s; color: $brand-teal; }
-    &:nth-child(4) { -webkit-animation-delay: 4s; -ms-animation-delay: 4s; animation-delay: 4s; color: $brand-teal; }
-    &:nth-child(5) { -webkit-animation-delay: 5s; -ms-animation-delay: 5s; animation-delay: 5s; color: $brand-teal; }
-    &:nth-child(6) { -webkit-animation-delay: 6s; -ms-animation-delay: 6s; animation-delay: 6s; color: $brand-teal; }
-    &:nth-child(7) { -webkit-animation-delay: 7s; -ms-animation-delay: 7s; animation-delay: 7s; color: $brand-teal; }
-    &:nth-child(8) { -webkit-animation-delay: 8s; -ms-animation-delay: 8s; animation-delay: 8s; color: $brand-teal; }
+    &:nth-child(2) { -webkit-animation-delay: 2s; -ms-animation-delay: 2s; animation-delay: 2s; color: #0c343d; }
+    &:nth-child(3) { -webkit-animation-delay: 3s; -ms-animation-delay: 3s; animation-delay: 3s; color: #134f5c; }
+    &:nth-child(4) { -webkit-animation-delay: 4s; -ms-animation-delay: 4s; animation-delay: 4s; color: #134f5c; }
+    &:nth-child(5) { -webkit-animation-delay: 5s; -ms-animation-delay: 5s; animation-delay: 5s; color: #45818e; }
+    &:nth-child(6) { -webkit-animation-delay: 6s; -ms-animation-delay: 6s; animation-delay: 6s; color: #76a5af; }
+    &:nth-child(7) { -webkit-animation-delay: 7s; -ms-animation-delay: 7s; animation-delay: 7s; color: #a2c4c9; }
+    &:nth-child(8) { -webkit-animation-delay: 8s; -ms-animation-delay: 8s; animation-delay: 8s; color: #d0e0e3; }
   }
 }
 
@@ -89,27 +127,24 @@
 
 /* ---------------- CircAtlas Demo ---------------- */
 #circular_atlas_demo {
-  padding-top: 60px !important;
-  scroll-snap-align: start;
-
-  padding: 2.5vh 3% 5vh;
+  padding: 60px 10% 0;
   height: 100vh;
-  display: flex;
-  flex-wrap: wrap;
+  display: inline-block;
+  align-content: space-evenly;
   background-color: #d0e0e3;
 
   h3 {
     width: 100%;
     text-align: center;
     font-size: 32px;
-    padding-top: 2vh
+    padding-top: 2vh;
+    text-shadow: 1px 1px 2px rgb(150, 150, 150);
   }
 
-  button {
-    color: #fff;
-    background-color:#FF5252;
-    border: none;
-    font-size: large;
+  a:hover { cursor: pointer; }
+
+  img {
+    height: 32px;
   }
 
   video {
