@@ -28,6 +28,7 @@
       text-decoration: none;
       border-radius: .2rem;
       cursor: pointer;
+      box-shadow: $strong-shadow;
     }
   }
 
@@ -85,12 +86,13 @@
   width: 40px;
   margin: 10px;
   transition: 0.4s;
-  border-radius: .5rem;
+  border-radius: .2rem;
+  box-shadow: $strong-shadow;
   &:hover { transform: scale(0.9, 0.9); }
 }
 
 .active {
-  @include underline-accent($color-accent);
+  @include underline-accent-thin($color-accent);
   color: white;
 }
 
@@ -130,7 +132,7 @@
 
 /* Keep active underline styling scoped to topnav anchors too (helps specificity) */
 .topnav a.active {
-  @include underline-accent($color-accent);
+  @include underline-accent-thin($color-accent);
 }
 
 /* --------- Title-only variant (Atlas page) --------- */

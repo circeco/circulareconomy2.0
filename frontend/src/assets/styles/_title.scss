@@ -3,11 +3,8 @@
 
 /* ---------------- Title section ---------------- */
 
-#title_section {
-  scroll-snap-align: start;
-}
-
 #title_div {
+  position: relative;   /* important: anchor .text absolutely to this container */
   height: 400px;
 }
 
@@ -18,69 +15,80 @@
   font-family: $font-bebas;
   margin: 0 !important;
   padding: 0;
-  @include underline-accent($color-accent);
+  @include underline-accent-thick($color-accent);
 }
 
 #subtitle {
   font-size: 40px;
-  margin: 10px auto 220px;
+  margin: 20px auto 220px;
   text-align: center;
   font-family: $font-chathura;
   line-height: 0.7;
+  text-shadow: 1px 1px 2px rgb(150, 150, 150);
 }
 
-/* Title animation */
+/* Title animation core */
 .text {
   position: absolute;
-  top: 360px;
+  /* You can use clamp for responsiveness if you prefer */
+  top: 360px; /* or: top: clamp(220px, 35vh, 380px); */
   left: 50%;
   transform: translateX(-50%) translateY(-50%);
   list-style: none;
   text-align: center;
   width: max-content;
+  padding: 0;
+  margin: 0;
+  text-shadow: 1px 1px 2px rgb(150, 150, 150);
 
   li {
     float: left;
     opacity: 1;
-    transition: all 0.8s ease-in-out;
-    max-width: 2em;
+    transform: translateY(8px);
+    max-width: 2em; /* prevents layout jump on reveal */
+
+    transition:
+      opacity 1.5s cubic-bezier(0.16, 1, 0.3, 1),
+      max-width 1.5s cubic-bezier(0.16, 1, 0.3, 1),
+      padding-left 1.5s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: opacity, max-width, padding-left;
+
+    @include underline-accent-thick($color-accent);
 
     &.spaced { padding-left: 0.5em; }
+    &.revealed {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
-  &.hidden li.ghost {
+  li.ghost {
     opacity: 0;
     max-width: 0;
+    padding-left: 0; 
   }
 }
 
-#underline {
-  margin: 0;
-  @include underline-accent($color-accent);
-}
 
 /* ---------------- Title section responsive ---------------- */
 @media screen and (max-width: 900px) {
-//   .title { font-size: 50px; padding: 0; }
-    #subtitle { font-size: 30px; margin-bottom: 20%; }
-    #red-wood { height: 220px; }
+  #subtitle { font-size: 30px; margin-bottom: 20%; }
+  #red-wood { height: 220px; }
 }
 
 @media screen and (max-width: 450px) {
-    #title_div {
-        height: 500px;
-    }
+  #title_div { height: 500px; }
 
-    .text {
-        transform: translateX(-55%) translateY(-60%);
-        left: 55%;
-        width: 80%;
+  .text {
+    transform: translateX(-55%) translateY(-60%);
+    left: 55%;
+    width: 80%;
 
-        &.hidden li.ghost {
-            opacity: 1;
-            max-width: max-content;
-        }
+    /* On very small screens, don't collapse ghosts; readability > effect */
+    &.hidden li.ghost {
+      opacity: 1;
+      max-width: max-content;
     }
+  }
 }
-
 

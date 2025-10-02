@@ -1,7 +1,15 @@
 // Colored underline + ink skip (used in multiple headings/links)
-@mixin underline-accent($color) {
-  text-decoration-line: underline;
-  -webkit-text-decoration-color: $color;
+@mixin underline-accent-thin($color) {
+  text-decoration: underline $color 6px;
+  -webkit-text-decoration: underline $color 6px;
+  text-decoration-color: $color;
+  -webkit-text-decoration-skip: ink;
+  text-decoration-skip: ink;
+}
+
+@mixin underline-accent-thick($color) {
+  text-decoration: underline $color 12px;
+  -webkit-text-decoration: underline $color 12px;
   text-decoration-color: $color;
   -webkit-text-decoration-skip: ink;
   text-decoration-skip: ink;

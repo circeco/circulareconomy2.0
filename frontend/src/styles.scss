@@ -61,7 +61,7 @@ h2 {
   font-size: 50px;
   text-align: center;
   padding-top: 10%;
-  @include underline-accent($color-accent);
+  @include underline-accent-thick($color-accent);
 }
 
 h3 {
@@ -80,7 +80,7 @@ h5 {
   font-size: 20px ;
   text-align: center;
   margin: 3% ;
-  @include underline-accent($color-accent);
+  @include underline-accent-thin($color-accent);
 }
 
 p {
