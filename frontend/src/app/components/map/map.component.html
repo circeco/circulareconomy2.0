@@ -1,8 +1,5 @@
 
 <section class="section scroll" id="circular_atlas">
-  <h4>CIRCULAR ATLAS: Find circular solutions in your area!</h4>
-
-  <div class="atlas">
     <div id="maplist" class="overlay" [class.open]="listOpen" (click)="onOverlayBackdrop($event)">
       <span id="close_button" class="closebtn" (click)="toggleList()"></span>
       <div id="sidebar" (click)="$event.stopPropagation()">
@@ -15,6 +12,5 @@
     </div>
 
     <span id="search_button" (click)="toggleList()"></span>
-    <div id="map" class="map"></div>
-  </div>
+    <div id="map"></div>
 </section>

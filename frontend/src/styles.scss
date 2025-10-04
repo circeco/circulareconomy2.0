@@ -110,11 +110,6 @@ p {
 
 
 /* ---------------- Resizing codes ---------------- */
-@media screen and (min-width: 450px){
-  #maplist { width: 20% }
-  #sidebar { width: 98% !important }
-  #circular_atlas { padding-top: 5% !important }
-}
 
 @media screen and (max-width: 900px){
   p { font-size: 30px }
@@ -122,9 +117,6 @@ p {
   .rw-wrapper h2, span { font-size: 30px !important }
   #circular_action h4, p { font-size: 24px !important }
   #sidebar { width: 98% !important }
-  .map { width: 75% !important }
-  .atlas { padding: 10% 2% 20% !important }
-  #circular_atlas { padding-top: 15% !important }
   #reuse, #refuse, #reduce, #repair, #remanu, #recycle { height: 200px }
 }
 
@@ -135,11 +127,7 @@ p {
     p { top: 5% !important }
   }
   .rw-wrapper { width: 60% !important }
-  #circular_atlas h4 { font-size: 18px !important }
-  .atlas { display: block !important; padding-top: 2% !important }
   #sidebar { width: 100% !important; margin: 30% auto 0 !important }
-  #map { width: 100% !important }
-  .mapboxgl-ctrl-group { visibility: hidden; }
 
   .overlay {
     height: 100%; width: 0; position: fixed; z-index: 2; top: 0; left: 0;
