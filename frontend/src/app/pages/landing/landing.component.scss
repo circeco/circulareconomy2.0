@@ -145,6 +145,8 @@
 
   img {
     height: 32px;
+    transition: 0.4s;
+    &:hover { transform: scale(0.9, 0.9); }
   }
 
   video {
