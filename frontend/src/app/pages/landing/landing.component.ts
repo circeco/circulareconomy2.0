@@ -10,7 +10,7 @@ import { Router } from '@angular/router';
 import { DEMO_VIDEO_URL } from '../../config/media';
 
 @Component({
-  selector: 'app-landing',
+  selector: 'landing-page',
   standalone: true,
   imports: [CommonModule, FooterComponent],
   templateUrl: './landing.component.html',
