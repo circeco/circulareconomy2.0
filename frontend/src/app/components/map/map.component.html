@@ -1,16 +1,50 @@
-
 <section class="section scroll" id="circular_atlas">
-    <div id="maplist" class="overlay" [class.open]="listOpen" (click)="onOverlayBackdrop($event)">
-      <span id="close_button" class="closebtn" (click)="toggleList()"></span>
-      <div id="sidebar" (click)="$event.stopPropagation()">
-        <fieldset>
-          <input id="feature-filter" type="text" placeholder="Filter results by name"/>
-        </fieldset>
-        <nav id="selectlayers"></nav>
-        <div id="listings" class="listings"></div>
+  <div id="maplist" class="overlay" [class.open]="listOpen" (click)="onOverlayBackdrop($event)">
+    <span id="close_button" class="closebtn" (click)="toggleList(false)"></span>
+    <div id="sidebar" (click)="$event.stopPropagation()">
+      <fieldset>
+        <input id="feature-filter" type="text" placeholder="Filter results by name" (input)="onFilter($event)" />
+      </fieldset>
+
+      <nav id="selectlayers">
+        <a href="#"
+           id="favorites-toggle"
+           [class.active]="favoritesVisible"
+           [attr.aria-disabled]="favoritesDisabled ? 'true' : null"
+           (click)="onToggleFavorites($event)">favourites ♥︎</a>
+
+        <a *ngFor="let cat of categoryIds"
+           href="#"
+           [class.active]="isCatEnabled(cat)"
+           (click)="onToggleCategory($event, cat)">{{ cat }}</a>
+      </nav>
+
+      <div id="listings" class="listings">
+        <div *ngFor="let item of filteredList; let i = index"
+             class="item"
+             [id]="'listing-' + i"
+             (click)="focusOn(item)">
+          <div class="listing-header">
+            <div class="stockholmlist" [id]="'link-' + i">
+              {{ propsOf(item).STORE_NAME || propsOf(item).NAME || 'Unknown place' }}
+            </div>
+            <button class="heart-btn"
+                    type="button"
+                    aria-pressed="false"
+                    #heartBtn
+                    (click)="onHeartClick(heartBtn, item); $event.stopPropagation()">♡</button>
+          </div>
+
+          <p class="address"
+             *ngIf="propsOf(item).ADDRESS_LINE1 || propsOf(item).ADDRESS">
+            {{ propsOf(item).ADDRESS_LINE1 || propsOf(item).ADDRESS }}
+          </p>
+          <p *ngIf="propsOf(item).DESCRIPTION">{{ propsOf(item).DESCRIPTION }}</p>
+        </div>
       </div>
     </div>
+  </div>
 
-    <span id="search_button" (click)="toggleList()"></span>
-    <div id="map"></div>
+  <span id="search_button" (click)="toggleList()"></span>
+  <div id="map" #mapHost></div>
 </section>

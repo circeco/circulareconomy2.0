@@ -25,7 +25,7 @@
     font-size: 18px !important;
     cursor: pointer;
     font-family: $font-bebas;
-    @include underline-accent-thick($color-accent);
+    @include underline-accent-thiner($color-accent);
   }
 
   p {
@@ -40,6 +40,7 @@
 
 .mapboxgl-popup-close-button { display: none; }
 .popup-header, .listing-header { display: flex; }
+.popup-header h4 { @include underline-accent-thiner($color-accent); }
 
 .mapboxgl-popup-content {
   line-height: 1.2;
