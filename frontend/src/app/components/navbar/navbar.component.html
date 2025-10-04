@@ -1,31 +1,34 @@
 <header>
   <div class="topnav" id="myTopnav" [class.responsive]="menuOpen()" [class.titleOnly]="!isLanding()">
-    <!-- Logo / Home -->
+    <!-- Logo / Home --> 
     <a id="logo" class="active" (click)="goHome()" [attr.aria-label]="isLanding() ? 'Go to top' : 'Go to home'" role="button" tabindex="0"></a>
-
-    <!-- Landing-only: section anchors with scroll + active underline -->
-    <ng-container *ngIf="isLanding(); else atlasTitleOnly">
-      <a (click)="goTo('circular_action')" [class.active]="activeSection() === 'circular_action'" role="button" tabindex="0">
-        Circular Action
-      </a>
-
-      <a (click)="goTo('circular_atlas_demo')" [class.active]="activeSection() === 'circular_atlas_demo'" role="button" tabindex="0">
-        Circular Atlas
-      </a>
-
-      <a (click)="goTo('footer')" [class.active]="activeSection() === 'footer'" role="button" tabindex="0">
-        Contact
-      </a>
-
-      <a id="icon" (click)="toggleHamburger()" aria-label="Toggle menu">&#9776;</a>
-    </ng-container>
-
+    
+    <!-- Landing-only: section anchors with scroll + active underline --> 
+    <ng-container *ngIf="isLanding(); else atlasTitleOnly"> 
+      <a class="navtext" (click)="goTo('circular_action')" [class.active]="activeSection() === 'circular_action'" role="button" tabindex="0"> 
+        Circular Action 
+      </a> 
+      <a class="navtext" (click)="goTo('circular_atlas_demo')" [class.active]="activeSection() === 'circular_atlas_demo'" role="button" tabindex="0"> 
+        Circular Atlas 
+      </a> 
+      <a class="navtext" (click)="goTo('footer')" [class.active]="activeSection() === 'footer'" role="button" tabindex="0"> 
+        Contact 
+      </a> 
+      <a id="icon" (click)="toggleHamburger()" aria-label="Toggle menu">&#9776;</a> 
+    </ng-container> 
+        
     <!-- Atlas-only: centered title, no section anchors -->
     <ng-template #atlasTitleOnly>
-      <h4 class="nav-title" aria-label="Page title">CIRCULAR ATLAS: Find circular solutions in your area!</h4>
+      <h4 id="nav-title" aria-label="Page title"> 
+        <a (click)="goHome()">
+          <img class="arrow" [src]="'assets/img/arrowback.png'" alt="arrow" />
+        </a>
+        CIRCULAR ATLAS: Find circular solutions in your area!
+      </h4> 
       <a id="icon" (click)="toggleHamburger()" aria-label="Toggle menu">&#9776;</a>
-    </ng-template>
+    </ng-template> 
   </div>
+
 
   <!-- 🔐 Auth controls (top-right) -->
   <div id="authHeader">

@@ -137,22 +137,36 @@
 
 /* --------- Title-only variant (Atlas page) --------- */
 .topnav.titleOnly {
-  /* neutralize floats from default anchor styles */
-  a { float: none; }
-  /* center the title while keeping logo pinned left */
+  a { 
+    float: none; 
+    font-family: unset;
+    padding: 0;
+    margin: 0;
+  }
   display: flex;
   align-items: center;
   justify-content: center;
 
   #logo {
     position: absolute;
-    left: 8px;
+    left: 0;
   }
 
-  .nav-title {
+  #nav-title {
     font-family: "Bebas Neue", cursive;
-    font-size: 30px;
+    font-size: 26px;
     margin-bottom: 0;
+    a:hover {
+      background-color: unset;
+      box-shadow: none;
+    }
+    img {
+      height: 30px;
+      width: 30px;
+      transition: 0.4s;
+      border-radius: 0.2rem;
+      &:hover { transform: scale(0.9, 0.9); }
+    }
   }
 
   #icon {
