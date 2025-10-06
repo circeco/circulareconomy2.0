@@ -128,6 +128,11 @@
   }
 }
 
+#signout {
+  color: $color-accent;
+  font-size: small;
+}
+
 /* ===================== ADDITIONS ===================== */
 
 /* Keep active underline styling scoped to topnav anchors too (helps specificity) */
@@ -137,8 +142,8 @@
 
 /* --------- Title-only variant (Atlas page) --------- */
 .topnav.titleOnly {
-  a { 
-    float: none; 
+  a {
+    float: none;
     font-family: unset;
     padding: 0;
     margin: 0;
