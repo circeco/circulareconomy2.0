@@ -22,3 +22,11 @@
   -webkit-text-decoration-skip: ink;
   text-decoration-skip: ink;
 }
+
+@mixin underline-accent-thinest($color) {
+  text-decoration: underline $color 2px;
+  -webkit-text-decoration: underline $color 2px;
+  text-decoration-color: $color;
+  -webkit-text-decoration-skip: ink;
+  text-decoration-skip: ink;
+}

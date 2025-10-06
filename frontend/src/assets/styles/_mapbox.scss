@@ -22,17 +22,19 @@
   }
 
   h4 {
-    font-size: 18px !important;
+    line-height: 1;
+    font-size: 22px !important;
     cursor: pointer;
     font-family: $font-bebas;
-    @include underline-accent-thiner($color-accent);
+    @include underline-accent-thinest($color-accent);
   }
 
   p {
     text-align: left;
-    font-family: $font-chathura;
-    line-height: 0.5;
-    font-size: 22px;
+    font-family: "economica", sans-serif;
+    line-height: 1;
+    font-size: 16px;
+    font-weight: normal;
   }
 }
 
@@ -45,8 +47,12 @@
 .mapboxgl-popup-content {
   line-height: 1.2;
   padding: 2%;
-  width: 120px;
+  min-width: 120px;
+  width: min-content;
   box-shadow: none;
+
+  .address {margin: 0;}
+  .description {margin: 10px 0;}
 }
 
 .mapboxgl-popup-content-wrapper { padding: 1%; }
@@ -62,10 +68,18 @@
 }
 
 .stockholmlist {
-  font-size: 18px;
+  font-size: 22px;
   cursor: pointer;
   font-family: $font-bebas;
-  @include underline-accent-thiner($color-accent);
+  @include underline-accent-thinest($color-accent);
+
+  /* --- FIX: normalize accented glyph metrics & fallback --- */
+  /* Prefer Bebas Neue; if a glyph is missing, fall back to Inter/Helvetica/Arial
+     (instead of generic cursive) and keep x-height consistent. */
+  font-family: 'Bebas Neue', 'Inter', 'Helvetica Neue', Arial, sans-serif;
+  font-size-adjust: 0.52;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .listings {
