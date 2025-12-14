@@ -1,6 +1,6 @@
 # Frontend
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 18.2.8 and is currently developed on the `work` branch. Check out that branch locally (`git checkout work`) to follow along with the latest changes.
+This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 18.2.8 and is currently developed on the `plan-app-architecture-for-circular-initiatives` branch. Check out that branch locally (`git checkout plan-app-architecture-for-circular-initiatives`) to follow along with the latest changes.
 
 ## Development server
 
