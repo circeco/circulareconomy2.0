@@ -3,8 +3,10 @@ import {
   Auth, user, signInWithEmailAndPassword, createUserWithEmailAndPassword,
   signOut, setPersistence, browserLocalPersistence, User
 } from '@angular/fire/auth';
-import { Observable, from, firstValueFrom } from 'rxjs';
+import { Observable, from, firstValueFrom, of } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { map, switchMap } from 'rxjs/operators';
+import { getIdTokenResult } from 'firebase/auth';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -56,6 +58,25 @@ export class AuthService {
   }
   signOutOnce() {
     return firstValueFrom(this.signOut());
+  }
+
+  /** Convenience observable that resolves to true when a user is logged in. */
+  isAuthenticated() {
+    return this.user$.pipe(map(user => !!user));
+  }
+
+  /**
+   * Checks whether the current user has the `admin` custom claim.
+   * Returns false when anonymous or when the claim is missing.
+   */
+  isAdmin() {
+    return this.user$.pipe(
+      takeUntilDestroyed(),
+      switchMap(user => {
+        if (!user) return of(false);
+        return from(getIdTokenResult(user)).pipe(map(token => !!token.claims['admin']));
+      })
+    );
   }
 }
 
