@@ -43,7 +43,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     private filter: PlacesFilter,
     private zone: NgZone,
     private cdr: ChangeDetectorRef
-  ) {}
+  ) { }
 
   // Optional public API if the page wants to control the overlay
   public openList() { this.toggleList(true); }
@@ -120,6 +120,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.listOpen = typeof force === 'boolean' ? force : !this.listOpen;
     setTimeout(() => this.onWindowResize(), 300);
   }
+
   onOverlayBackdrop(_ev: MouseEvent) { this.toggleList(false); }
 
   // ---------- UI handlers ----------
@@ -131,6 +132,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     else this.enabledCategories.add(cat);
     this.filter.setCategories(this.enabledCategories);
   }
+
   isCatEnabled(cat: string) { return this.enabledCategories.has(cat); }
 
   onToggleFavorites(ev: Event) {
@@ -197,11 +199,19 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
     header.appendChild(h); header.appendChild(btn); el.appendChild(header);
 
-    if (props.STORE_TYPE) { const t = document.createElement('p'); t.style.margin = '4px 0'; t.textContent = props.STORE_TYPE; el.appendChild(t); }
-    if (props.ADDRESS_LINE1 || props.ADDRESS) { const a = document.createElement('p'); a.className = 'address'; a.textContent = props.ADDRESS_LINE1 || props.ADDRESS || ''; el.appendChild(a); }
+    if (props.STORE_TYPE) {
+      const t = document.createElement('p'); t.style.margin = '4px 0'; t.textContent = props.STORE_TYPE; el.appendChild(t);
+    }
+    if (props.ADDRESS_LINE1 || props.ADDRESS) {
+      const a = document.createElement('p'); a.className = 'address'; a.textContent = props.ADDRESS_LINE1 || props.ADDRESS || ''; el.appendChild(a);
+    }
     const rawWeb = (props.WEB || '').replace(/^https?:\/\//i, ''); const href = this.normalizeWebHref(rawWeb);
-    if (href) { const a = document.createElement('a'); a.target = '_blank'; a.rel = 'noopener'; a.href = href; a.textContent = rawWeb; el.appendChild(a); }
-    if (props.DESCRIPTION) { const d = document.createElement('p'); d.textContent = props.DESCRIPTION; el.appendChild(d); }
+    if (href) {
+      const a = document.createElement('a'); a.target = '_blank'; a.rel = 'noopener'; a.href = href; a.textContent = rawWeb; el.appendChild(a);
+    }
+    if (props.DESCRIPTION) {
+      const d = document.createElement('p'); d.textContent = props.DESCRIPTION; el.appendChild(d);
+    }
 
     return el;
   }
@@ -209,9 +219,16 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   private mountHeart(btn: HTMLButtonElement, place: any) {
     btn.addEventListener('click', ev => ev.stopPropagation());
     const api = (window as any).circeco?.favorites?.mountHeartButton;
-    if (api) { api(btn, place); (btn as any).dataset.heartMounted = '1'; }
-    else { this.heartMountQueue.push({ btn, place }); btn.textContent = '♡'; }
+    if (api) {
+      api(btn, place);
+      (btn as any).dataset.heartMounted = '1';
+    }
+    else {
+      this.heartMountQueue.push({ btn, place });
+      btn.textContent = '♡';
+    }
   }
+
   private flushHeartQueue() {
     const api = (window as any).circeco?.favorites?.mountHeartButton;
     if (!api) return;
@@ -225,13 +242,15 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   }
 
   // favourites events
-  private onFavUpdate = () => { };
-  private onFavAuth = (e: any) => {
+  private onFavUpdate(e: Event) { console.log("this is fav update", e) };
+
+  private onFavAuth(e: any) {
     const authed = !!e?.detail?.user;
     this.favoritesDisabled = !authed;
     if (!authed) this.favoritesVisible = false;
     // safe even if early; MapService guards if layer isn't ready yet
     this.map.setFavoritesVisibility(authed && this.favoritesVisible);
   };
-  private onFavReady = () => this.flushHeartQueue();
+
+  private onFavReady() { this.flushHeartQueue() };
 }
