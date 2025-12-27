@@ -14,9 +14,9 @@ export class MapService {
   private click$ = new Subject<{ feature: any; coords: [number, number] }>();
 
   private readonly STOCKHOLM: [number, number] = [18.072, 59.325];
-  private readonly BOUNDS: [[number, number], [number, number]] = [[15.072078, 58.247414],[19.180375, 60.008548]];
+  private readonly BOUNDS: [[number, number], [number, number]] = [[15.072078, 58.247414], [19.180375, 60.008548]];
 
-  constructor(private zone: NgZone) {}
+  constructor(private zone: NgZone) { }
 
   onReady(): Observable<boolean> { return this.ready$.asObservable(); }
   onFeatureClick(): Observable<{ feature: any; coords: [number, number] }> { return this.click$.asObservable(); }
@@ -43,7 +43,7 @@ export class MapService {
 
       (window as any).circeco = (window as any).circeco || {};
       (window as any).circeco.map = this.map;
-      if (!(window as any).circeco.openAuthModal) (window as any).circeco.openAuthModal = () => {};
+      if (!(window as any).circeco.openAuthModal) (window as any).circeco.openAuthModal = () => { };
 
       this.map.on('load', () => this.onLoad());
     });
@@ -64,12 +64,12 @@ export class MapService {
             'circle-radius': 5,
             'circle-color': [
               'match', ['get', 'STORE_TYPE'],
-              'reuse',   '#FF5252',
+              'reuse', '#FF5252',
               'recycle', 'rgb(69,129,142)',
-              'refuse',  '#FF8C00',
+              'refuse', '#FF8C00',
               'rethink', '#9ACD32',
-              'remake',  '#008000',
-              'repair',  '#008000',
+              'remake', '#008000',
+              'repair', '#008000',
               'rgb(69,129,142)'
             ]
           }
@@ -77,7 +77,7 @@ export class MapService {
       }
 
       if (!this.getSource('favorites')) {
-        this.map.addSource('favorites', { type: 'geojson', data: { type:'FeatureCollection', features: [] } });
+        this.map.addSource('favorites', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
       }
       if (!this.getLayer('favorites')) {
         this.map.addLayer({
@@ -117,7 +117,7 @@ export class MapService {
 
   // --- interactions: click + hover pointer ---
   private wireClickAndHover() {
-    const layers = () => this.existingVisibleLayers(['places','favorites']);
+    const layers = () => this.existingVisibleLayers(['places', 'favorites']);
 
     this.map.on('click', (e: any) => {
       const ids = layers();
@@ -173,26 +173,22 @@ export class MapService {
   setCategoryFilter(enabled: Set<string>) {
     const tests: any[] = [];
     enabled.forEach(cat => {
-      tests.push(['in', cat, ['coalesce',['get','CATEGORIES'], ['literal',[]]]]);
-      tests.push(['==', ['get','CATEGORY'], cat]);
+      tests.push(['in', cat, ['coalesce', ['get', 'CATEGORIES'], ['literal', []]]]);
+      tests.push(['==', ['get', 'CATEGORY'], cat]);
     });
-    const expr = enabled.size ? ['any', ...tests] : ['==',['literal',1],0];
-    try {
-      if (this.getLayer('places')) {
-        this.map.setFilter('places', expr);
-      }
-    } catch {}
+    const expr = enabled.size ? ['any', ...tests] : ['==', ['literal', 1], 0];
+    if (this.getLayer('places')) {
+      this.map.setFilter('places', expr);
+    }
   }
 
   setFavoritesVisibility(v: boolean) {
-    try {
-      if (this.getLayer('favorites')) {
-        this.map.setLayoutProperty('favorites','visibility', v ? 'visible' : 'none');
-      }
-    } catch {}
+    if (this.getLayer('favorites')) {
+      this.map.setLayoutProperty('favorites', 'visibility', v ? 'visible' : 'none');
+    }
   }
 
-  queryRenderedFeatures$(layers: string[] = ['places','favorites']): Observable<any[]> {
+  queryRenderedFeatures$(layers: string[] = ['places', 'favorites']): Observable<any[]> {
     return new Observable(sub => {
       let rafId = 0;
       let retries = 0;
@@ -228,26 +224,22 @@ export class MapService {
       else this.onReady().subscribe({ next: () => start() });
 
       return () => {
-        try {
-          cancelAnimationFrame(rafId);
-          this.map.off('idle', emit);
-          this.map.off('moveend', emit);
-          this.map.off('zoomend', emit);
-          this.map.off('rotateend', emit);
-          this.map.off('pitchend', emit);
-        } catch {}
+        cancelAnimationFrame(rafId);
+        this.map.off('idle', emit);
+        this.map.off('moveend', emit);
+        this.map.off('zoomend', emit);
+        this.map.off('rotateend', emit);
+        this.map.off('pitchend', emit);
       };
     });
   }
 
-  flyTo(center: [number, number], zoom = 14) { try { this.map.flyTo({ center, zoom }); } catch {} }
+  flyTo(center: [number, number], zoom = 14) { this.map.flyTo({ center, zoom }); }
   openPopup(center: [number, number], content: HTMLElement) {
-    try {
-      document.querySelector('.mapboxgl-popup')?.remove();
-      new mapboxgl.Popup({ closeOnClick: true }).setLngLat(center).setDOMContent(content).addTo(this.map);
-    } catch {}
+    document.querySelector('.mapboxgl-popup')?.remove();
+    new mapboxgl.Popup({ closeOnClick: true }).setLngLat(center).setDOMContent(content).addTo(this.map);
   }
 
-  resize() { try { this.map?.resize(); } catch {} }
-  destroy() { try { this.map?.remove(); } catch {} this.map = null; this.loaded = false; this.placesReady = false; }
+  resize() { this.map?.resize(); }
+  destroy() { this.map?.remove(); this.map = null; this.loaded = false; this.placesReady = false; }
 }

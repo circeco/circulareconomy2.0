@@ -248,9 +248,7 @@ export class FavoritesService {
   }
 
   private emitUpdate() {
-    try {
-      window.dispatchEvent(new CustomEvent('favorites:update', { detail: { items: Array.from(this.cache.values()) } }));
-    } catch {}
+    window.dispatchEvent(new CustomEvent('favorites:update', { detail: { items: Array.from(this.cache.values()) } }));
   }
 
   private updateFavoritesToggleLink(isAuthed: boolean) {
@@ -262,11 +260,9 @@ export class FavoritesService {
       favLink.classList.remove('active');
       favLink.setAttribute('aria-disabled','true');
       favLink.setAttribute('data-tip','Sign in to save favourites');
-      try {
-        if (map && map.getLayer('favorites') && map.getLayoutProperty('favorites','visibility') === 'visible') {
-          map.setLayoutProperty('favorites','visibility','none');
-        }
-      } catch {}
+      if (map && map.getLayer('favorites') && map.getLayoutProperty('favorites','visibility') === 'visible') {
+        map.setLayoutProperty('favorites','visibility','none');
+      }
     } else {
       favLink.removeAttribute('aria-disabled');
       favLink.removeAttribute('data-tip');
