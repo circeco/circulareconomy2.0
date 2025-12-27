@@ -87,7 +87,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
     // Build enrichment index (independent of map readiness)
     fetch(new URL('assets/data/circular_places.geojson', document.baseURI).toString())
-      .then(r => r.json()).then(fc => this.filter.buildIndex(fc)).catch(() => {});
+      .then(r => r.json()).then(fc => this.filter.buildIndex(fc));
 
     // 3) Update the displayed list when filter output changes — run INSIDE Angular
     this.filter.filteredFeatures$.subscribe(list => {

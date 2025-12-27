@@ -1,12 +1,9 @@
 import { Injectable, inject } from '@angular/core';
 import { Auth } from '@angular/fire/auth';
-import {
-  Firestore, collection, doc, setDoc, deleteDoc, query, orderBy,
-} from '@angular/fire/firestore';
+import { Firestore, collection, doc, setDoc, deleteDoc, query, orderBy } from '@angular/fire/firestore';
 import { collectionData } from '@angular/fire/firestore';
 import { serverTimestamp } from 'firebase/firestore';
 import { Subscription } from 'rxjs';
-
 import { AuthService } from './auth.service';
 
 type Coords = { lng: number; lat: number };
@@ -39,7 +36,7 @@ export class FavoritesService {
     g.circeco.favorites.buildPlaceFromFeature = (f: any) => this.buildPlaceFromFeature(f);
     g.circeco.favorites.computePlaceKey = (p: any) => this.computePlaceKey(p);
     g.circeco.favourites = g.circeco.favorites; // UK alias
-    try { window.dispatchEvent(new Event('favorites-ready')); } catch {}
+    window.dispatchEvent(new Event('favorites-ready'));
 
     // 2) React to auth changes: enable/disable UI, live-sync from Firestore
     this.authSvc.user$.subscribe(user => {

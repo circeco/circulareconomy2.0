@@ -23,7 +23,7 @@ export class FooterComponent {
   private ensureEmailJsInit() {
     const ej = window.emailjs;
     if (!ej) throw new Error('EmailJS SDK not loaded');
-    try { ej.init?.(environment.emailjs.publicKey); } catch {}
+    ej.init?.(environment.emailjs.publicKey);
     return ej;
   }
 

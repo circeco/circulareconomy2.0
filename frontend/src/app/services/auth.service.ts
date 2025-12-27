@@ -1,8 +1,9 @@
 import { Injectable, inject, signal } from '@angular/core';
 import {
   Auth, user, signInWithEmailAndPassword, createUserWithEmailAndPassword,
-  signOut, setPersistence, browserLocalPersistence, User
+  signOut, User
 } from '@angular/fire/auth';
+import { setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { Observable, from, firstValueFrom } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
@@ -19,13 +20,13 @@ export class AuthService {
   closeModal() { this.modalOpen.set(false); }
 
   constructor() {
-    setPersistence(this.auth, browserLocalPersistence).catch(() => {});
+    setPersistence(this.auth, browserLocalPersistence).catch(err => {
+      console.error('[auth] Failed to set persistence', err);
+    });
     this.user$.subscribe(u => {
-      try {
         window.dispatchEvent(new CustomEvent('favorites:auth', {
           detail: { user: u ? { uid: u.uid, email: u.email ?? null } : null }
         }));
-      } catch {}
     });
 
     const g = window as any;
@@ -58,4 +59,3 @@ export class AuthService {
     return firstValueFrom(this.signOut());
   }
 }
-

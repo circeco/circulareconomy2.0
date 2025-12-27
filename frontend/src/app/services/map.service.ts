@@ -150,13 +150,13 @@ export class MapService {
 
   // ---------- Safe helpers ----------
   private getLayer(id: string) {
-    try { return this.map?.getLayer?.(id) || null; } catch { return null; }
+    return this.map?.getLayer?.(id) || null;
   }
   private getSource(id: string) {
-    try { return this.map?.getSource?.(id) || null; } catch { return null; }
+    return this.map?.getSource?.(id) || null;
   }
   private getLayoutProperty(id: string, prop: string) {
-    try { return this.map?.getLayoutProperty?.(id, prop); } catch { return undefined; }
+    return this.map?.getLayoutProperty?.(id, prop);
   }
   private existingLayers(ids: string[]) {
     return ids.filter(id => !!this.getLayer(id));
