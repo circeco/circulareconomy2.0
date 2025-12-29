@@ -25,6 +25,7 @@ export class FavoritesService {
   private cache = new Map<string, Place>();
   private hearts = new Map<string, Set<HTMLButtonElement>>(); // key -> buttons
   private favSub?: Subscription;
+  private mapSourceReady = false;
 
   constructor() {
     // 1) Global API for legacy map/list code
@@ -37,6 +38,7 @@ export class FavoritesService {
     g.circeco.favorites.computePlaceKey = (p: any) => this.computePlaceKey(p);
     g.circeco.favourites = g.circeco.favorites; // UK alias
     window.dispatchEvent(new Event('favorites-ready'));
+    window.addEventListener('map:favorites-source-ready', this.onMapFavoritesSourceReady);
 
     // 2) React to auth changes: enable/disable UI, live-sync from Firestore
     this.authSvc.user$.subscribe(user => {
@@ -87,9 +89,8 @@ export class FavoritesService {
 
   // ---------- public helpers (same signatures as legacy) ----------
   computePlaceKey(input: Partial<Place>) {
-    const n = normString(input.name);
-    const a = normString(input.address);
-    if (n && a) return `nameaddr|${n}|${a}`;
+    const addr = normString(input.address);
+    if (addr) return `addr|${addr}`;
     const c = input.coords;
     if (c && isFiniteNum(c.lng) && isFiniteNum(c.lat)) {
       return `coords|${Number(c.lng).toFixed(6)},${Number(c.lat).toFixed(6)}`;
@@ -164,7 +165,7 @@ export class FavoritesService {
       ev.stopPropagation(); ev.preventDefault();
       const user = this.auth.currentUser;
       if (!user) {
-        (window as any).circeco?.openAuthModal?.();
+        this.authSvc.openModal()
         return;
       }
       const isFav = this.cache.has(place!.key);
@@ -237,7 +238,13 @@ export class FavoritesService {
     if (!map) return;
     try {
       const src = map.getSource('favorites');
-      if (!src) return;
+      if (!src) {
+        if (!this.mapSourceReady && typeof map.once === 'function') {
+          map.once('styledata', () => this.pushToMapSource());
+        }
+        return;
+      }
+      this.mapSourceReady = true;
       src.setData({
         type: 'FeatureCollection',
         features: Array.from(this.cache.values()).map(toFeature).filter(Boolean),
@@ -269,6 +276,11 @@ export class FavoritesService {
       // don't force it visible; keep the last user choice
     }
   }
+
+  private onMapFavoritesSourceReady = () => {
+    this.mapSourceReady = false;
+    this.pushToMapSource();
+  };
 }
 
 /* ---------- small utilities (same as legacy) ---------- */
@@ -288,6 +300,8 @@ function toFeature(rec: Place | null) {
       DESCRIPTION: '',
       STORE_TYPE: 'Favorite',
       WEB: '',
+      PLACE_KEY: rec.key,
+      LEGACY_ID: rec.legacyId || '',
     }
   };
 }

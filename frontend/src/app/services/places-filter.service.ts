@@ -7,6 +7,8 @@ export interface PlaceProps {
   DESCRIPTION?: string; STORE_TYPE?: string;
   CATEGORY?: string; CATEGORIES?: string[];
   WEB?: string;
+  PLACE_KEY?: string;
+  LEGACY_ID?: string | number | null;
 }
 export interface Feature {
   type: 'Feature';
@@ -61,15 +63,21 @@ export class PlacesFilter {
   enrichForUI(feat: Feature) { return this.enrichProps(feat); }
 
   // ---- helpers (ported) ----
-  private normString(s: string){ return String(s||'').trim().toLowerCase().replace(/\s+/g,' ').replace(/[,\.;:]+$/,''); }
-  private kNA(name: string, addr: string){ const n=this.normString(name), a=this.normString(addr); return n && a ? `${n}|${a}` : ''; }
+  private normString(s?: string | null){
+    return String(s || '').trim().toLowerCase().replace(/\s+/g,' ').replace(/[,\.;:]+$/,'');
+  }
+  private normAddress(addr?: string | null){ return this.normString(addr); }
+  private kNA(name: string, addr: string){ const n=this.normString(name), a=this.normAddress(addr); return n && a ? `${n}|${a}` : ''; }
   private kC(lng: number, lat: number){ return `${Number(lng).toFixed(6)},${Number(lat).toFixed(6)}`; }
 
   private indexFeature(f: Feature){
     const p=f.properties||{};
+    const coords = f.geometry?.coordinates || [];
+    const key = this.computePlaceKey(p, coords as [number, number], f.id);
+    if (key && !p.PLACE_KEY) (p as any).PLACE_KEY = key;
     const name=p.STORE_NAME||p.NAME||'';
     const addr=p.ADDRESS_LINE1||p.ADDRESS||'';
-    const c=f.geometry?.coordinates||[];
+    const c=coords||[];
     const kna=this.kNA(name,addr); if (kna && !this.placesIndexByNameAddr.has(kna)) this.placesIndexByNameAddr.set(kna,f);
     if (c.length===2){ const kc=this.kC(c[0],c[1]); if (!this.placesIndexByCoord.has(kc)) this.placesIndexByCoord.set(kc,f); }
   }
@@ -95,10 +103,17 @@ export class PlacesFilter {
 
   private canonicalKey(feature: Feature){
     try {
-      const p = this.enrichProps(feature);
-      const name = (p.STORE_NAME || p.NAME || '').trim().toLowerCase();
-      const c = feature.geometry?.coordinates || [0,0];
-      return `${name}|${Number(c[0]).toFixed(6)},${Number(c[1]).toFixed(6)}`;
+      const props = this.enrichProps(feature) || {};
+      if (props.PLACE_KEY) return String(props.PLACE_KEY);
+      const coords = feature.geometry?.coordinates || [0,0];
+      const key = this.computePlaceKey(props, coords as [number, number], (feature as any)?.id);
+      if (key) {
+        (feature.properties as any).PLACE_KEY = key;
+        return key;
+      }
+      const fallback = `${this.normString(props.STORE_NAME || props.NAME)}|${Number(coords[0]).toFixed(6)},${Number(coords[1]).toFixed(6)}`;
+      (feature.properties as any).PLACE_KEY = fallback;
+      return fallback;
     } catch { return String(feature.id || Math.random()); }
   }
 
@@ -115,5 +130,20 @@ export class PlacesFilter {
       }
     }
     return Object.values(byKey);
+  }
+
+  private computePlaceKey(props: PlaceProps, coords?: [number, number], legacyId?: string | number | null) {
+    const addrKey = this.normAddress(props.ADDRESS_LINE1 || props.ADDRESS);
+    if (addrKey) return `addr|${addrKey}`;
+    if (Array.isArray(coords) && coords.length === 2 && isFinite(coords[0]) && isFinite(coords[1])) {
+      return `coords|${Number(coords[0]).toFixed(6)},${Number(coords[1]).toFixed(6)}`;
+    }
+    const legacy = props.LEGACY_ID ?? legacyId;
+    if (legacy !== null && legacy !== undefined && legacy !== '') return `id|${String(legacy)}`;
+    const nameKey = this.normString(props.STORE_NAME || props.NAME);
+    if (nameKey && Array.isArray(coords) && coords.length === 2 && isFinite(coords[0]) && isFinite(coords[1])) {
+      return `namecoords|${nameKey}|${Number(coords[0]).toFixed(6)},${Number(coords[1]).toFixed(6)}`;
+    }
+    return '';
   }
 }

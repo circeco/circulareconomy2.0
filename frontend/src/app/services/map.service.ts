@@ -10,6 +10,20 @@ export class MapService {
   private loaded = false;                // style rendered at least once
   private placesReady = false;           // geojson source fully loaded
 
+  private favoriteKeys = new Set<string>();
+  private favoritesVisible = true;
+  private lastCategorySet = new Set<string>();
+  private readonly baseColorExpr: any = [
+    'match', ['get', 'STORE_TYPE'],
+    'reuse', '#FF5252',
+    'recycle', 'rgb(69,129,142)',
+    'refuse', '#FF8C00',
+    'rethink', '#9ACD32',
+    'remake', '#008000',
+    'repair', '#008000',
+    'rgb(69,129,142)'
+  ];
+
   private ready$ = new ReplaySubject<boolean>(1); // emits when BOTH are true
   private click$ = new Subject<{ feature: any; coords: [number, number] }>();
 
@@ -47,6 +61,8 @@ export class MapService {
 
       this.map.on('load', () => this.onLoad());
     });
+
+    window.addEventListener('favorites:update', this.onFavoritesUpdate);
   }
 
   private onLoad() {
@@ -62,16 +78,7 @@ export class MapService {
           layout: { visibility: 'visible' },
           paint: {
             'circle-radius': 5,
-            'circle-color': [
-              'match', ['get', 'STORE_TYPE'],
-              'reuse', '#FF5252',
-              'recycle', 'rgb(69,129,142)',
-              'refuse', '#FF8C00',
-              'rethink', '#9ACD32',
-              'remake', '#008000',
-              'repair', '#008000',
-              'rgb(69,129,142)'
-            ]
+            'circle-color': this.baseColorExpr
           }
         });
       }
@@ -82,10 +89,12 @@ export class MapService {
       if (!this.getLayer('favorites')) {
         this.map.addLayer({
           id: 'favorites', type: 'circle', source: 'favorites',
-          layout: { visibility: 'visible' },
+          layout: { visibility: 'none' },
           paint: { 'circle-radius': 5, 'circle-color': '#FF5252' }
         });
       }
+      this.enrichPlacesSource(DATA_URL);
+      window.dispatchEvent(new Event('map:favorites-source-ready'));
     } catch (e) {
       console.error('[map] failed adding sources/layers', e);
     }
@@ -171,21 +180,17 @@ export class MapService {
 
   // ---------- Public API (safe) ----------
   setCategoryFilter(enabled: Set<string>) {
-    const tests: any[] = [];
-    enabled.forEach(cat => {
-      tests.push(['in', cat, ['coalesce', ['get', 'CATEGORIES'], ['literal', []]]]);
-      tests.push(['==', ['get', 'CATEGORY'], cat]);
-    });
-    const expr = enabled.size ? ['any', ...tests] : ['==', ['literal', 1], 0];
-    if (this.getLayer('places')) {
-      this.map.setFilter('places', expr);
-    }
+    this.lastCategorySet = new Set(enabled);
+    this.applyFilters();
   }
 
   setFavoritesVisibility(v: boolean) {
+    this.favoritesVisible = v;
     if (this.getLayer('favorites')) {
-      this.map.setLayoutProperty('favorites', 'visibility', v ? 'visible' : 'none');
+      this.map.setLayoutProperty('favorites', 'visibility', 'none');
     }
+    this.applyFilters();
+    this.applyPaint();
   }
 
   queryRenderedFeatures$(layers: string[] = ['places', 'favorites']): Observable<any[]> {
@@ -241,5 +246,95 @@ export class MapService {
   }
 
   resize() { this.map?.resize(); }
-  destroy() { this.map?.remove(); this.map = null; this.loaded = false; this.placesReady = false; }
+  destroy() {
+    window.removeEventListener('favorites:update', this.onFavoritesUpdate);
+    this.map?.remove(); this.map = null; this.loaded = false; this.placesReady = false;
+  }
+
+  setFavoriteKeys(keys: Set<string>) {
+    this.favoriteKeys = new Set(keys);
+    this.applyFilters();
+    this.applyPaint();
+  }
+
+  private applyFilters() {
+    const tests: any[] = [];
+    this.lastCategorySet.forEach(cat => {
+      tests.push(['in', cat, ['coalesce', ['get', 'CATEGORIES'], ['literal', []]]]);
+      tests.push(['==', ['get', 'CATEGORY'], cat]);
+    });
+    const favList = Array.from(this.favoriteKeys);
+    let expr: any = this.lastCategorySet.size ? ['any', ...tests] : ['==', ['literal', 1], 1];
+    if (!this.lastCategorySet.size) {
+      if (this.favoritesVisible && favList.length) {
+        expr = ['in', ['get', 'PLACE_KEY'], ['literal', favList]];
+      } else if (!this.favoritesVisible) {
+        expr = ['==', ['literal', 1], 0];
+      } else if (this.favoritesVisible && favList.length === 0) {
+        expr = ['==', ['literal', 1], 0];
+      }
+    }
+    if (this.getLayer('places')) {
+      this.map.setFilter('places', expr);
+    }
+    this.applyPaint();
+  }
+
+  private async enrichPlacesSource(url: string) {
+    try {
+      const res = await fetch(url);
+      const fc = await res.json();
+      const features = (fc.features || []).map((f: any) => {
+        const props = f.properties || {};
+        const key = this.computePlaceKey(props, f.geometry?.coordinates, f.id);
+        if (key) props.PLACE_KEY = key;
+        return { ...f, properties: props };
+      });
+      const src = this.getSource('places');
+      if (src?.setData) src.setData({ ...fc, features });
+    } catch (e) {
+      console.warn('[map] failed to enrich places source with PLACE_KEY', e);
+    }
+  }
+
+  private computePlaceKey(props: any, coords?: [number, number], legacyId?: string | number | null) {
+    const addr = this.normAddress(props?.ADDRESS_LINE1 || props?.ADDRESS);
+    if (addr) return `addr|${addr}`;
+    if (Array.isArray(coords) && coords.length === 2 && isFinite(coords[0]) && isFinite(coords[1])) {
+      return `coords|${Number(coords[0]).toFixed(6)},${Number(coords[1]).toFixed(6)}`;
+    }
+    const legacy = props?.LEGACY_ID ?? legacyId;
+    if (legacy !== null && legacy !== undefined && legacy !== '') return `id|${String(legacy)}`;
+    const name = this.normString(props?.STORE_NAME || props?.NAME);
+    if (name && Array.isArray(coords) && coords.length === 2 && isFinite(coords[0]) && isFinite(coords[1])) {
+      return `namecoords|${name}|${Number(coords[0]).toFixed(6)},${Number(coords[1]).toFixed(6)}`;
+    }
+    return '';
+  }
+
+  private normString(s?: string | null) {
+    return String(s || '').trim().toLowerCase().replace(/\s+/g,' ').replace(/[,\.;:]+$/,'');
+  }
+  private normAddress(addr?: string | null) { return this.normString(addr); }
+
+  private onFavoritesUpdate = (ev: any) => {
+    try {
+      const items = ev?.detail?.items || [];
+      const keys = new Set<string>();
+      items.forEach((i: any) => { if (i?.key) keys.add(String(i.key)); });
+      this.setFavoriteKeys(keys);
+    } catch {}
+  };
+
+  private applyPaint() {
+    if (!this.getLayer('places')) return;
+    const favList = Array.from(this.favoriteKeys);
+    const colorExpr = (this.favoritesVisible && favList.length)
+      ? ['case',
+          ['in', ['get', 'PLACE_KEY'], ['literal', favList]],
+          '#FF5252',
+          this.baseColorExpr]
+      : this.baseColorExpr;
+    this.map.setPaintProperty('places', 'circle-color', colorExpr);
+  }
 }
