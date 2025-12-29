@@ -94,6 +94,7 @@ export class MapService {
         });
       }
       this.enrichPlacesSource(DATA_URL);
+      this.applyFilters(); // ensures stored favorites recolor once layers exist
       window.dispatchEvent(new Event('map:favorites-source-ready'));
     } catch (e) {
       console.error('[map] failed adding sources/layers', e);

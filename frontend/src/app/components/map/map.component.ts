@@ -3,6 +3,8 @@ import {
   ElementRef,
   HostListener,
   ViewChild,
+  ViewChildren,
+  QueryList,
   OnDestroy,
   AfterViewInit,
   OnInit,
@@ -22,6 +24,7 @@ import { PlacesFilter, Feature } from '../../services/places-filter.service';
 })
 export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   @ViewChild('mapHost', { static: true }) mapHost!: ElementRef<HTMLDivElement>;
+  @ViewChildren('heartBtn') heartButtons!: QueryList<ElementRef<HTMLButtonElement>>;
 
   // --- UI state ---
   listOpen = false;
@@ -94,6 +97,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       this.zone.run(() => {
         this.filteredList = list;
         this.cdr.markForCheck();
+        setTimeout(() => this.mountListHearts(), 0);
       });
     });
 
@@ -242,7 +246,12 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   }
 
   // favourites events
-  private onFavUpdate(e: Event) { console.log("this is fav update", e) };
+  private onFavUpdate = (_e: Event) => {
+    this.zone.run(() => {
+      this.mountListHearts();
+      this.cdr.markForCheck();
+    });
+  };
 
   private onFavAuth(e: any) {
     const authed = !!e?.detail?.user;
@@ -253,4 +262,18 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   };
 
   private onFavReady() { this.flushHeartQueue() };
+
+  private mountListHearts() {
+    const api = (window as any).circeco?.favorites?.mountHeartButton;
+    if (!api || !this.heartButtons) return;
+    this.heartButtons.forEach((ref, idx) => {
+      const btn = ref.nativeElement;
+      if ((btn as any).dataset.heartMounted) return;
+      const feat = this.filteredList[idx];
+      if (!feat) return;
+      const place = this.buildPlaceForHeart(feat);
+      api(btn, place);
+      (btn as any).dataset.heartMounted = '1';
+    });
+  }
 }
