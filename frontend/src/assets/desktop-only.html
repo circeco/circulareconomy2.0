@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Desktop required</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Chathura:wght@300;400;700;800&display=swap"
+      rel="stylesheet"
+    >
+    <style>
+      :root {
+        color-scheme: light;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background: radial-gradient(circle at top, #d0e0e3, #d0e0e3 40%, #d0e0e3 100%);
+        font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+        color: #212529;
+        padding: 24px;
+      }
+
+      main {
+        max-width: 520px;
+        background: #fff;
+        border-radius: 16px;
+        box-shadow: 0 18px 40px rgba(58, 47, 34, 0.18);
+        padding: 28px 24px;
+        text-align: center;
+      }
+
+      h1 {
+        font-size: 28px;
+        font-family: "Bebas Neue", cursive;
+        text-shadow: 1px 1px 2px rgb(150, 150, 150);
+        text-decoration: underline #FF5252 8px;
+        -webkit-text-decoration: underline #FF5252 8px;
+        text-decoration-color: #FF5252;
+      }
+
+      p {
+        margin: 0 0 12px;
+        font-size: 22px;
+        line-height: 1.5;
+
+        font-family: "Chathura", sans-serif;
+        text-shadow: 1px 1px 2px rgb(150, 150, 150);
+      }
+
+      .hint {
+        font-size: 14px;
+        color: #6a5a48;
+        margin-top: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>LARGER SCREEN REQUIRED</h1>
+      <p>This application is built for larger screens atm (1024px minimum).</p>
+      <p>Please open it on a laptop or desktop computer.</p>
+      <p>If you are on a large tablet, rotate to landscape.</p>
+    </main>
+    <script>
+      (function () {
+        var DESKTOP_MIN_WIDTH = 1024;
+        function getReturnPath() {
+          var params = new URLSearchParams(window.location.search);
+          var target = params.get('return') || '/';
+          if (target.charAt(0) !== '/') {
+            return '/';
+          }
+          return target;
+        }
+
+        function redirectIfDesktop() {
+          if (window.innerWidth >= DESKTOP_MIN_WIDTH) {
+            window.location.replace(getReturnPath());
+          }
+        }
+
+        redirectIfDesktop();
+
+        var mediaQuery = window.matchMedia('(min-width: 1024px)');
+        function handleChange(event) {
+          if (event.matches) {
+            window.location.replace(getReturnPath());
+          }
+        }
+
+        if (typeof mediaQuery.addEventListener === 'function') {
+          mediaQuery.addEventListener('change', handleChange);
+        } else {
+          mediaQuery.addListener(handleChange);
+        }
+      })();
+    </script>
+  </body>
+</html>
