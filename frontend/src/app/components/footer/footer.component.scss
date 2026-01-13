@@ -44,6 +44,25 @@
   border-radius: .25rem !important;
 }
 
+.recaptcha {
+  display: flex;
+  justify-content: center;
+  margin: 10px 0 0;
+}
+
+.form-feedback {
+  max-width: 80%;
+  margin: 0 auto;
+}
+
+.honeypot {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
 .send_button {
   text-align: center;
 

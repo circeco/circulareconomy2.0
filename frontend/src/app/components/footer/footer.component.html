@@ -20,7 +20,7 @@
       <h5>Get in touch!</h5>
 
       <form #f="ngForm" (ngSubmit)="onSubmit(f)">
-        <input type="hidden" name="contact_number" />
+        <input type="text" name="_gotcha" class="honeypot" tabindex="-1" autocomplete="off" ngModel />
 
         <input type="text" name="name" id="name" class="form-control" placeholder="Name" required ngModel />
 
@@ -30,6 +30,10 @@
         <textarea rows="5" name="message" id="message" class="form-control" placeholder="Message" required
           ngModel></textarea>
 
+        <div *ngIf="recaptchaSiteKey" class="recaptcha">
+          <div class="g-recaptcha" [attr.data-sitekey]="recaptchaSiteKey"></div>
+        </div>
+
         <div class="send_button">
           <button type="submit" id="send_button" class="btn btn-primary" [disabled]="sending || !f.valid"
             [class.onclic]="anim.onclic" [class.validate]="anim.validate">
@@ -37,8 +41,14 @@
           </button>
         </div>
 
-        <p *ngIf="success" class="text-success mt-2">{{ success }}</p>
-        <p *ngIf="error" class="text-danger mt-2">{{ error }}</p>
+        <div class="form-feedback">
+          <div *ngIf="success" class="alert alert-success mt-2" role="status" aria-live="polite">
+            {{ success }}
+          </div>
+          <div *ngIf="error" class="alert alert-danger mt-2" role="alert">
+            {{ error }}
+          </div>
+        </div>
       </form>
     </div>
   </div>

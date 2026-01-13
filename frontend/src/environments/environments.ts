@@ -10,9 +10,8 @@ export const environment = {
     messagingSenderId: '141138113054',
     appId: '1:141138113054:web:9edc9ce0553984f8c3b40f',
   },
-    emailjs: {
-    publicKey: 'user_h8aOCHdQhXpblY9crGyiG',
-    serviceId: 'circeco_web',
-    templateId: 'circeco',
+  formspree: {
+    endpoint: 'https://formspree.io/f/xdaaovjw',
+    recaptchaSiteKey: '',
   },
 };
