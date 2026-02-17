@@ -10,6 +10,7 @@ import { CommonModule, AsyncPipe, NgIf } from '@angular/common';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { AuthService } from '../../services/auth.service';
+import { SearchService } from '../../services/search.service';
 
 @Component({
   selector: 'app-navbar',
@@ -29,11 +30,12 @@ export class NavbarComponent implements AfterViewInit, OnDestroy {
   isLanding = signal<boolean>(true);
 
   private observer?: IntersectionObserver;
-  private readonly sectionIds = ['title_section', 'circular_action', 'circular_atlas_demo', 'footer'];
+  private readonly sectionIds = ['title_section', 'circular_events', 'circular_action', 'circular_atlas_demo', 'footer'];
   private readonly headerOffset = 60; // px – adjust to the header height
 
   constructor(
     public auth: AuthService,
+    public searchService: SearchService,
     private zone: NgZone,
     private router: Router
   ) {
@@ -65,8 +67,8 @@ export class NavbarComponent implements AfterViewInit, OnDestroy {
 
   private updateModeFromUrl(): void {
     const url = this.router.url.split('?')[0].split('#')[0];
-    // Treat any /atlas* as "atlas page", everything else as "landing"
-    const landing = !url.startsWith('/atlas');
+    // Treat /atlas* and /events* as non-landing pages, everything else as "landing"
+    const landing = !url.startsWith('/atlas') && !url.startsWith('/events');
     this.isLanding.set(landing);
     this.toggleSnapClass(landing);
   }
@@ -164,6 +166,21 @@ export class NavbarComponent implements AfterViewInit, OnDestroy {
     );
     const top = Math.max(0, maxHeight - window.innerHeight);
     window.scrollTo({ top, behavior: 'smooth' });
+  }
+
+  get nonLandingTitle(): string {
+    const url = this.router.url.split('?')[0].split('#')[0];
+    return url.startsWith('/events') ? 'Circular Events' : 'CIRCULAR ATLAS: Find circular solutions in your area!';
+  }
+
+  showSearchBar(): boolean {
+    const url = this.router.url.split('?')[0].split('#')[0];
+    return url.startsWith('/atlas') || url.startsWith('/events');
+  }
+
+  onSearchInput(ev: Event): void {
+    const value = (ev.target as HTMLInputElement)?.value ?? '';
+    this.searchService.setQuery(value);
   }
 
   openLogin(): void { this.auth.openModal(); }

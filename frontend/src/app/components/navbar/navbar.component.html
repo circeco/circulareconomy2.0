@@ -5,6 +5,9 @@
 
     <!-- Landing-only: section anchors with scroll + active underline -->
     <ng-container *ngIf="isLanding(); else atlasTitleOnly">
+      <a class="navtext" (click)="goTo('circular_events')" [class.active]="activeSection() === 'circular_events'" role="button" tabindex="0">
+        Circular Events
+      </a>
       <a class="navtext" (click)="goTo('circular_action')" [class.active]="activeSection() === 'circular_action'" role="button" tabindex="0">
         Circular Action
       </a>
@@ -17,14 +20,25 @@
       <a id="icon" (click)="toggleHamburger()" aria-label="Toggle menu">&#9776;</a>
     </ng-container>
 
-    <!-- Atlas-only: centered title, no section anchors -->
+    <!-- Non-landing (atlas, events): title + search bar -->
     <ng-template #atlasTitleOnly>
       <h4 id="nav-title" aria-label="Page title">
         <a (click)="goHome()">
           <img class="arrow" [src]="'assets/img/arrowback.png'" alt="arrow" />
         </a>
-        CIRCULAR ATLAS: Find circular solutions in your area!
+        {{ nonLandingTitle }}
       </h4>
+      <div class="nav-search">
+        <span class="search-icon" aria-hidden="true">🔍</span>
+        <input
+          type="search"
+          class="search-input"
+          placeholder="Search places and events..."
+          [value]="searchService.query()"
+          (input)="onSearchInput($event)"
+          aria-label="Search places and events"
+        />
+      </div>
       <a id="icon" (click)="toggleHamburger()" aria-label="Toggle menu">&#9776;</a>
     </ng-template>
   </div>

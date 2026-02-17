@@ -8,6 +8,7 @@ import { ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { DEMO_VIDEO_URL } from '../../config/media';
+import { EventsService, EventItem } from '../../services/events.service';
 
 @Component({
   selector: 'landing-page',
@@ -21,6 +22,7 @@ export class LandingComponent implements AfterViewInit, OnDestroy {
   titleList!: ElementRef<HTMLUListElement>;
 
   demoUrl = DEMO_VIDEO_URL;
+  events: EventItem[] = [];
 
   private onScroll?: () => void;
   private ghostItems: HTMLElement[] = [];
@@ -29,8 +31,11 @@ export class LandingComponent implements AfterViewInit, OnDestroy {
 
   constructor(
     private zone: NgZone,
-    private router: Router
-  ) {}
+    private router: Router,
+    private eventsService: EventsService
+  ) {
+    this.events = this.eventsService.getEvents();
+  }
 
   ngAfterViewInit(): void {
     const listEl = this.titleList?.nativeElement;
@@ -81,5 +86,9 @@ export class LandingComponent implements AfterViewInit, OnDestroy {
 
   goToMapPage(): void {
     this.router.navigate(['/atlas']);
+  }
+
+  goToEventsPage(): void {
+    this.router.navigate(['/events']);
   }
 }

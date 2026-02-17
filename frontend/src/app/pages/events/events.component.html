@@ -1,0 +1,59 @@
+<section class="events-page">
+  <h1 class="events-page-title">Upcoming Events</h1>
+
+  <div class="events-layout">
+    <aside class="events-sidebar">
+      <div class="filter-section">
+        <h3>Filter by Category</h3>
+        <div class="category-filters">
+          <button
+            *ngFor="let cat of categories"
+            type="button"
+            class="category-pill"
+            [class.active]="selectedCategory() === cat.id"
+            (click)="selectCategory(cat.id)"
+          >
+            <span class="category-icon">{{ cat.icon }}</span>
+            <span>{{ cat.label }}</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="filter-section">
+        <h3>Select Date</h3>
+        <app-calendar (selectedDatesChange)="onDatesChange($event)"></app-calendar>
+      </div>
+    </aside>
+
+    <div class="events-content">
+      <div class="events-scroll">
+        <article
+          *ngFor="let event of filteredEvents()"
+          class="event-card"
+        >
+          <img [src]="event.image" [alt]="event.title" class="event-card-image" />
+          <div class="event-card-content">
+            <div class="category-tag">
+              <span class="heart-icon">♥</span>
+              <span>{{ event.category | titlecase }}</span>
+            </div>
+            <h2 class="event-title">{{ event.title }}</h2>
+            <p class="event-description">{{ event.description }}</p>
+            <p class="event-date">
+              <span class="date-icon" aria-hidden="true">📅</span>
+              {{ event.dateStr }}
+            </p>
+            <p class="event-location">
+              <span class="pin-icon" aria-hidden="true">📍</span>
+              {{ event.location }}
+            </p>
+            <p class="event-time">
+              <span class="clock-icon" aria-hidden="true">🕐</span>
+              {{ event.time }}
+            </p>
+          </div>
+        </article>
+      </div>
+    </div>
+  </div>
+</section>

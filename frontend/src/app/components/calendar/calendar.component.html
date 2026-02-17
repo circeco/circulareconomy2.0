@@ -1,0 +1,31 @@
+<div class="calendar">
+  <div class="calendar-header">
+    <button type="button" class="calendar-nav" (click)="prevMonth()" aria-label="Previous month">&lt;</button>
+    <span class="calendar-month-year">{{ monthYear() }}</span>
+    <button type="button" class="calendar-nav" (click)="nextMonth()" aria-label="Next month">&gt;</button>
+  </div>
+  <div class="calendar-weekdays">
+    <span>Su</span>
+    <span>Mo</span>
+    <span>Tu</span>
+    <span>We</span>
+    <span>Th</span>
+    <span>F</span>
+    <span>Sa</span>
+  </div>
+  <div class="calendar-days">
+    <ng-container *ngFor="let week of weeks()">
+      <button
+        *ngFor="let day of week"
+        type="button"
+        class="calendar-day"
+        [class.empty]="day === null"
+        [class.selected]="isSelected(day)"
+        [disabled]="day === null"
+        (click)="toggleDate(day)"
+      >
+        {{ day ?? '' }}
+      </button>
+    </ng-container>
+  </div>
+</div>

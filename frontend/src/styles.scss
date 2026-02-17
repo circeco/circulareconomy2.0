@@ -21,6 +21,7 @@
 
 /* Sections that should align to top */
 body.snap-landing #title_section,
+body.snap-landing #circular_events,
 body.snap-landing #circular_action,
 body.snap-landing #circular_atlas_demo {
   scroll-snap-align: start;
