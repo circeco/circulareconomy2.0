@@ -170,12 +170,11 @@ export class NavbarComponent implements AfterViewInit, OnDestroy {
 
   get nonLandingTitle(): string {
     const url = this.router.url.split('?')[0].split('#')[0];
-    return url.startsWith('/events') ? 'Circular Events' : 'CIRCULAR ATLAS: Find circular solutions in your area!';
+    return url.startsWith('/events') ? 'Circular Events: Find circular solutions in your area!' : 'CIRCULAR ATLAS: Find circular solutions in your area!';
   }
 
   showSearchBar(): boolean {
-    const url = this.router.url.split('?')[0].split('#')[0];
-    return url.startsWith('/atlas') || url.startsWith('/events');
+    return false;
   }
 
   onSearchInput(ev: Event): void {

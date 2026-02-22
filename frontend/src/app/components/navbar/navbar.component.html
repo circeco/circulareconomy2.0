@@ -28,17 +28,6 @@
         </a>
         {{ nonLandingTitle }}
       </h4>
-      <div class="nav-search">
-        <span class="search-icon" aria-hidden="true">🔍</span>
-        <input
-          type="search"
-          class="search-input"
-          placeholder="Search places and events..."
-          [value]="searchService.query()"
-          (input)="onSearchInput($event)"
-          aria-label="Search places and events"
-        />
-      </div>
       <a id="icon" (click)="toggleHamburger()" aria-label="Toggle menu">&#9776;</a>
     </ng-template>
   </div>

@@ -20,6 +20,8 @@
         type="button"
         class="calendar-day"
         [class.empty]="day === null"
+        [class.today]="isToday(day)"
+        [class.has-event]="hasEvent(day)"
         [class.selected]="isSelected(day)"
         [disabled]="day === null"
         (click)="toggleDate(day)"

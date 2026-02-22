@@ -73,6 +73,16 @@
     visibility: hidden;
   }
 
+  &.today {
+    font-weight: 700;
+    border: 2px solid $brand-deep;
+  }
+
+  &.has-event {
+    background: #c8e6c9;
+    border: 2px solid $brand-deep;
+  }
+
   &.selected {
     background: $brand-deep;
     color: white;

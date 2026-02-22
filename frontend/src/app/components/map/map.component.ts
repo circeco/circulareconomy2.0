@@ -12,6 +12,7 @@ import {
   ChangeDetectorRef,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ActivatedRoute } from '@angular/router';
 import { MapService } from '../../services/map.service';
 import { PlacesFilter, Feature } from '../../services/places-filter.service';
 
@@ -45,7 +46,8 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     private map: MapService,
     private filter: PlacesFilter,
     private zone: NgZone,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private route: ActivatedRoute
   ) { }
 
   // Optional public API if the page wants to control the overlay
@@ -67,6 +69,14 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
     // Wait until map & layers are rendered at least once
     this.map.onReady().subscribe(() => {
+      // 0) Focus on place from route query param (e.g. /atlas?place=ID)
+      this.route.queryParams.subscribe((params) => {
+        const placeId = params['place'];
+        if (placeId && typeof placeId === 'string') {
+          this.focusOnPlaceById(placeId);
+        }
+      });
+
       // 1) Feed visible features into the store — run INSIDE Angular so UI updates immediately
       this.map.queryRenderedFeatures$().subscribe(fs => {
         this.zone.run(() => {
@@ -147,6 +157,23 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   }
 
   // ---------- Map interactions ----------
+  focusOnPlaceById(placeId: string): void {
+    const url = new URL('assets/data/circular_places.geojson', document.baseURI).toString();
+    fetch(url)
+      .then((r) => r.json())
+      .then((fc: { features?: Feature[] }) => {
+        const features = fc?.features ?? [];
+        const feat = features.find((f: Feature) => String((f as any)?.id ?? '') === String(placeId));
+        if (feat && feat.geometry?.coordinates) {
+          this.zone.run(() => {
+            this.focusOn(feat);
+            this.cdr.markForCheck();
+          });
+        }
+      })
+      .catch(() => {});
+  }
+
   focusOn(feature: Feature) {
     if (!feature.geometry?.coordinates) return;
     const props = this.propsOf(feature);

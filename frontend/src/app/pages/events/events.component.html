@@ -20,22 +20,50 @@
       </div>
 
       <div class="filter-section">
+        <h3>Search Events</h3>
+        <div class="search-box">
+          <span class="search-icon" aria-hidden="true">🔍</span>
+          <input
+            type="search"
+            class="search-input"
+            placeholder="Search places and events..."
+            [value]="searchService.query()"
+            (input)="onSearchInput($event)"
+            aria-label="Search places and events"
+          />
+        </div>
+      </div>
+
+      <div class="filter-section">
         <h3>Select Date</h3>
-        <app-calendar (selectedDatesChange)="onDatesChange($event)"></app-calendar>
+        <app-calendar
+          [eventDates]="eventDatesForCalendar"
+          [initialSelection]="initialCalendarSelection"
+          [initialViewDate]="initialCalendarViewDate"
+          (selectedDatesChange)="onDatesChange($event)"
+        ></app-calendar>
       </div>
     </aside>
 
     <div class="events-content">
-      <div class="events-scroll">
+      <div class="events-grid">
         <article
           *ngFor="let event of filteredEvents()"
           class="event-card"
+          [class.selected-event]="selectedEventId() === event.id"
         >
-          <img [src]="event.image" [alt]="event.title" class="event-card-image" />
           <div class="event-card-content">
-            <div class="category-tag">
-              <span class="heart-icon">♥</span>
-              <span>{{ event.category | titlecase }}</span>
+            <div class="event-card-header">
+              <div class="category-tag">{{ event.category | titlecase }}</div>
+              <button
+                type="button"
+                class="fav-btn"
+                [class.favorited]="eventFavorites.isFavorite(event.id)"
+                [attr.aria-label]="eventFavorites.isFavorite(event.id) ? 'Remove from favorites' : 'Add to favorites'"
+                (click)="toggleFavorite(event.id)"
+              >
+                {{ eventFavorites.isFavorite(event.id) ? '♥' : '♡' }}
+              </button>
             </div>
             <h2 class="event-title">{{ event.title }}</h2>
             <p class="event-description">{{ event.description }}</p>

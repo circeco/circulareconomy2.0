@@ -18,7 +18,6 @@ export const EVENT_CATEGORIES = [
   { id: 'recycle', label: 'Recycle', icon: '♻' },
   { id: 'share', label: 'Share', icon: '↗' },
   { id: 'reuse', label: 'Reuse', icon: '📦' },
-  { id: 'other', label: 'Other', icon: '🌿' },
 ] as const;
 
 @Injectable({ providedIn: 'root' })
@@ -30,7 +29,7 @@ export class EventsService {
       description:
         'Swap your gently used clothes and find new-to-you items. Bring clothes to trade and leave with a refreshed wardrobe.',
       category: 'share',
-      location: 'Community Center, 456 Oak Avenue',
+      location: 'Norrtullsgatan 31, Stockholm',
       time: 'Sat 10AM-2PM',
       image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop',
       date: new Date(2025, 11, 20),
@@ -42,7 +41,7 @@ export class EventsService {
       description:
         "Learn to fix electronics, furniture, and household items with expert volunteers. Bring your broken items and we'll help you repair them.",
       category: 'repair',
-      location: '456 Oak Avenue, Midtown',
+      location: 'Hagagatan 3, Stockholm',
       time: 'Sun 1PM-5PM',
       image: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400&h=300&fit=crop',
       date: new Date(2026, 1, 17),
@@ -53,8 +52,8 @@ export class EventsService {
       title: 'Garden Day',
       description:
         'Grow food together and learn about sustainable agriculture. Join us for planting, harvesting, and workshops.',
-      category: 'other',
-      location: '789 Green Lane, Northside',
+      category: 'share',
+      location: 'Nybrogatan 44, Stockholm',
       time: 'Wed 9AM-12PM',
       image: 'https://images.unsplash.com/photo-1592150621744-aca64f48394a?w=400&h=300&fit=crop',
       date: new Date(2026, 1, 18),
@@ -66,7 +65,7 @@ export class EventsService {
       description:
         'Educational center for proper recycling and waste reduction. Learn what can be recycled and how to reduce your waste footprint.',
       category: 'recycle',
-      location: '321 Eco Street, Westside',
+      location: 'Norrtullsgatan 9, Stockholm',
       time: 'Tue 2PM-4PM',
       image: 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=400&h=300&fit=crop',
       date: new Date(2026, 1, 25),
@@ -78,7 +77,7 @@ export class EventsService {
       description:
         'Borrow tools and equipment for your DIY projects. Membership is free for the community.',
       category: 'reuse',
-      location: '122 Main Street, Downtown',
+      location: 'Handenterminalen 5, Stockholm',
       time: 'Sat 9AM-3PM',
       image: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=400&h=300&fit=crop',
       date: new Date(2026, 2, 1),

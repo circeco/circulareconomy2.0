@@ -1,4 +1,4 @@
-import { Component, signal, computed, output } from '@angular/core';
+import { Component, signal, computed, output, input, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -10,9 +10,23 @@ import { CommonModule } from '@angular/common';
 })
 export class CalendarComponent {
   selectedDatesChange = output<Date[]>();
+  eventDates = input<Date[]>([]);
+  initialSelection = input<Date[]>([]);
+  initialViewDate = input<Date | null>(null);
 
   private readonly _viewDate = signal(new Date());
   private readonly _selectedDates = signal<Set<number>>(new Set());
+
+  constructor() {
+    effect(() => {
+      const dates = this.initialSelection();
+      if (dates?.length) this.setSelectedDates(dates);
+    }, { allowSignalWrites: true });
+    effect(() => {
+      const d = this.initialViewDate();
+      if (d) this._viewDate.set(new Date(d));
+    }, { allowSignalWrites: true });
+  }
 
   readonly viewDate = this._viewDate.asReadonly();
   readonly selectedDates = this._selectedDates.asReadonly();
@@ -76,6 +90,24 @@ export class CalendarComponent {
     const d = this._viewDate();
     const key = new Date(d.getFullYear(), d.getMonth(), day).getTime();
     return this._selectedDates().has(key);
+  }
+
+  isToday(day: number | null): boolean {
+    if (day === null) return false;
+    const d = this._viewDate();
+    const today = new Date();
+    return d.getFullYear() === today.getFullYear() && d.getMonth() === today.getMonth() && day === today.getDate();
+  }
+
+  hasEvent(day: number | null): boolean {
+    if (day === null) return false;
+    const dates = this.eventDates();
+    const d = this._viewDate();
+    const dayStart = new Date(d.getFullYear(), d.getMonth(), day).getTime();
+    return dates.some(
+      (ev) =>
+        new Date(ev.getFullYear(), ev.getMonth(), ev.getDate()).getTime() === dayStart
+    );
   }
 
   getSelectedDates(): Date[] {
