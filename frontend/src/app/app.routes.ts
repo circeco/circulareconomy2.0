@@ -37,5 +37,12 @@ export const routes: Routes = [
     canActivate: [adminGuard],
     title: 'Admin'
   },
+  {
+    path: 'admin/review',
+    loadComponent: () =>
+      import('./pages/admin-review/admin-review.component').then(m => m.AdminReviewComponent),
+    canActivate: [adminGuard],
+    title: 'Review Queue'
+  },
   { path: '**', redirectTo: '' },
 ];

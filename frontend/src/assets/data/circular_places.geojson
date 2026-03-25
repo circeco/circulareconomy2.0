@@ -641,7 +641,7 @@
             "properties": {
                 "ADDRESS_LINE1": "Riddargatan 29",
                 "CITY": "Stockholm",
-                "DESCRIPTION": "Second hand bikes that are refurbished with recycled bike pieces also reparing of bikes ",
+                "DESCRIPTION": "Second hand bikes that are refurbished with recycled bike pieces also repairing bikes ",
                 "STORE_NAME": "Second Hand Bike",
                 "STORE_TYPE": "Reuse & Repair to buy and to give",
                 "WEB": "www.secondhandbike.se/",
@@ -665,7 +665,7 @@
                 "CITY": "Stockholm",
                 "STORE_NAME": "iRecycle - Begagnade Cyklar",
                 "STORE_TYPE": "Reuse & Repair to buy and to give",
-                "DESCRIPTION": "Second hand bikes that are refurbished with recycled bike pieces also reparing of bikes ",
+                "DESCRIPTION": "Second hand bikes that are refurbished with recycled bike pieces also repairing bikes ",
                 "WEB": "www.irecycle.se",
                 "CATEGORIES": [
                     "cycling-sports"
@@ -882,8 +882,8 @@
             "type": "Feature",
             "properties": {
                 "ADDRESS_LINE1": "Fredsgatan 1",
-                "CITY": "Sundyberg",
-                "DESCRIPTION": "Second hand homware, forniture and Antik",
+                "CITY": "Sundbyberg",
+                "DESCRIPTION": "Second hand homeware, furniture and antiques",
                 "STORE_NAME": "Verdandi Second Hand",
                 "STORE_TYPE": "Reuse to buy",
                 "WEB": "www.verdandi.org",

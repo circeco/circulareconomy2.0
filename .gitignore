@@ -9,3 +9,10 @@ frontend/frontend/
 !.env.template
 .DS_Store
 *.log
+# Firebase service account keys (never commit)
+*firebase-adminsdk*.json
+serviceAccount*.json
+
+# Local secrets folder: only README is tracked; all other files stay on your machine
+secrets/*
+!secrets/README.md

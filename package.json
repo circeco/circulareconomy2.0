@@ -7,7 +7,9 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "sass": "sass assets/scss/main.scss assets/css/main.css --style=expanded --embed-source-map --error-css",
     "sass:watch": "npm run sass -- --watch",
-    "sass:prod": "sass assets/scss/main.scss assets/css/main.css --style=compressed --no-source-map"
+    "sass:prod": "sass assets/scss/main.scss assets/css/main.css --style=compressed --no-source-map",
+    "seed:firestore": "node tools/seed-firestore.js",
+    "admin:set-claim": "node tools/set-admin-claim.js"
   },
   "keywords": [],
   "author": "",
@@ -18,6 +20,7 @@
     "@tailwindcss/typography": "^0.5.19",
     "autoprefixer": "^10.4.21",
     "baseline-browser-mapping": "^2.9.11",
+    "firebase-admin": "^13.5.0",
     "postcss": "^8.5.6",
     "sass": "^1.92.1",
     "tailwindcss": "^4.1.13"

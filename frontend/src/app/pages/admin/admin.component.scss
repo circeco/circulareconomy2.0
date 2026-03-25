@@ -1,5 +1,6 @@
 .admin-shell {
-  padding: 3rem 1.5rem;
+  /* Clear fixed .topnav (60px) — see :root --header-offset in styles.scss */
+  padding: calc(var(--header-offset, 60px) + 1.5rem) 1.5rem 3rem;
   max-width: 900px;
   margin: 0 auto;
 

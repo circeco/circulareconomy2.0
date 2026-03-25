@@ -1,5 +1,5 @@
 import { FooterComponent } from '../../components/footer/footer.component';
-import { Component } from '@angular/core';
+import { Component, DestroyRef, inject } from '@angular/core';
 import { AfterViewInit } from '@angular/core';
 import { OnDestroy } from '@angular/core';
 import { NgZone } from '@angular/core';
@@ -9,6 +9,7 @@ import { QueryList } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { firstValueFrom, Subscription } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DEMO_VIDEO_URL } from '../../config/media';
 import { EventsService, EventItem } from '../../services/events.service';
 import { FeaturedPlacesService, FeaturedPlace } from '../../services/featured-places.service';
@@ -40,6 +41,7 @@ export class LandingComponent implements AfterViewInit, OnDestroy {
   private ghostItems: HTMLElement[] = [];
   private rafId: number | null = null;
   private pending = false;
+  private destroyRef = inject(DestroyRef);
 
   constructor(
     private zone: NgZone,
@@ -51,10 +53,12 @@ export class LandingComponent implements AfterViewInit, OnDestroy {
     private favoritesService: FavoritesService,
     public searchService: SearchService
   ) {
-    this.allEvents = this.eventsService.getEvents();
-    this.events = [...this.allEvents]
-      .sort((a, b) => a.date.getTime() - b.date.getTime())
-      .slice(0, 4);
+    this.eventsService.events$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((all) => {
+      this.allEvents = all;
+      this.events = [...all]
+        .sort((a, b) => a.date.getTime() - b.date.getTime())
+        .slice(0, 4);
+    });
     this.featuredPlacesService.getFeaturedPlaces().subscribe((places) => {
       this.featuredPlaces = places;
       setTimeout(() => this.mountPlaceHearts(), 0);

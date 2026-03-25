@@ -1,0 +1,54 @@
+rules_version = '2';
+// Deploy: from repo root, `firebase deploy --only firestore:rules` (after `firebase login` & `firebase use <project>`)
+// Full setup: see FIREBASE_ADMIN_AND_RULES.md
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /** True only for users with custom claim { "admin": true } — set via Admin SDK (see tools/set-admin-claim.js). */
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.admin == true;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // --- App catalogue (mirrors frontend collections) ---
+
+    /** Public site only reads approved rows; query must use where status == approved */
+    match /events/{eventId} {
+      allow read: if resource.data.status == 'approved';
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /places/{placeId} {
+      allow read: if resource.data.status == 'approved';
+      allow create, update, delete: if isAdmin();
+    }
+
+    /** City metadata: public read; writes admin-only */
+    match /cities/{cityId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    /** Moderation queue: admin only */
+    match /reviewQueue/{queueId} {
+      allow read, create, update, delete: if isAdmin();
+    }
+
+    // --- User data (existing app behaviour) ---
+    match /users/{uid}/favourites/{docId} {
+      allow read, write: if isOwner(uid);
+    }
+
+    // Default deny (everything not matched above)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

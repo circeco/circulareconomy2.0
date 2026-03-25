@@ -1,7 +1,9 @@
-import { Component, signal, computed, OnInit } from '@angular/core';
-import { CommonModule, AsyncPipe } from '@angular/common';
+import { Component, DestroyRef, inject, signal, computed } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
+import { combineLatest } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   EventsService,
   EventItem,
@@ -15,11 +17,13 @@ import { CalendarComponent } from '../../components/calendar/calendar.component'
 @Component({
   selector: 'events-page',
   standalone: true,
-  imports: [CommonModule, AsyncPipe, CalendarComponent],
+  imports: [CommonModule, CalendarComponent],
   templateUrl: './events.component.html',
   styleUrls: ['./events.component.scss'],
 })
-export class EventsComponent implements OnInit {
+export class EventsComponent {
+  private destroyRef = inject(DestroyRef);
+
   readonly categories = EVENT_CATEGORIES;
   selectedCategory = signal<string>('all');
   selectedDateTimes = signal<Set<number>>(new Set());
@@ -38,38 +42,38 @@ export class EventsComponent implements OnInit {
     private router: Router,
     private route: ActivatedRoute
   ) {
-    this.events = this.eventsService.getEvents();
-    const dates = new Set<string>();
-    this.events.forEach((e) => {
-      const key = new Date(e.date.getFullYear(), e.date.getMonth(), e.date.getDate()).toISOString();
-      dates.add(key);
-    });
-    this.eventDatesForCalendar = Array.from(dates).map((k) => new Date(k));
-  }
+    combineLatest([this.eventsService.events$, this.route.queryParams])
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(([events, params]) => {
+        this.events = events;
+        const dates = new Set<string>();
+        events.forEach((e) => {
+          const key = new Date(e.date.getFullYear(), e.date.getMonth(), e.date.getDate()).toISOString();
+          dates.add(key);
+        });
+        this.eventDatesForCalendar = Array.from(dates).map((k) => new Date(k));
 
-  ngOnInit(): void {
-    this.route.queryParams.subscribe((params) => {
-      const dateStr = params['date'];
-      const eventId = params['event'];
-      let dateToUse: Date | null = null;
-      if (dateStr && typeof dateStr === 'string') {
-        const d = new Date(dateStr);
-        if (!isNaN(d.getTime())) dateToUse = d;
-      }
-      if (eventId && typeof eventId === 'string') {
-        this.selectedEventId.set(eventId);
-        if (!dateToUse) {
-          const ev = this.events.find((e) => e.id === eventId);
-          if (ev) dateToUse = ev.date;
+        const dateStr = params['date'];
+        const eventId = params['event'];
+        let dateToUse: Date | null = null;
+        if (dateStr && typeof dateStr === 'string') {
+          const d = new Date(dateStr);
+          if (!isNaN(d.getTime())) dateToUse = d;
         }
-      }
-      if (dateToUse) {
-        const dayStart = new Date(dateToUse.getFullYear(), dateToUse.getMonth(), dateToUse.getDate());
-        this.selectedDateTimes.set(new Set([dayStart.getTime()]));
-        this.initialCalendarSelection = [dayStart];
-        this.initialCalendarViewDate = dayStart;
-      }
-    });
+        if (eventId && typeof eventId === 'string') {
+          this.selectedEventId.set(eventId);
+          if (!dateToUse) {
+            const ev = this.events.find((e) => e.id === eventId);
+            if (ev) dateToUse = ev.date;
+          }
+        }
+        if (dateToUse) {
+          const dayStart = new Date(dateToUse.getFullYear(), dateToUse.getMonth(), dateToUse.getDate());
+          this.selectedDateTimes.set(new Set([dayStart.getTime()]));
+          this.initialCalendarSelection = [dayStart];
+          this.initialCalendarViewDate = dayStart;
+        }
+      });
   }
 
   async toggleFavorite(eventId: string): Promise<void> {
