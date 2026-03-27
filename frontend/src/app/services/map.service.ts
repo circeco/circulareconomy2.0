@@ -28,7 +28,12 @@ export class MapService {
   private click$ = new Subject<{ feature: any; coords: [number, number] }>();
 
   private readonly STOCKHOLM: [number, number] = [18.072, 59.325];
-  private readonly BOUNDS: [[number, number], [number, number]] = [[15.072078, 58.247414], [19.180375, 60.008548]];
+  private readonly EMPTY_FC: { type: 'FeatureCollection'; features: any[] } = {
+    type: 'FeatureCollection',
+    features: [],
+  };
+  private pendingPlacesData: { type: 'FeatureCollection'; features: any[] } = this.EMPTY_FC;
+  private pendingCityCenter: [number, number] | null = null;
 
   constructor(private zone: NgZone) { }
 
@@ -48,8 +53,7 @@ export class MapService {
         container,
         style: 'mapbox://styles/circeco/ck5zjodry0ujw1ioaiqvk9kjs',
         center: this.STOCKHOLM,
-        zoom: 10,
-        maxBounds: this.BOUNDS
+        zoom: 10
       });
 
       this.map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
@@ -66,11 +70,9 @@ export class MapService {
   }
 
   private onLoad() {
-    const DATA_URL = new URL('assets/data/circular_places.geojson', document.baseURI).toString();
-
     try {
       if (!this.getSource('places')) {
-        this.map.addSource('places', { type: 'geojson', data: DATA_URL });
+        this.map.addSource('places', { type: 'geojson', data: this.EMPTY_FC });
       }
       if (!this.getLayer('places')) {
         this.map.addLayer({
@@ -93,7 +95,11 @@ export class MapService {
           paint: { 'circle-radius': 5, 'circle-color': '#FF5252' }
         });
       }
-      this.enrichPlacesSource(DATA_URL);
+      // Apply latest queued places once source exists.
+      this.setPlacesData(this.pendingPlacesData);
+      if (this.pendingCityCenter) {
+        this.map.flyTo({ center: this.pendingCityCenter, zoom: 11 });
+      }
       this.applyFilters(); // ensures stored favorites recolor once layers exist
       window.dispatchEvent(new Event('map:favorites-source-ready'));
     } catch (e) {
@@ -240,7 +246,31 @@ export class MapService {
     });
   }
 
-  flyTo(center: [number, number], zoom = 14) { this.map.flyTo({ center, zoom }); }
+  flyTo(center: [number, number], zoom = 14) {
+    if (!this.map?.flyTo) return;
+    this.map.flyTo({ center, zoom });
+  }
+
+  flyToCity(center: [number, number], zoom = 11) {
+    this.pendingCityCenter = center;
+    if (!this.map?.flyTo) return;
+    this.map.flyTo({ center, zoom });
+  }
+
+  setPlacesData(fc: { type: 'FeatureCollection'; features: any[] }) {
+    const features = (fc?.features || []).map((f: any) => {
+      const props = f?.properties || {};
+      const coords = (f?.geometry?.coordinates || []) as [number, number];
+      const key = this.computePlaceKey(props, coords, f?.id);
+      if (key && !props.PLACE_KEY) props.PLACE_KEY = key;
+      return { ...f, properties: props };
+    });
+    const next = { type: 'FeatureCollection' as const, features };
+    this.pendingPlacesData = next;
+    const src = this.getSource('places');
+    if (src?.setData) src.setData(next);
+  }
+
   openPopup(center: [number, number], content: HTMLElement) {
     document.querySelector('.mapboxgl-popup')?.remove();
     new mapboxgl.Popup({ closeOnClick: true }).setLngLat(center).setDOMContent(content).addTo(this.map);
@@ -250,6 +280,8 @@ export class MapService {
   destroy() {
     window.removeEventListener('favorites:update', this.onFavoritesUpdate);
     this.map?.remove(); this.map = null; this.loaded = false; this.placesReady = false;
+    this.pendingPlacesData = this.EMPTY_FC;
+    this.pendingCityCenter = null;
   }
 
   setFavoriteKeys(keys: Set<string>) {
@@ -279,23 +311,6 @@ export class MapService {
       this.map.setFilter('places', expr);
     }
     this.applyPaint();
-  }
-
-  private async enrichPlacesSource(url: string) {
-    try {
-      const res = await fetch(url);
-      const fc = await res.json();
-      const features = (fc.features || []).map((f: any) => {
-        const props = f.properties || {};
-        const key = this.computePlaceKey(props, f.geometry?.coordinates, f.id);
-        if (key) props.PLACE_KEY = key;
-        return { ...f, properties: props };
-      });
-      const src = this.getSource('places');
-      if (src?.setData) src.setData({ ...fc, features });
-    } catch (e) {
-      console.warn('[map] failed to enrich places source with PLACE_KEY', e);
-    }
   }
 
   private computePlaceKey(props: any, coords?: [number, number], legacyId?: string | number | null) {

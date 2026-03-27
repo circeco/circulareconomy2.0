@@ -56,22 +56,35 @@ export class EventsComponent {
         const dateStr = params['date'];
         const eventId = params['event'];
         let dateToUse: Date | null = null;
+        let hasExplicitDateFilter = false;
         if (dateStr && typeof dateStr === 'string') {
           const d = new Date(dateStr);
-          if (!isNaN(d.getTime())) dateToUse = d;
+          if (!isNaN(d.getTime())) {
+            dateToUse = d;
+            hasExplicitDateFilter = true;
+          }
         }
         if (eventId && typeof eventId === 'string') {
           this.selectedEventId.set(eventId);
           if (!dateToUse) {
             const ev = this.events.find((e) => e.id === eventId);
-            if (ev) dateToUse = ev.date;
+            if (ev) {
+              dateToUse = ev.date;
+              hasExplicitDateFilter = true;
+            }
           }
         }
-        if (dateToUse) {
+        if (hasExplicitDateFilter && dateToUse) {
           const dayStart = new Date(dateToUse.getFullYear(), dateToUse.getMonth(), dateToUse.getDate());
           this.selectedDateTimes.set(new Set([dayStart.getTime()]));
           this.initialCalendarSelection = [dayStart];
           this.initialCalendarViewDate = dayStart;
+        } else {
+          // Default state: no date selected -> show all events.
+          this.selectedDateTimes.set(new Set());
+          this.initialCalendarSelection = [];
+          this.initialCalendarViewDate = null;
+          if (!eventId) this.selectedEventId.set(null);
         }
       });
   }

@@ -6,6 +6,7 @@ import { AuthService } from './services/auth.service';
 import { FavoritesService } from './services/favorites.service';
 import { LoginComponent } from './components/login/login.component';
 import { NavbarComponent } from './components/navbar/navbar.component';
+import { CitySwitcherComponent } from './components/city-switcher/city-switcher.component';
 
 declare global {
   interface Window {
@@ -17,7 +18,7 @@ declare global {
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, NavbarComponent, LoginComponent],
+  imports: [CommonModule, RouterOutlet, NavbarComponent, LoginComponent, CitySwitcherComponent],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
 })

@@ -12,17 +12,22 @@
     </div>
     <div id="subtitle">alternative solutions for sustainable consumption</div>
     <div class="hero-search">
-      <div class="hero-search-bar">
-        <span class="search-icon" aria-hidden="true">🔍</span>
-        <input
-          type="search"
-          class="hero-search-input"
-          placeholder="Search places and events..."
-          [value]="searchService.query()"
-          (input)="onSearchInput($event)"
-          (keydown.enter)="goToMapPage()"
-          aria-label="Search places and events"
-        />
+      <div class="hero-search-row">
+        <div class="hero-search-bar">
+          <span class="search-icon" aria-hidden="true">🔍</span>
+          <input
+            type="search"
+            class="hero-search-input"
+            placeholder="Search places and events..."
+            [value]="searchService.query()"
+            (input)="onSearchInput($event)"
+            (keydown.enter)="goToMapPage()"
+            aria-label="Search places and events"
+          />
+        </div>
+        <div class="hero-city-switch">
+          <app-city-switcher [variant]="'inline'"></app-city-switcher>
+        </div>
       </div>
     </div>
   </div>
@@ -84,27 +89,6 @@
   </div>
 
   <div class="events-header">
-    <h2>Featured Circular Places</h2>
-    <a (click)="goToMapPage()" class="view-all-link" role="button" tabindex="0">View map →</a>
-  </div>
-  <div class="places-container">
-    <div *ngFor="let place of featuredPlaces" class="place-card" role="button" tabindex="0" (click)="goToMapWithPlace(place.id)" (keydown.enter)="goToMapWithPlace(place.id)">
-      <div class="place-card-content">
-        <div class="place-card-header">
-          <div class="category-tag">{{ place.label || place.storeType | titlecase }}</div>
-          <button type="button" class="fav-btn" #placeHeartBtn (click)="$event.stopPropagation()">♡</button>
-        </div>
-        <h3 class="place-title">{{ place.name }}</h3>
-        <p class="place-description">{{ place.description }}</p>
-        <p class="place-address">
-          <span class="pin-icon" aria-hidden="true">📍</span>
-          {{ place.address }}, {{ place.storeType }}
-        </p>
-      </div>
-    </div>
-  </div>
-
-  <div class="events-header">
     <h2>Upcoming Circular Events</h2>
     <a (click)="goToEventsPage()" class="view-all-link" role="button" tabindex="0">View all circular events →</a>
   </div>
@@ -124,15 +108,36 @@
           </button>
         </div>
         <h3 class="event-title">{{ event.title }}</h3>
-      <p class="event-description">{{ event.description }}</p>
-      <p class="event-location">
-        <span class="pin-icon" aria-hidden="true">📍</span>
-        {{ event.location }}
-      </p>
-      <p class="event-time">
-        <span class="clock-icon" aria-hidden="true">🕐</span>
-        {{ event.time }}
-      </p>
+        <p class="event-description">{{ event.description }}</p>
+        <p class="event-location">
+          <span class="pin-icon" aria-hidden="true">📍</span>
+          {{ event.location }}
+        </p>
+        <p class="event-time">
+          <span class="clock-icon" aria-hidden="true">🕐</span>
+          {{ event.time }}
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="events-header">
+    <h2>Featured Circular Places</h2>
+    <a (click)="goToMapPage()" class="view-all-link" role="button" tabindex="0">View map →</a>
+  </div>
+  <div class="places-container">
+    <div *ngFor="let place of featuredPlaces" class="place-card" role="button" tabindex="0" (click)="goToMapWithPlace(place.id)" (keydown.enter)="goToMapWithPlace(place.id)">
+      <div class="place-card-content">
+        <div class="place-card-header">
+          <div class="category-tag">{{ place.label || place.storeType | titlecase }}</div>
+          <button type="button" class="fav-btn" #placeHeartBtn (click)="$event.stopPropagation()">♡</button>
+        </div>
+        <h3 class="place-title">{{ place.name }}</h3>
+        <p class="place-description">{{ place.description }}</p>
+        <p class="place-address">
+          <span class="pin-icon" aria-hidden="true">📍</span>
+          {{ place.address }}, {{ place.storeType }}
+        </p>
       </div>
     </div>
   </div>

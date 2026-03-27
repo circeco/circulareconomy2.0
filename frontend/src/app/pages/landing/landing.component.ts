@@ -17,11 +17,12 @@ import { AuthService } from '../../services/auth.service';
 import { EventFavoritesService } from '../../services/event-favorites.service';
 import { FavoritesService } from '../../services/favorites.service';
 import { SearchService } from '../../services/search.service';
+import { CitySwitcherComponent } from '../../components/city-switcher/city-switcher.component';
 
 @Component({
   selector: 'landing-page',
   standalone: true,
-  imports: [CommonModule, FooterComponent],
+  imports: [CommonModule, FooterComponent, CitySwitcherComponent],
   templateUrl: './landing.component.html',
   styleUrls: ['./landing.component.scss'],
 })

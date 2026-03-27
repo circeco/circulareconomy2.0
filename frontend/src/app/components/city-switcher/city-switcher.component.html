@@ -1,0 +1,16 @@
+<div *ngIf="visible()" class="city-switcher" [class.inline]="variant() === 'inline'" aria-label="City switcher">
+  <select
+    class="city-select"
+    [ngModel]="cityContext.cityId()"
+    (ngModelChange)="cityContext.setCityId($event)"
+  >
+    <ng-container *ngIf="(cities.cities$ | async) as cs; else loading">
+      <option *ngFor="let c of cs" [value]="c.id">{{ c.name }}</option>
+      <option *ngIf="cs.length === 0" value="stockholm">Stockholm</option>
+    </ng-container>
+    <ng-template #loading>
+      <option [value]="cityContext.cityId()">Loading cities…</option>
+    </ng-template>
+  </select>
+</div>
+

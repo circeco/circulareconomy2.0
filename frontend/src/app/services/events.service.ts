@@ -1,10 +1,11 @@
 import { inject, Injectable } from '@angular/core';
-import { Firestore, collection, query, where, limit, orderBy } from '@angular/fire/firestore';
+import { Firestore, collection, query, where, limit } from '@angular/fire/firestore';
 import { collectionData } from '@angular/fire/firestore';
-import { Observable, of } from 'rxjs';
+import { Observable, of, switchMap } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
 import { FS_PATHS } from '../data/firestore-paths';
+import { CityContextService } from './city-context.service';
 
 export interface EventItem {
   id: string;
@@ -34,6 +35,7 @@ const UI_CATEGORY_SLUGS = EVENT_CATEGORIES.map((c) => c.id).filter((id) => id !=
 @Injectable({ providedIn: 'root' })
 export class EventsService {
   private fs = inject(Firestore);
+  private cityContext = inject(CityContextService);
 
   private readonly staticEvents: EventItem[] = [
     {
@@ -103,24 +105,30 @@ export class EventsService {
    * Query must include `where('status','==','approved')` so Firestore rules can allow
    * only approved docs (queries must not be able to return documents the user cannot read).
    */
-  readonly events$: Observable<EventItem[]> = collectionData(
-    query(
-      collection(this.fs, FS_PATHS.events),
-      where('status', '==', 'approved'),
-      limit(100)
-    ),
-    { idField: 'id' }
-  ).pipe(
-    map((docs: Record<string, unknown>[]) => {
-      const approved = docs
-        .map((d) => this.firestoreDocToEventItem(d))
-        .filter((e): e is EventItem => !!e);
-      return this.mergeAndSort(this.staticEvents, approved);
-    }),
-    catchError((err) => {
-      console.warn('[events] Firestore read failed; using static events only', err);
-      return of([...this.staticEvents]);
-    })
+  readonly events$: Observable<EventItem[]> = this.cityContext.cityId$.pipe(
+    switchMap((cityId) =>
+      collectionData(
+        query(
+          collection(this.fs, FS_PATHS.events),
+          where('status', '==', 'approved'),
+          where('cityId', '==', cityId),
+          limit(100)
+        ),
+        { idField: 'id' }
+      ).pipe(
+        map((docs: Record<string, unknown>[]) => {
+          const approved = docs
+            .map((d) => this.firestoreDocToEventItem(d))
+            .filter((e): e is EventItem => !!e);
+          const staticForCity = cityId === 'stockholm' ? this.staticEvents : [];
+          return this.mergeAndSort(staticForCity, approved);
+        }),
+        catchError((err) => {
+          console.warn('[events] Firestore read failed; using city fallback', err);
+          return of(cityId === 'stockholm' ? [...this.staticEvents] : []);
+        })
+      )
+    )
   );
 
   /** @deprecated Prefer `events$` for Firestore-backed list */

@@ -13,8 +13,12 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
+import { Subscription, combineLatest } from 'rxjs';
 import { MapService } from '../../services/map.service';
 import { PlacesFilter, Feature } from '../../services/places-filter.service';
+import { CityContextService } from '../../services/city-context.service';
+import { CitiesService } from '../../services/cities.service';
+import { FeaturedPlacesService } from '../../services/featured-places.service';
 
 @Component({
   selector: 'atlas-map',
@@ -41,13 +45,17 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
   // queue hearts until favourites service ready
   private heartMountQueue: Array<{ btn: HTMLButtonElement, place: any }> = [];
+  private subs: Subscription[] = [];
 
   constructor(
     private map: MapService,
     private filter: PlacesFilter,
     private zone: NgZone,
     private cdr: ChangeDetectorRef,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private cityContext: CityContextService,
+    private cities: CitiesService,
+    private featuredPlaces: FeaturedPlacesService
   ) { }
 
   // Optional public API if the page wants to control the overlay
@@ -98,9 +106,23 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       // Category filter stream already wired in ngOnInit
     });
 
-    // Build enrichment index (independent of map readiness)
-    fetch(new URL('assets/data/circular_places.geojson', document.baseURI).toString())
-      .then(r => r.json()).then(fc => this.filter.buildIndex(fc));
+    this.subs.push(
+      this.featuredPlaces.getGeoJsonForCurrentCity().subscribe((fc) => {
+        this.map.setPlacesData(fc);
+        this.filter.buildIndex(fc as any);
+      })
+    );
+
+    this.subs.push(
+      combineLatest([this.cityContext.cityId$, this.cities.cities$]).subscribe(([cityId, cities]) => {
+        const city = cities.find((c) => c.id === cityId);
+        const lat = city?.center?.lat;
+        const lng = city?.center?.lng;
+        if (typeof lat === 'number' && typeof lng === 'number' && isFinite(lat) && isFinite(lng)) {
+          this.map.flyToCity([lng, lat], 11);
+        }
+      })
+    );
 
     // 3) Update the displayed list when filter output changes — run INSIDE Angular
     this.filter.filteredFeatures$.subscribe(list => {
@@ -121,6 +143,8 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     window.removeEventListener('favorites:update', this.onFavUpdate);
     window.removeEventListener('favorites:auth', this.onFavAuth);
     window.removeEventListener('favorites-ready', this.onFavReady);
+    this.subs.forEach((s) => s.unsubscribe());
+    this.subs = [];
     this.map.destroy();
   }
 
@@ -158,20 +182,12 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
   // ---------- Map interactions ----------
   focusOnPlaceById(placeId: string): void {
-    const url = new URL('assets/data/circular_places.geojson', document.baseURI).toString();
-    fetch(url)
-      .then((r) => r.json())
-      .then((fc: { features?: Feature[] }) => {
-        const features = fc?.features ?? [];
-        const feat = features.find((f: Feature) => String((f as any)?.id ?? '') === String(placeId));
-        if (feat && feat.geometry?.coordinates) {
-          this.zone.run(() => {
-            this.focusOn(feat);
-            this.cdr.markForCheck();
-          });
-        }
-      })
-      .catch(() => {});
+    const feat = this.filteredList.find((f: Feature) => String((f as any)?.id ?? '') === String(placeId));
+    if (!feat || !feat.geometry?.coordinates) return;
+    this.zone.run(() => {
+      this.focusOn(feat);
+      this.cdr.markForCheck();
+    });
   }
 
   focusOn(feature: Feature) {

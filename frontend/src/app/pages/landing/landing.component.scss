@@ -13,6 +13,28 @@
   padding: 0 5%;
 }
 
+.hero-search-row {
+  width: 100%;
+  max-width: 600px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  @media (max-width: 720px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+.hero-city-switch {
+  display: flex;
+  justify-content: flex-end;
+
+  @media (max-width: 720px) {
+    justify-content: center;
+  }
+}
+
 .hero-search-bar {
   display: flex;
   align-items: center;
