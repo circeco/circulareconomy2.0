@@ -13,16 +13,7 @@ export class MapService {
   private favoriteKeys = new Set<string>();
   private favoritesVisible = true;
   private lastCategorySet = new Set<string>();
-  private readonly baseColorExpr: any = [
-    'match', ['get', 'STORE_TYPE'],
-    'reuse', '#FF5252',
-    'recycle', 'rgb(69,129,142)',
-    'refuse', '#FF8C00',
-    'rethink', '#9ACD32',
-    'remake', '#008000',
-    'repair', '#008000',
-    'rgb(69,129,142)'
-  ];
+  private readonly baseColor = 'rgb(69,129,142)';
 
   private ready$ = new ReplaySubject<boolean>(1); // emits when BOTH are true
   private click$ = new Subject<{ feature: any; coords: [number, number] }>();
@@ -80,7 +71,7 @@ export class MapService {
           layout: { visibility: 'visible' },
           paint: {
             'circle-radius': 5,
-            'circle-color': this.baseColorExpr
+            'circle-color': this.baseColor
           }
         });
       }
@@ -331,7 +322,11 @@ export class MapService {
   private normString(s?: string | null) {
     return String(s || '').trim().toLowerCase().replace(/\s+/g,' ').replace(/[,\.;:]+$/,'');
   }
-  private normAddress(addr?: string | null) { return this.normString(addr); }
+  private normAddress(addr?: string | null) {
+    const s = this.normString(addr);
+    const m = s.match(/^(\d+[a-z]?)\s+(.+)$/i);
+    return m ? `${m[2]} ${m[1]}`.trim().replace(/\s+/g, ' ') : s;
+  }
 
   private onFavoritesUpdate = (ev: any) => {
     try {
@@ -349,8 +344,8 @@ export class MapService {
       ? ['case',
           ['in', ['get', 'PLACE_KEY'], ['literal', favList]],
           '#FF5252',
-          this.baseColorExpr]
-      : this.baseColorExpr;
+          this.baseColor]
+      : this.baseColor;
     this.map.setPaintProperty('places', 'circle-color', colorExpr);
   }
 }

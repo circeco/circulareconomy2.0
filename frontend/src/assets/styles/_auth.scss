@@ -47,6 +47,19 @@
       padding: .5rem;
       min-width: 200px;
       box-shadow: 0 6px 20px rgba(0, 0, 0, .12);
+
+      .dropdown-item {
+        display: block;
+        width: 100%;
+        text-align: left;
+      }
+
+      .admin-link {
+        color: #0c343d;
+        text-decoration: none;
+        font-size: 0.92rem;
+        padding: 0.2rem 0;
+      }
     }
 
     &:hover .menu { display: block; }

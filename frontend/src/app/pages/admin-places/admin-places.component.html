@@ -1,0 +1,64 @@
+<section class="catalog-shell">
+  <header class="catalog-header">
+    <h1>Place Catalogue</h1>
+  </header>
+
+  <section class="toolbar">
+    <label class="search">
+      <span>Search</span>
+      <input type="text" [ngModel]="searchText()" (ngModelChange)="setSearchText($event)" placeholder="name, address, website..." />
+    </label>
+    <div class="toolbar-action">
+      <span class="toolbar-label-spacer" aria-hidden="true">Action</span>
+      <button type="button" class="refresh-btn" (click)="refresh()" [disabled]="loading()">Refresh</button>
+    </div>
+  </section>
+
+  <p *ngIf="error() as err" class="error" role="alert">{{ err }}</p>
+  <p *ngIf="loading()">Loading places…</p>
+
+  <ul class="rows" *ngIf="!loading()">
+    <li class="empty" *ngIf="filteredRows().length === 0">No places for this city and filter.</li>
+    <li class="row" *ngFor="let row of filteredRows()">
+      <div class="row-head">
+        <div>
+          <div class="name">{{ row.name || '(missing name)' }}</div>
+          <div class="meta">{{ row.address || '(missing address)' }}</div>
+          <a class="meta-link" *ngIf="row.website" [href]="row.website" target="_blank" rel="noopener noreferrer">{{ row.website }}</a>
+          <div class="meta" *ngIf="row.description">{{ row.description }}</div>
+          <div class="chips" *ngIf="showList(row.actionTags).length > 0">
+            <span class="chip-label">Action tags:</span>
+            <span class="chip" *ngFor="let t of showList(row.actionTags)">{{ t }}</span>
+          </div>
+          <div class="chips" *ngIf="displaySectorCategories(row.sectorCategories).length > 0">
+            <span class="chip-label">Categories:</span>
+            <span class="chip" *ngFor="let c of displaySectorCategories(row.sectorCategories)">{{ c }}</span>
+          </div>
+        </div>
+        <div class="actions">
+          <button type="button" [disabled]="isBusy(row.id)" (click)="openEdit(row)">Edit</button>
+          <button type="button" class="danger" [disabled]="isBusy(row.id)" (click)="remove(row)">Delete</button>
+        </div>
+      </div>
+
+      <div class="editor" *ngIf="editingId() === row.id && editForm() as f">
+        <div class="grid">
+          <label><span>Name</span><input type="text" [(ngModel)]="f.name" /></label>
+          <label><span>Address</span><input type="text" [(ngModel)]="f.address" /></label>
+          <label><span>Location Name</span><input type="text" [(ngModel)]="f.locationName" /></label>
+          <label><span>Website</span><input type="url" [(ngModel)]="f.website" /></label>
+          <label class="full"><span>Description</span><textarea rows="2" [(ngModel)]="f.description"></textarea></label>
+          <label><span>Latitude</span><input type="text" [(ngModel)]="f.latStr" /></label>
+          <label><span>Longitude</span><input type="text" [(ngModel)]="f.lngStr" /></label>
+          <label class="full"><span>Sector Categories</span><input type="text" [(ngModel)]="f.sectorCategoriesText" /></label>
+          <label class="full"><span>Action Tags</span><input type="text" [(ngModel)]="f.actionTagsText" /></label>
+        </div>
+        <div class="actions">
+          <button type="button" [disabled]="isBusy(row.id)" (click)="saveEdit(row)">Save</button>
+          <button type="button" [disabled]="isBusy(row.id)" (click)="closeEdit()">Cancel</button>
+        </div>
+      </div>
+    </li>
+  </ul>
+</section>
+

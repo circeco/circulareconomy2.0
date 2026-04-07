@@ -240,3 +240,9 @@ Configure rules in the Firebase Console (or `firestore.rules` if you add them to
 
 If Approve/Reject fails, the review page shows the error returned by Firestore (often `permission-denied`).
 
+---
+
+## Related: CLI discovery and scripts
+
+For **seed vs OSM discovery**, how to run `discover:osm`, Overpass troubleshooting, **admin review** notes, and a small **dev log**, see [`DISCOVERY_SCRIPTS.md`](DISCOVERY_SCRIPTS.md).
+

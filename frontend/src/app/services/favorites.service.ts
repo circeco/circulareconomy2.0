@@ -285,7 +285,9 @@ export class FavoritesService {
 
 /* ---------- small utilities (same as legacy) ---------- */
 function normString(s: any) {
-  return String(s || '').trim().toLowerCase().replace(/\s+/g, ' ').replace(/[,\.;:]+$/, '');
+  const base = String(s || '').trim().toLowerCase().replace(/\s+/g, ' ').replace(/[,\.;:]+$/, '');
+  const m = base.match(/^(\d+[a-z]?)\s+(.+)$/i);
+  return m ? `${m[2]} ${m[1]}`.trim().replace(/\s+/g, ' ') : base;
 }
 function isFiniteNum(n: any) { return typeof n === 'number' && isFinite(n); }
 function toFeature(rec: Place | null) {

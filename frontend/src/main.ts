@@ -22,9 +22,13 @@ if (typeof window !== 'undefined') {
     window.location.replace(`${MOBILE_REDIRECT_URL}?return=${getReturnUrl()}`);
   };
 
-  if (window.innerWidth < DESKTOP_MIN_WIDTH) {
+  // Admin/moderation routes must load even on narrow viewports (tablets, split-screen).
+  const isAdminPath =
+    window.location.pathname.startsWith('/admin');
+
+  if (!isAdminPath && window.innerWidth < DESKTOP_MIN_WIDTH) {
     redirectToDesktopOnly();
-  } else {
+  } else if (!isAdminPath) {
     const mediaQuery = window.matchMedia(`(max-width: ${DESKTOP_MIN_WIDTH - 1}px)`);
     const handleChange = (event: MediaQueryListEvent) => {
       if (event.matches) {

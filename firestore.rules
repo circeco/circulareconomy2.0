@@ -21,12 +21,12 @@ service cloud.firestore {
 
     /** Public site only reads approved rows; query must use where status == approved */
     match /events/{eventId} {
-      allow read: if resource.data.status == 'approved';
+      allow read: if resource.data.status == 'approved' || isAdmin();
       allow create, update, delete: if isAdmin();
     }
 
     match /places/{placeId} {
-      allow read: if resource.data.status == 'approved';
+      allow read: if resource.data.status == 'approved' || isAdmin();
       allow create, update, delete: if isAdmin();
     }
 
@@ -38,6 +38,24 @@ service cloud.firestore {
 
     /** Moderation queue: admin only */
     match /reviewQueue/{queueId} {
+      allow read, create, update, delete: if isAdmin();
+    }
+
+    /** Compact review memory for ingestion dedupe/learning: admin only */
+    match /reviewMemory/{memoryId} {
+      allow read, create, update, delete: if isAdmin();
+    }
+
+    /** Aggregated memory indexes/rollups used by discovery dedupe lookups: admin only */
+    match /reviewMemoryNameIndex/{docId} {
+      allow read, create, update, delete: if isAdmin();
+    }
+
+    match /reviewMemoryNameGeoIndex/{docId} {
+      allow read, create, update, delete: if isAdmin();
+    }
+
+    match /reviewMemoryRollups/{cityId} {
       allow read, create, update, delete: if isAdmin();
     }
 

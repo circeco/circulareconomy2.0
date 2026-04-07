@@ -1,0 +1,55 @@
+<section class="catalog-shell">
+  <header class="catalog-header">
+    <h1>Event Catalogue</h1>
+  </header>
+
+  <section class="toolbar">
+    <label class="search">
+      <span>Search</span>
+      <input type="text" [ngModel]="searchText()" (ngModelChange)="setSearchText($event)" placeholder="title, location, website..." />
+    </label>
+    <div class="toolbar-action">
+      <span class="toolbar-label-spacer" aria-hidden="true">Action</span>
+      <button type="button" class="refresh-btn" (click)="refresh()" [disabled]="loading()">Refresh</button>
+    </div>
+  </section>
+
+  <p *ngIf="error() as err" class="error" role="alert">{{ err }}</p>
+  <p *ngIf="loading()">Loading events…</p>
+
+  <ul class="rows" *ngIf="!loading()">
+    <li class="empty" *ngIf="filteredRows().length === 0">No events for this city and filter.</li>
+    <li class="row" *ngFor="let row of filteredRows()">
+      <div class="row-head">
+        <div>
+          <div class="name">{{ row.title || '(missing title)' }}</div>
+          <div class="meta">{{ row.locationText || '(missing location)' }} · {{ row.startDate || 'no date' }}</div>
+        </div>
+        <div class="actions">
+          <button type="button" [disabled]="isBusy(row.id)" (click)="openEdit(row)">Edit</button>
+          <button type="button" class="danger" [disabled]="isBusy(row.id)" (click)="remove(row)">Delete</button>
+        </div>
+      </div>
+
+      <div class="editor" *ngIf="editingId() === row.id && editForm() as f">
+        <div class="grid">
+          <label class="full"><span>Title</span><input type="text" [(ngModel)]="f.title" /></label>
+          <label><span>Start Date</span><input type="text" [(ngModel)]="f.startDate" /></label>
+          <label><span>End Date</span><input type="text" [(ngModel)]="f.endDate" /></label>
+          <label class="full"><span>Location / Venue</span><input type="text" [(ngModel)]="f.locationText" /></label>
+          <label class="full"><span>Address</span><input type="text" [(ngModel)]="f.address" /></label>
+          <label class="full"><span>Website</span><input type="url" [(ngModel)]="f.website" /></label>
+          <label class="full"><span>Description</span><textarea rows="2" [(ngModel)]="f.description"></textarea></label>
+          <label><span>Time Display</span><input type="text" [(ngModel)]="f.timeDisplay" /></label>
+          <label class="full"><span>Sector Categories</span><input type="text" [(ngModel)]="f.sectorCategoriesText" /></label>
+          <label class="full"><span>Action Tags</span><input type="text" [(ngModel)]="f.actionTagsText" /></label>
+        </div>
+        <div class="actions">
+          <button type="button" [disabled]="isBusy(row.id)" (click)="saveEdit(row)">Save</button>
+          <button type="button" [disabled]="isBusy(row.id)" (click)="closeEdit()">Cancel</button>
+        </div>
+      </div>
+    </li>
+  </ul>
+</section>
+

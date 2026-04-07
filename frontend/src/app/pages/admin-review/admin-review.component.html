@@ -1,17 +1,45 @@
 <section class="review-shell">
   <header class="review-header">
     <h1>Review Queue</h1>
-    <p>
-      Items here are candidates from ingestion/discovery that still need human review
-      before being published into <code>places</code> or <code>events</code>.
-      Use <strong>Edit details</strong> to fix or fill fields, <strong>Save changes</strong> to store them in the queue, then <strong>Approve</strong> or <strong>Reject</strong>.
-    </p>
     <p *ngIf="lastError() as err" class="review-error" role="alert">{{ err }}</p>
   </header>
 
   <div class="review-grid">
-    <section class="review-panel">
-      <h2>Events (needs review)</h2>
+    <section class="review-panel places-panel">
+      <div class="panel-title-row">
+        <h2>Events (needs review)</h2>
+        <button
+          type="button"
+          class="btn btn-add"
+          [disabled]="isBusy('manual:add-event')"
+          (click)="openCreateEvent()"
+        >
+          Add event
+        </button>
+      </div>
+      <div *ngIf="creatingEvent && newEventEdit as ef" class="row row-manual">
+        <div class="row-main">
+          <div class="title">New event ({{ cityId() }})</div>
+        </div>
+        <div class="row-editor">
+          <div class="field-grid">
+            <label class="field full"><span class="field-label">Title</span><input type="text" [(ngModel)]="ef.title" name="new-ev-title" /></label>
+            <label class="field"><span class="field-label">Start date</span><input type="text" [(ngModel)]="ef.startDate" name="new-ev-sd" placeholder="YYYY-MM-DD" /></label>
+            <label class="field"><span class="field-label">End date</span><input type="text" [(ngModel)]="ef.endDate" name="new-ev-ed" placeholder="YYYY-MM-DD" /></label>
+            <label class="field full"><span class="field-label">Location / venue</span><input type="text" [(ngModel)]="ef.locationText" name="new-ev-loc" /></label>
+            <label class="field full"><span class="field-label">Address (optional)</span><input type="text" [(ngModel)]="ef.address" name="new-ev-addr" /></label>
+            <label class="field full"><span class="field-label">Website</span><input type="url" [(ngModel)]="ef.website" name="new-ev-web" /></label>
+            <label class="field full"><span class="field-label">Description</span><textarea [(ngModel)]="ef.description" name="new-ev-desc" rows="2"></textarea></label>
+            <label class="field"><span class="field-label">Time (display)</span><input type="text" [(ngModel)]="ef.timeDisplay" name="new-ev-time" placeholder="e.g. Sat 10AM–2PM" /></label>
+            <label class="field full"><span class="field-label">Sector categories</span><input type="text" [(ngModel)]="ef.sectorCategoriesText" name="new-ev-sec" placeholder="comma/semicolon-separated" /></label>
+            <label class="field full"><span class="field-label">Action tags</span><input type="text" [(ngModel)]="ef.actionTagsText" name="new-ev-tags" placeholder="reuse, repair, …" /></label>
+          </div>
+          <div class="row-actions">
+            <button type="button" class="btn btn-save" [disabled]="isBusy('manual:add-event')" (click)="createEvent()">Create event</button>
+            <button type="button" class="btn btn-edit" [disabled]="isBusy('manual:add-event')" (click)="cancelCreateEvent()">Cancel</button>
+          </div>
+        </div>
+      </div>
       <ul *ngIf="eventQueue$ | async as rows; else loadingEvents" class="review-list">
         <li *ngIf="rows.length === 0" class="empty">No events waiting for review.</li>
         <li *ngFor="let row of rows" class="row">
@@ -32,9 +60,9 @@
               <label class="field"><span class="field-label">End date</span><input type="text" [(ngModel)]="ef.endDate" name="ev-ed-{{ row.id }}" placeholder="YYYY-MM-DD" /></label>
               <label class="field full"><span class="field-label">Location / venue</span><input type="text" [(ngModel)]="ef.locationText" name="ev-loc-{{ row.id }}" /></label>
               <label class="field full"><span class="field-label">Address (optional)</span><input type="text" [(ngModel)]="ef.address" name="ev-addr-{{ row.id }}" /></label>
+              <label class="field full"><span class="field-label">Website</span><input type="url" [(ngModel)]="ef.website" name="ev-web-{{ row.id }}" /></label>
               <label class="field full"><span class="field-label">Description</span><textarea [(ngModel)]="ef.description" name="ev-desc-{{ row.id }}" rows="2"></textarea></label>
               <label class="field"><span class="field-label">Time (display)</span><input type="text" [(ngModel)]="ef.timeDisplay" name="ev-time-{{ row.id }}" placeholder="e.g. Sat 10AM–2PM" /></label>
-              <label class="field full"><span class="field-label">Image URL</span><input type="url" [(ngModel)]="ef.imageUrl" name="ev-img-{{ row.id }}" /></label>
               <label class="field full"><span class="field-label">Sector categories</span><input type="text" [(ngModel)]="ef.sectorCategoriesText" name="ev-sec-{{ row.id }}" placeholder="comma-separated" /></label>
               <label class="field full"><span class="field-label">Action tags</span><input type="text" [(ngModel)]="ef.actionTagsText" name="ev-tags-{{ row.id }}" placeholder="reuse, repair, …" /></label>
             </div>
@@ -67,7 +95,6 @@
               Reject
             </button>
           </div>
-          <div class="row-id"><code>{{ row.id }}</code></div>
         </li>
       </ul>
       <ng-template #loadingEvents>
@@ -76,17 +103,114 @@
     </section>
 
     <section class="review-panel">
-      <h2>Places (needs review)</h2>
+      <div class="panel-title-row">
+        <h2>Places (needs review)</h2>
+        <button
+          type="button"
+          class="btn btn-add"
+          [disabled]="isBusy('manual:add-place')"
+          (click)="openCreatePlace()"
+        >
+          Add place
+        </button>
+      </div>
+      <div *ngIf="creatingPlace && newPlaceEdit as pf" class="row row-manual">
+        <div class="row-main">
+          <div class="title">New place ({{ cityId() }})</div>
+        </div>
+        <div class="row-editor">
+          <div class="field-grid">
+            <label class="field full"><span class="field-label">Name</span><input type="text" [(ngModel)]="pf.name" name="new-pl-name" /></label>
+            <label class="field full"><span class="field-label">Address</span><input type="text" [(ngModel)]="pf.address" name="new-pl-addr" /></label>
+            <label class="field full"><span class="field-label">Location name (optional)</span><input type="text" [(ngModel)]="pf.locationName" name="new-pl-ln" /></label>
+            <label class="field full"><span class="field-label">Website</span><input type="url" [(ngModel)]="pf.website" name="new-pl-web" /></label>
+            <label class="field full"><span class="field-label">Description</span><textarea [(ngModel)]="pf.description" name="new-pl-desc" rows="2"></textarea></label>
+            <label class="field"><span class="field-label">Latitude</span><input type="text" [(ngModel)]="pf.latStr" name="new-pl-lat" placeholder="optional" /></label>
+            <label class="field"><span class="field-label">Longitude</span><input type="text" [(ngModel)]="pf.lngStr" name="new-pl-lng" placeholder="optional" /></label>
+            <label class="field full"><span class="field-label">Sector categories</span><input type="text" [(ngModel)]="pf.sectorCategoriesText" name="new-pl-sec" placeholder="comma/semicolon-separated" /></label>
+            <label class="field full"><span class="field-label">Action tags</span><input type="text" [(ngModel)]="pf.actionTagsText" name="new-pl-tags" placeholder="reuse, repair, …" /></label>
+          </div>
+          <div class="row-actions">
+            <button type="button" class="btn btn-save" [disabled]="isBusy('manual:add-place')" (click)="createPlace()">Create place</button>
+            <button type="button" class="btn btn-edit" [disabled]="isBusy('manual:add-place')" (click)="cancelCreatePlace()">Cancel</button>
+          </div>
+        </div>
+      </div>
       <ul *ngIf="placeQueue$ | async as rows; else loadingPlaces" class="review-list">
         <li *ngIf="rows.length === 0" class="empty">No places waiting for review.</li>
-        <li *ngFor="let row of rows" class="row">
-          <div class="row-main">
-            <div class="title">{{ row.candidate.name || '(missing name)' }}</div>
-            <div class="meta">
-              <span class="pill">{{ row.cityId }}</span>
-              <span class="pill">confidence {{ row.confidence | number:'1.2-2' }}</span>
+        <li *ngFor="let row of rows" class="row row-place">
+          <div class="place-layout">
+            <div class="row-main place-main">
+              <div class="title place-title">{{ row.candidate.name || '(missing name)' }}</div>
+              <div class="sub place-address">{{ row.candidate.address || '(missing address)' }}</div>
+              <a
+                *ngIf="row.candidate.website"
+                class="place-website"
+                [href]="row.candidate.website"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {{ row.candidate.website }}
+              </a>
+
+              <div class="place-tags">
+                <div class="tag-group">
+                  <div class="tag-label">Action tags</div>
+                  <div class="tag-list">
+                    <span class="tag-chip" *ngFor="let t of displayActionTags(row.candidate.actionTags)">{{ t }}</span>
+                    <span class="tag-chip muted" *ngIf="displayActionTags(row.candidate.actionTags).length === 0">none</span>
+                  </div>
+                </div>
+
+                <div class="tag-group">
+                  <div class="tag-label">Sector categories</div>
+                  <div class="tag-list">
+                    <span class="tag-chip" *ngFor="let s of displaySectorCategories(row.candidate.sectorCategories)">{{ s }}</span>
+                    <span class="tag-chip muted" *ngIf="displaySectorCategories(row.candidate.sectorCategories).length === 0">none</span>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div class="sub">{{ row.candidate.address || '(missing address)' }}</div>
+
+            <div class="row-actions place-actions">
+              <button
+                type="button"
+                class="btn btn-approve"
+                [disabled]="isBusy(row.id) || isBusy(row.id + ':save-place')"
+                (click)="approvePlace(row)"
+              >
+                Approve
+              </button>
+              <button
+                type="button"
+                class="btn btn-reject"
+                [disabled]="isBusy(row.id) || isBusy(row.id + ':save-place')"
+                (click)="rejectPlace(row)"
+              >
+                Reject
+              </button>
+              <label
+                class="bulk-reject"
+                *ngIf="similarPlaceCount(row) > 1"
+                [attr.aria-label]="'Reject all similar places for ' + (row.candidate.name || 'this place')"
+              >
+                <input
+                  type="checkbox"
+                  [checked]="isRejectSimilarEnabled(row.id)"
+                  [disabled]="isBusy(row.id) || isBusy(row.id + ':save-place')"
+                  (change)="setRejectSimilar(row.id, $any($event.target).checked)"
+                />
+                Reject all {{ similarPlaceCount(row) }} similar places
+              </label>
+              <button
+                type="button"
+                class="btn btn-edit"
+                [disabled]="isBusy(row.id) || isBusy(row.id + ':save-place')"
+                (click)="togglePlaceEdit(row)"
+              >
+                {{ editingPlaceRowId === row.id ? 'Close editor' : 'Edit details' }}
+              </button>
+            </div>
           </div>
 
           <div *ngIf="editingPlaceRowId === row.id && placeEdit as pf" class="row-editor">
@@ -103,34 +227,6 @@
             </div>
             <button type="button" class="btn btn-save" [disabled]="isBusy(row.id) || isBusy(row.id + ':save-place')" (click)="savePlaceDraft(row)">Save changes</button>
           </div>
-
-          <div class="row-actions">
-            <button
-              type="button"
-              class="btn btn-edit"
-              [disabled]="isBusy(row.id) || isBusy(row.id + ':save-place')"
-              (click)="togglePlaceEdit(row)"
-            >
-              {{ editingPlaceRowId === row.id ? 'Close editor' : 'Edit details' }}
-            </button>
-            <button
-              type="button"
-              class="btn btn-approve"
-              [disabled]="isBusy(row.id) || isBusy(row.id + ':save-place')"
-              (click)="approvePlace(row)"
-            >
-              Approve
-            </button>
-            <button
-              type="button"
-              class="btn btn-reject"
-              [disabled]="isBusy(row.id) || isBusy(row.id + ':save-place')"
-              (click)="rejectPlace(row)"
-            >
-              Reject
-            </button>
-          </div>
-          <div class="row-id"><code>{{ row.id }}</code></div>
         </li>
       </ul>
       <ng-template #loadingPlaces>

@@ -119,3 +119,25 @@ export type ReviewQueueEventDoc = Omit<ReviewQueueDoc, 'kind' | 'candidate'> & {
   candidate: EventCandidate;
 };
 
+export type ReviewMemoryDecision = 'approved' | 'rejected';
+
+/** Compact city-scoped memory used by ingestion to avoid re-reviewing already-decided places. */
+export type ReviewMemoryDoc = {
+  cityId: string;
+  fingerprint: string;
+  placeKey: string;
+  nameNorm: string;
+  addressNorm: string;
+  geoBucket?: string;
+  lastDecision: ReviewMemoryDecision;
+  lastReviewedAt: string; // ISO timestamp
+  approvedCount: number;
+  rejectedCount: number;
+  rejectionSignals?: {
+    actionTags?: string[];
+    sectorCategories?: string[];
+  };
+  createdAt?: unknown;
+  updatedAt?: unknown;
+};
+

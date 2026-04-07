@@ -29,6 +29,25 @@ export class FeaturedPlacesService {
 
   constructor(private http: HttpClient) {}
 
+  private toAtlasCategories(raw: unknown): string[] {
+    const sectors = Array.isArray(raw) ? raw : [];
+    const out = new Set<string>();
+    for (const s of sectors) {
+      const v = String(s || '').toLowerCase().trim();
+      if (!v) continue;
+      if (v === 'clothing' || v === 'accessories') out.add('apparel');
+      else if (v === 'furniture' || v === 'antiques') out.add('home');
+      else if (v === 'sport') out.add('cycling-sports');
+      else if (v === 'electronics' || v === 'books' || v === 'music') out.add('electronics-books-music');
+    }
+    return Array.from(out);
+  }
+
+  private primaryAtlasCategory(atlasCategories: string[]): string {
+    if (atlasCategories.length) return atlasCategories[0];
+    return 'apparel';
+  }
+
   private parsePlaces(features: unknown[]): FeaturedPlace[] {
     return features.map((f: unknown) => {
       const feat = f as { id?: string; properties?: Record<string, unknown>; geometry?: { coordinates?: number[] } };
@@ -105,15 +124,16 @@ export class FeaturedPlacesService {
           const c = d['coords'] as { lat?: unknown; lng?: unknown } | undefined;
           const lat = typeof c?.lat === 'number' ? c.lat : undefined;
           const lng = typeof c?.lng === 'number' ? c.lng : undefined;
+          const atlasCategories = this.toAtlasCategories(d['sectorCategories']);
           return {
             id: String(d['id'] ?? ''),
             name: String(d['name'] ?? 'Unknown'),
             address: String(d['address'] ?? ''),
             description: String(d['description'] ?? ''),
             storeType: String((d['actionTags'] as string[] | undefined)?.[0] ?? 'reuse'),
-            label: String((d['sectorCategories'] as string[] | undefined)?.[0] ?? ''),
-            category: String((d['actionTags'] as string[] | undefined)?.[0] ?? 'reuse'),
-            categories: Array.isArray(d['sectorCategories']) ? (d['sectorCategories'] as string[]) : [],
+            label: String((d['actionTags'] as string[] | undefined)?.[0] ?? ''),
+            category: this.primaryAtlasCategory(atlasCategories),
+            categories: atlasCategories,
             web: typeof d['website'] === 'string' ? d['website'] : '',
             coords:
               lat != null && lng != null && isFinite(lat) && isFinite(lng)
@@ -141,9 +161,16 @@ export class FeaturedPlacesService {
   private mergePlaces(remote: FeaturedPlace[], fallback: FeaturedPlace[]): FeaturedPlace[] {
     const byKey = new Map<string, FeaturedPlace>();
     for (const p of [...remote, ...fallback]) {
-      const key = `${p.name.toLowerCase().trim()}|${p.address.toLowerCase().trim()}`;
+      const key = `${p.name.toLowerCase().trim()}|${this.canonicalAddressKey(p.address)}`;
       if (!byKey.has(key)) byKey.set(key, p);
     }
     return Array.from(byKey.values());
+  }
+
+  private canonicalAddressKey(v: string): string {
+    const raw = String(v || '').toLowerCase().replace(/[.,;:]+/g, ' ').replace(/\s+/g, ' ').trim();
+    if (!raw) return '';
+    const m = raw.match(/^(\d+[a-z]?)\s+(.+)$/i);
+    return m ? `${m[2]} ${m[1]}`.trim().replace(/\s+/g, ' ') : raw;
   }
 }

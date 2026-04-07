@@ -5,7 +5,6 @@ import {
 } from '@angular/fire/auth';
 import { setPersistence, browserLocalPersistence, getIdTokenResult } from 'firebase/auth';
 import { Observable, from, firstValueFrom, of } from 'rxjs';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { map, switchMap } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
@@ -71,10 +70,9 @@ export class AuthService {
    */
   isAdmin() {
     return this.user$.pipe(
-      takeUntilDestroyed(),
-      switchMap(user => {
+      switchMap((user) => {
         if (!user) return of(false);
-        return from(getIdTokenResult(user)).pipe(map(token => !!token.claims['admin']));
+        return from(getIdTokenResult(user)).pipe(map((token) => !!token.claims['admin']));
       })
     );
   }

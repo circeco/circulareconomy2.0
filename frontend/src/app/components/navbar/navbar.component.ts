@@ -7,15 +7,16 @@ import {
   signal
 } from '@angular/core';
 import { CommonModule, AsyncPipe, NgIf } from '@angular/common';
-import { Router, NavigationEnd } from '@angular/router';
+import { Router, NavigationEnd, RouterLink } from '@angular/router';
 import { filter } from 'rxjs/operators';
+import { Observable } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 import { SearchService } from '../../services/search.service';
 
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [CommonModule, NgIf, AsyncPipe],
+  imports: [CommonModule, NgIf, AsyncPipe, RouterLink],
   templateUrl: './navbar.component.html',
   styleUrls: ['./navbar.component.scss'],
 })
@@ -28,6 +29,7 @@ export class NavbarComponent implements AfterViewInit, OnDestroy {
 
   // Route-aware: landing vs atlas
   isLanding = signal<boolean>(true);
+  admin$!: Observable<boolean>;
 
   private observer?: IntersectionObserver;
   private readonly sectionIds = ['title_section', 'circular_events', 'circular_action', 'circular_atlas_demo', 'footer'];
@@ -39,6 +41,7 @@ export class NavbarComponent implements AfterViewInit, OnDestroy {
     private zone: NgZone,
     private router: Router
   ) {
+    this.admin$ = this.auth.isAdmin();
     // Watch route changes to toggle landing/atlas mode and (re)wire scrollspy
     this.router.events
       .pipe(filter(e => e instanceof NavigationEnd))
@@ -183,7 +186,11 @@ export class NavbarComponent implements AfterViewInit, OnDestroy {
   }
 
   openLogin(): void { this.auth.openModal(); }
-  async logout(): Promise<void> { await this.auth.signOutOnce(); }
+  async logout(): Promise<void> {
+    await this.auth.signOutOnce();
+    // Ensure a clean post-logout state and always land on home.
+    window.location.assign('/');
+  }
 
   // Keep “Back to top” keyboard accessibility working
   @HostListener('document:keydown', ['$event'])

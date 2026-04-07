@@ -66,7 +66,11 @@ export class PlacesFilter {
   private normString(s?: string | null){
     return String(s || '').trim().toLowerCase().replace(/\s+/g,' ').replace(/[,\.;:]+$/,'');
   }
-  private normAddress(addr?: string | null){ return this.normString(addr); }
+  private normAddress(addr?: string | null){
+    const s = this.normString(addr);
+    const m = s.match(/^(\d+[a-z]?)\s+(.+)$/i);
+    return m ? `${m[2]} ${m[1]}`.trim().replace(/\s+/g, ' ') : s;
+  }
   private kNA(name: string, addr: string){ const n=this.normString(name), a=this.normAddress(addr); return n && a ? `${n}|${a}` : ''; }
   private kC(lng: number, lat: number){ return `${Number(lng).toFixed(6)},${Number(lat).toFixed(6)}`; }
 

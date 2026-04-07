@@ -31,18 +31,32 @@ export const routes: Routes = [
     title: 'Account'
   },
   {
-    path: 'admin',
-    loadComponent: () =>
-      import('./pages/admin/admin.component').then(m => m.AdminComponent),
-    canActivate: [adminGuard],
-    title: 'Admin'
-  },
-  {
     path: 'admin/review',
     loadComponent: () =>
       import('./pages/admin-review/admin-review.component').then(m => m.AdminReviewComponent),
     canActivate: [adminGuard],
     title: 'Review Queue'
+  },
+  {
+    path: 'admin/places',
+    loadComponent: () =>
+      import('./pages/admin-places/admin-places.component').then(m => m.AdminPlacesComponent),
+    canActivate: [adminGuard],
+    title: 'Admin Places'
+  },
+  {
+    path: 'admin/events',
+    loadComponent: () =>
+      import('./pages/admin-events/admin-events.component').then(m => m.AdminEventsComponent),
+    canActivate: [adminGuard],
+    title: 'Admin Events'
+  },
+  {
+    path: 'admin',
+    loadComponent: () =>
+      import('./pages/admin/admin.component').then(m => m.AdminComponent),
+    canActivate: [adminGuard],
+    title: 'Admin'
   },
   { path: '**', redirectTo: '' },
 ];

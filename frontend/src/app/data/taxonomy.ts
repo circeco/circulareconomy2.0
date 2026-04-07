@@ -9,6 +9,7 @@ export const ACTION_TAGS = [
   'repurpose',
   'recycle',
   'share',
+  'rental',
 ] as const;
 
 export type ActionTag = (typeof ACTION_TAGS)[number];

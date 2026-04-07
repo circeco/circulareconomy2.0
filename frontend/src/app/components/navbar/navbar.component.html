@@ -41,6 +41,12 @@
         <div class="menu">
           <div class="dropdown-item" style="font-weight:600;">Welcome!</div>
           <div class="dropdown-item small text-muted">{{ user.email }}</div>
+          <ng-container *ngIf="admin$ | async">
+            <div class="dropdown-divider" style="height:1px;background:#eee;margin:.25rem 0;"></div>
+            <a class="dropdown-item admin-link" routerLink="/admin/review">Review queue</a>
+            <a class="dropdown-item admin-link" routerLink="/admin/places">Places catalogue</a>
+            <a class="dropdown-item admin-link" routerLink="/admin/events">Events catalogue</a>
+          </ng-container>
           <div class="dropdown-divider" style="height:1px;background:#eee;margin:.25rem 0;"></div>
           <button id="signout" class="dropdown-item" (click)="logout()">Sign out</button>
         </div>

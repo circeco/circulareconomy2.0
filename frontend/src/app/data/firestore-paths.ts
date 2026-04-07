@@ -7,6 +7,10 @@ export const FS_PATHS = {
   places: 'places',
   events: 'events',
   reviewQueue: 'reviewQueue',
+  reviewMemory: 'reviewMemory',
+  reviewMemoryNameIndex: 'reviewMemoryNameIndex',
+  reviewMemoryNameGeoIndex: 'reviewMemoryNameGeoIndex',
+  reviewMemoryRollups: 'reviewMemoryRollups',
 
   // user-scoped collections already used by the app
   userFavourites: (uid: string) => `users/${uid}/favourites`,

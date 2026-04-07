@@ -1,5 +1,5 @@
 import { inject, Injectable, signal } from '@angular/core';
-import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
+import { NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { toObservable } from '@angular/core/rxjs-interop';
 
@@ -9,19 +9,38 @@ const DEFAULT_CITY_ID = 'stockholm';
 @Injectable({ providedIn: 'root' })
 export class CityContextService {
   private router = inject(Router);
-  private route = inject(ActivatedRoute);
+  private initialized = false;
 
   readonly cityId = signal<string>(DEFAULT_CITY_ID);
   readonly cityId$ = toObservable(this.cityId);
 
   constructor() {
-    // Initialize from URL or localStorage.
-    queueMicrotask(() => this.syncFromUrlOrStorage(true));
-
-    // Keep in sync on navigation.
+    // Keep in sync on navigation; first NavigationEnd is treated as initial sync.
     this.router.events
       .pipe(filter((e) => e instanceof NavigationEnd))
-      .subscribe(() => this.syncFromUrlOrStorage(false));
+      .subscribe(() => {
+        this.syncFromUrlOrStorage(!this.initialized);
+        this.initialized = true;
+      });
+
+    // Fallback for cases where Router is already navigated before this service is created.
+    queueMicrotask(() => {
+      if (!this.initialized && this.router.navigated) {
+        this.syncFromUrlOrStorage(true);
+        this.initialized = true;
+      }
+    });
+  }
+
+  /**
+   * Merge `city` into the current URL without changing the path.
+   * Do NOT use `navigate([], { relativeTo: ActivatedRoute })` from a root service — the injected
+   * route is the router root, so `[]` resolves to `/` and kicks users off `/admin/*` etc.
+   */
+  private mergeCityIntoCurrentUrl(cityId: string): void {
+    const tree = this.router.parseUrl(this.router.url);
+    tree.queryParams = { ...tree.queryParams, city: cityId };
+    this.router.navigateByUrl(tree, { replaceUrl: true });
   }
 
   setCityId(next: string): void {
@@ -33,13 +52,7 @@ export class CityContextService {
       localStorage.setItem(LS_KEY, id);
     } catch {}
 
-    // Persist in URL (non-destructive).
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { city: id },
-      queryParamsHandling: 'merge',
-      replaceUrl: true,
-    });
+    this.mergeCityIntoCurrentUrl(id);
   }
 
   private syncFromUrlOrStorage(firstRun: boolean): void {
@@ -60,12 +73,7 @@ export class CityContextService {
       try {
         localStorage.setItem(LS_KEY, next);
       } catch {}
-      this.router.navigate([], {
-        relativeTo: this.route,
-        queryParams: { city: next },
-        queryParamsHandling: 'merge',
-        replaceUrl: true,
-      });
+      this.mergeCityIntoCurrentUrl(next);
     }
   }
 }
