@@ -19,6 +19,7 @@ import { PlacesFilter, Feature } from '../../services/places-filter.service';
 import { CityContextService } from '../../services/city-context.service';
 import { CitiesService } from '../../services/cities.service';
 import { FeaturedPlacesService } from '../../services/featured-places.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'atlas-map',
@@ -33,8 +34,8 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
   // --- UI state ---
   listOpen = false;
-  favoritesVisible = true;
-  favoritesDisabled = false;
+  favoritesVisible = false;
+  favoritesDisabled = true;
 
   // categories and enabled set get initialized in ngOnInit (after DI available)
   categoryIds: string[] = [];
@@ -55,7 +56,8 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     private route: ActivatedRoute,
     private cityContext: CityContextService,
     private cities: CitiesService,
-    private featuredPlaces: FeaturedPlacesService
+    private featuredPlaces: FeaturedPlacesService,
+    private auth: AuthService
   ) { }
 
   // Optional public API if the page wants to control the overlay
@@ -70,6 +72,21 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
     // keep map filter in sync with categories (map-side work is fine outside zone)
     this.filter.enabledCategories$.subscribe(set => this.map.setCategoryFilter(set));
+
+    // Drive favorites toggle state from real auth stream to avoid window-event timing races.
+    this.subs.push(
+      this.auth.user$.subscribe((user) => {
+        const authed = !!user;
+        this.favoritesDisabled = !authed;
+        if (!authed) {
+          this.favoritesVisible = false;
+        } else {
+          // Default to selected/on once authenticated.
+          this.favoritesVisible = true;
+        }
+        this.map.setFavoritesVisibility(authed && this.favoritesVisible);
+      })
+    );
   }
 
   ngAfterViewInit(): void {
