@@ -140,52 +140,6 @@
   @include underline-accent-thin($color-accent);
 }
 
-/* --------- Search bar --------- */
-.nav-search {
-  display: flex;
-  align-items: center;
-  flex: 1;
-  max-width: 400px;
-  margin: 0 20px;
-  padding: 4px 10px;
-  background: $bg-light;
-  border-radius: 6px;
-  min-height: 0;
-  border: 1px solid #e2e8f0;
-
-  .search-icon {
-    font-size: 14px;
-    margin-right: 6px;
-    opacity: 0.6;
-  }
-
-  .search-input {
-    flex: 1;
-    border: none;
-    background: transparent;
-    font-size: 13px;
-    line-height: 1.3;
-    padding: 2px 0;
-    outline: none;
-
-    &::placeholder {
-      color: #718096;
-    }
-  }
-}
-
-.topnav.titleOnly .nav-search {
-  margin-left: 24px;
-  flex: 1;
-  max-width: 360px;
-}
-
-@media screen and (max-width: 600px) {
-  .topnav.titleOnly .nav-search {
-    display: none;
-  }
-}
-
 /* --------- Title-only variant (Atlas page) --------- */
 .topnav.titleOnly {
   a {

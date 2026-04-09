@@ -7,6 +7,5 @@ import { MapComponent } from '../../components/map/map.component';
   standalone: true,
   imports: [CommonModule, MapComponent],
   templateUrl: './atlas.component.html',
-  styleUrls: ['./atlas.component.scss'],
 })
 export class AtlasComponent {}
