@@ -1,37 +1,45 @@
 import { TestBed } from '@angular/core/testing';
 import { UrlTree, provideRouter } from '@angular/router';
 import { firstValueFrom, of } from 'rxjs';
-import * as firebaseAuth from 'firebase/auth';
 import { Auth } from '@angular/fire/auth';
+import { FirebaseApp, deleteApp, getApps, initializeApp } from 'firebase/app';
+import { Auth as FirebaseAuth, getAuth } from 'firebase/auth';
 
 import { adminGuard } from './admin.guard';
 import { AuthService } from '../services/auth.service';
+import { environment } from '../../environments/environments';
 
 describe('adminGuard', () => {
   let authStub: { isAdmin: () => any };
+  let previousProduction = false;
+  let app: FirebaseApp;
+  let auth: FirebaseAuth;
+
+  beforeAll(() => {
+    const existing = getApps().find((a) => a.name === 'admin-guard-spec');
+    app = existing ?? initializeApp(environment.firebase, 'admin-guard-spec');
+    auth = getAuth(app);
+  });
 
   beforeEach(() => {
+    previousProduction = environment.production;
+    (environment as { production: boolean }).production = true;
     authStub = { isAdmin: () => of(false) };
-    spyOnProperty(window, 'location', 'get').and.returnValue({
-      hostname: 'example.com',
-      pathname: '/',
-      href: 'https://example.com/',
-      search: '',
-      hash: '',
-    } as Location);
-    spyOn(firebaseAuth, 'onAuthStateChanged').and.callFake(
-      (_auth, next: (user: firebaseAuth.User | null) => void) => {
-        next(null);
-        return () => {};
-      }
-    );
     TestBed.configureTestingModule({
       providers: [
         { provide: AuthService, useValue: authStub },
-        { provide: Auth, useValue: {} },
+        { provide: Auth, useValue: auth },
         provideRouter([])
       ]
     });
+  });
+
+  afterEach(() => {
+    (environment as { production: boolean }).production = previousProduction;
+  });
+
+  afterAll(async () => {
+    await deleteApp(app);
   });
 
   it('allows navigation when the admin claim is present', async () => {

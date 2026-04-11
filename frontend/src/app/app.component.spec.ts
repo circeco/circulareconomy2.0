@@ -1,5 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { RouterOutlet } from '@angular/router';
+import { CommonModule } from '@angular/common';
 
 import { AppComponent } from './app.component';
 import { AuthService } from './services/auth.service';
@@ -15,7 +17,14 @@ describe('AppComponent', () => {
         { provide: AuthService, useClass: AuthServiceStub },
         { provide: FavoritesService, useClass: FavoritesServiceStub },
       ],
-    }).compileComponents();
+    })
+      .overrideComponent(AppComponent, {
+        set: {
+          imports: [CommonModule, RouterOutlet],
+          template: '<router-outlet></router-outlet>',
+        },
+      })
+      .compileComponents();
   });
 
   it('should create the app', () => {
