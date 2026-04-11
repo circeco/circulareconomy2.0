@@ -1,0 +1,97 @@
+name: Monthly Discovery And Learning
+
+on:
+  schedule:
+    # 03:00 UTC on day 1 of every month.
+    - cron: '0 3 1 * *'
+  workflow_dispatch:
+    inputs:
+      cities:
+        description: Comma-separated city IDs
+        required: false
+        default: milan,stockholm
+      radius:
+        description: Discovery radius in meters
+        required: false
+        default: '6000'
+      limit:
+        description: Max queue writes per city
+        required: false
+        default: '100'
+      period:
+        description: Learning period YYYY-MM (defaults to previous month)
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency:
+  group: monthly-discovery-learning
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      FIREBASE_PROJECT_ID: circeco-bf511
+      DEFAULT_CITIES: milan,stockholm
+      DEFAULT_RADIUS: '6000'
+      DEFAULT_LIMIT: '100'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Write service account credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          CRED_PATH="$RUNNER_TEMP/firebase-sa.json"
+          printf '%s' '${{ secrets.FIREBASE_SERVICE_ACCOUNT_CIRCECO_BF511 }}' > "$CRED_PATH"
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$CRED_PATH" >> "$GITHUB_ENV"
+
+      - name: Resolve runtime parameters
+        id: params
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          CITIES='${{ github.event.inputs.cities }}'
+          RADIUS='${{ github.event.inputs.radius }}'
+          LIMIT='${{ github.event.inputs.limit }}'
+          PERIOD='${{ github.event.inputs.period }}'
+
+          if [ -z "${CITIES:-}" ]; then CITIES="$DEFAULT_CITIES"; fi
+          if [ -z "${RADIUS:-}" ]; then RADIUS="$DEFAULT_RADIUS"; fi
+          if [ -z "${LIMIT:-}" ]; then LIMIT="$DEFAULT_LIMIT"; fi
+          if [ -z "${PERIOD:-}" ]; then
+            PERIOD="$(date -u -d "$(date -u +%Y-%m-01) -1 month" +%Y-%m)"
+          fi
+
+          echo "cities=$CITIES" >> "$GITHUB_OUTPUT"
+          echo "radius=$RADIUS" >> "$GITHUB_OUTPUT"
+          echo "limit=$LIMIT" >> "$GITHUB_OUTPUT"
+          echo "period=$PERIOD" >> "$GITHUB_OUTPUT"
+
+      - name: Run monthly discovery
+        run: |
+          npm run discover:monthly -- \
+            --cities='${{ steps.params.outputs.cities }}' \
+            --radius='${{ steps.params.outputs.radius }}' \
+            --limit='${{ steps.params.outputs.limit }}'
+
+      - name: Run learning report
+        run: |
+          npm run learning:report -- --period='${{ steps.params.outputs.period }}'
+

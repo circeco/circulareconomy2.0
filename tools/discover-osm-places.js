@@ -36,6 +36,10 @@ const FALLBACK_CENTERS = {
   milan: { lat: 45.4642, lng: 9.19 },
   turin: { lat: 45.0703, lng: 7.6869 },
 };
+const CITY_ALIASES = {
+  torino: 'turin',
+  milano: 'milan',
+};
 
 function initAdminApp() {
   if (getApps().length > 0) return;
@@ -74,6 +78,7 @@ function parseArgs() {
     console.error('Usage: node tools/discover-osm-places.js --city=milan [--radius=9000] [--limit=100] [--dry-run]');
     process.exit(1);
   }
+  out.city = CITY_ALIASES[out.city] || out.city;
   return out;
 }
 
@@ -180,6 +185,37 @@ async function runOverpass(query) {
     }
   }
   throw lastErr || new Error('Overpass: all mirrors failed');
+}
+
+async function fetchOverpassWithAdaptiveRadius(center, radiusM, cityId) {
+  const attempted = new Set();
+  const radiusAttempts = [radiusM, Math.min(radiusM, 4500), 3000, 2200]
+    .map((r) => Math.max(1000, Math.trunc(r)))
+    .filter((r) => {
+      if (attempted.has(r)) return false;
+      attempted.add(r);
+      return true;
+    });
+
+  let lastErr = null;
+  for (const r of radiusAttempts) {
+    try {
+      const qShops = buildOverpassQueryShops(center.lat, center.lng, r);
+      const qAmenity = buildOverpassQueryAmenitiesCraft(center.lat, center.lng, r);
+      if (r !== radiusM) {
+        console.warn(
+          `[discover-osm] retrying ${cityId} with reduced radius=${r}m after Overpass timeout/load failure`
+        );
+      }
+      const data1 = await runOverpass(qShops);
+      const data2 = await runOverpass(qAmenity);
+      return { data1, data2, effectiveRadiusM: r };
+    } catch (e) {
+      lastErr = e;
+      console.warn(`[discover-osm] radius=${r}m failed for ${cityId}:`, e.message || e);
+    }
+  }
+  throw lastErr || new Error('Overpass failed for all adaptive radii');
 }
 
 function osmUrl(el) {
@@ -649,19 +685,23 @@ async function main() {
   const memoryRollup = await loadCityMemoryRollup(db, city);
   const reviewedQueueIds = await loadReviewedQueueDocIds(db, city);
   const memoryLookup = createMemoryLookup(db, city, Date.now());
-  const qShops = buildOverpassQueryShops(center.lat, center.lng, radiusM);
-  const qAmenity = buildOverpassQueryAmenitiesCraft(center.lat, center.lng, radiusM);
   console.log('[discover-osm] fetching Overpass (2 smaller queries)…');
 
   let data1;
   let data2;
+  let effectiveRadiusM = radiusM;
   try {
-    data1 = await runOverpass(qShops);
-    data2 = await runOverpass(qAmenity);
+    const fetched = await fetchOverpassWithAdaptiveRadius(center, radiusM, city);
+    data1 = fetched.data1;
+    data2 = fetched.data2;
+    effectiveRadiusM = fetched.effectiveRadiusM;
   } catch (e) {
     console.error('[discover-osm] Overpass failed', e.message || e);
     process.exitCode = 1;
     return;
+  }
+  if (effectiveRadiusM !== radiusM) {
+    console.log(`[discover-osm] using reduced effective radius=${effectiveRadiusM}m for ${city}`);
   }
 
   const merged = new Map();

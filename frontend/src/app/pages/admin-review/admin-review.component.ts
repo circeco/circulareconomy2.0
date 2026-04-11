@@ -13,8 +13,8 @@ import {
 } from '@angular/fire/firestore';
 import { deleteField, increment, serverTimestamp } from 'firebase/firestore';
 import { collectionData } from '@angular/fire/firestore';
-import { Observable, combineLatest, firstValueFrom, of } from 'rxjs';
-import { map, shareReplay, catchError, tap } from 'rxjs/operators';
+import { Observable, firstValueFrom, of } from 'rxjs';
+import { map, shareReplay, catchError, tap, switchMap, distinctUntilChanged } from 'rxjs/operators';
 
 import { FS_PATHS } from '../../data/firestore-paths';
 import { CityContextService } from '../../services/city-context.service';
@@ -131,26 +131,26 @@ export class AdminReviewComponent {
 
   constructor() {
     const col = collection(this.fs, FS_PATHS.reviewQueue);
-    const q = query(col, where('status', '==', 'needs_review'), limit(100));
-    const rawQueue$ = collectionData(q, { idField: 'id' }).pipe(
-      map((docs: Record<string, unknown>[]) => [...docs].sort(
-          (a, b) => Number(b['confidence'] ?? 0) - Number(a['confidence'] ?? 0)
-        )
-      ),
-      tap(() => this.lastError.set(null)),
-      catchError((err: unknown) => {
-        const msg = err instanceof Error ? err.message : String(err);
-        this.lastError.set(msg);
-        return of([] as Record<string, unknown>[]);
-      }),
-      shareReplay(1)
-    );
-    const queue$ = combineLatest([rawQueue$, this.cityContext.cityId$]).pipe(
-      map(([docs, cityId]) => {
-        const scoped = docs.filter((d) => String(d['cityId'] || '') === cityId);
-        const places = scoped.filter((d) => d['kind'] === 'place') as unknown as ReviewQueuePlaceRow[];
-        const events = scoped.filter((d) => d['kind'] === 'event') as unknown as ReviewQueueEventRow[];
-        return { places, events };
+    const queue$ = this.cityContext.cityId$.pipe(
+      distinctUntilChanged(),
+      switchMap((cityId) => {
+        const q = query(col, where('status', '==', 'needs_review'), where('cityId', '==', cityId), limit(300));
+        return collectionData(q, { idField: 'id' }).pipe(
+          map((docs: Record<string, unknown>[]) => {
+            const sorted = [...docs].sort(
+              (a, b) => Number(b['confidence'] ?? 0) - Number(a['confidence'] ?? 0)
+            );
+            const places = sorted.filter((d) => d['kind'] === 'place') as unknown as ReviewQueuePlaceRow[];
+            const events = sorted.filter((d) => d['kind'] === 'event') as unknown as ReviewQueueEventRow[];
+            return { places, events };
+          }),
+          tap(() => this.lastError.set(null)),
+          catchError((err: unknown) => {
+            const msg = err instanceof Error ? err.message : String(err);
+            this.lastError.set(msg);
+            return of({ places: [] as ReviewQueuePlaceRow[], events: [] as ReviewQueueEventRow[] });
+          })
+        );
       }),
       shareReplay(1)
     );

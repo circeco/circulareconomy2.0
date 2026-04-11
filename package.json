@@ -10,6 +10,8 @@
     "sass:prod": "sass assets/scss/main.scss assets/css/main.css --style=compressed --no-source-map",
     "seed:firestore": "node tools/seed-firestore.js",
     "discover:osm": "node tools/discover-osm-places.js",
+    "discover:monthly": "node tools/scheduled-discovery-job.js",
+    "learning:report": "node tools/generate-learning-v1-report.js",
     "admin:set-claim": "node tools/set-admin-claim.js"
   },
   "keywords": [],

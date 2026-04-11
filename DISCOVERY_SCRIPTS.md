@@ -37,6 +37,8 @@ These only appear **after you run** the discovery script against production (or 
 |--------|---------|---------|
 | Seed cities + sample queue | `npm run seed:firestore` | Upserts `cities/*` and sample `reviewQueue/*` per city (including Milan). |
 | OSM place discovery | `npm run discover:osm -- --city=<id> [opts]` | Queries Overpass, merges candidates into `reviewQueue` (places only). |
+| Monthly multi-city discovery | `npm run discover:monthly -- [opts]` | Runs discovery for all enabled cities (or provided list) and logs each run to `discoveryRuns`. |
+| Monthly learning report | `npm run learning:report -- --period=YYYY-MM [--city=<id>]` | Aggregates moderation outcomes and writes per-city stats to `learningStats`. |
 | Admin claim | `npm run admin:set-claim -- <email>` | Sets Firebase Auth custom claim `admin: true` for the review UI. |
 
 ### Credentials
@@ -177,11 +179,17 @@ Now this has been tightened: generic `shop=books` entries are skipped unless the
 ```bash
 npm run discover:osm -- --city=milan --dry-run
 npm run discover:osm -- --city=turin --radius=12000 --limit=80
+npm run discover:osm -- --city=torino --radius=6000 --dry-run
+npm run discover:monthly -- --radius=6000 --limit=100 --dry-run
+npm run discover:monthly -- --cities=milan,stockholm,turin,uppsala --radius=6000 --limit=100
+npm run learning:report -- --period=2026-03
 ```
 
 - **`--dry-run`**: calls Overpass, prints a sample of what would be written; **no Firestore writes**.
 - **`--radius`**: meters around city center (default `9000`).
 - **`--limit`**: max documents to write after dedupe (default `100`).
+- **`--city=torino`** is supported and mapped to `turin` automatically (`milano -> milan` as well).
+- For `discover:monthly`, omit `--cities` to run all enabled cities from `cities/*`.
 
 Optional env: `OVERPASS_URL` (single endpoint) or `OVERPASS_URLS` (comma-separated mirrors).
 
@@ -192,8 +200,17 @@ Public Overpass servers can time out under load. This script now:
 - Uses **two smaller queries** per run (shops vs amenities/craft) instead of one huge query.
 - Defaults to a **smaller radius** (9000 m) to reduce work; increase with `--radius=` if needed.
 - **Retries** transient errors and rotates **public mirrors** (`overpass-api.de`, `lz4`, `z`) unless you set `OVERPASS_URL` or `OVERPASS_URLS`.
+- Applies **adaptive radius fallback** on failure (`requested -> 4500 -> 3000 -> 2200`) so city runs can still produce candidates under load.
 
 If it still fails, wait a few minutes and retry, or run with `--radius=6000`.
+
+### Scheduled automation
+
+- GitHub workflow: `.github/workflows/monthly-discovery-learning.yml`
+- Automatic trigger: day 1 of each month (`cron: 0 3 1 * *`, UTC)
+- Manual trigger: `workflow_dispatch` with inputs for `cities`, `radius`, `limit`, `period`
+- Uses Firebase service account secret `FIREBASE_SERVICE_ACCOUNT_CIRCECO_BF511`
+- Writes telemetry to `discoveryRuns` and monthly learning outputs to `learningStats`
 
 ### Limitations (important)
 
@@ -232,5 +249,8 @@ If it still fails, wait a few minutes and retry, or run with `--radius=6000`.
 | 2026-03-28 | Added targeted Humana rule: include `humana*` as reuse-brand signal. |
 | 2026-03-28 | Added `reviewMemory` feedback loop from admin approve/reject and discovery skip checks (reviewed queue ids + memory + approved places). |
 | 2026-03-28 | Added scalable dedupe controls: rejected-only memory TTL/compaction, city-scoped name/name+geo memory indexes, hard-skip vs soft-penalty matching, and per-run observability counters. |
+| 2026-04-11 | Added `discover:monthly` + `learning:report` scripts and Firestore logging to `discoveryRuns` / `learningStats`. |
+| 2026-04-11 | Added monthly GitHub Actions workflow (`monthly-discovery-learning.yml`) for automated discovery + learning report generation. |
+| 2026-04-11 | Added city aliases (`torino -> turin`, `milano -> milan`) and adaptive radius fallback to improve reliability under Overpass timeouts. |
 
 _Add a row when you change Overpass tags, add event ingestion, or change queue ID strategy._

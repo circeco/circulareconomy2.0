@@ -59,6 +59,16 @@ service cloud.firestore {
       allow read, create, update, delete: if isAdmin();
     }
 
+    /** Discovery run telemetry (monthly job + per-city runs): admin only */
+    match /discoveryRuns/{runId} {
+      allow read, create, update, delete: if isAdmin();
+    }
+
+    /** Learning V1 monthly stats by city/period: admin only */
+    match /learningStats/{docId} {
+      allow read, create, update, delete: if isAdmin();
+    }
+
     // --- User data (existing app behaviour) ---
     match /users/{uid}/favourites/{docId} {
       allow read, write: if isOwner(uid);
