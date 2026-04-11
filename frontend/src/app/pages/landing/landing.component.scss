@@ -468,12 +468,12 @@
 
 .card:hover { p { visibility: visible; } h4 { visibility: hidden; } }
 
-#refuse  { background-color: $brand-deep; }
-#reduce  { background-color: $brand-mid; }
-#reuse   { background-color: $brand-teal; }
-#repair  { background-color: #76a5afff; }
-#remanu  { background-color: #a2c4c9ff; }
-#recycle { background-color: $blue-gray; }
+#refuse     { background-color: $brand-deep; }
+#reuse      { background-color: $brand-mid; }
+#repair     { background-color: $brand-teal; }
+#reporpouse { background-color: #76a5afff; }
+#recycle    { background-color: #a2c4c9ff; }
+#reduce     { background-color: $blue-gray; }
 
 
 /* ---------------- CircAction animation ---------------- */
@@ -499,13 +499,11 @@
     -ms-animation: rotateWord 8s linear infinite 1s;
     animation: rotateWord 8s linear infinite 1s;
 
-    &:nth-child(2) { -webkit-animation-delay: 2s; -ms-animation-delay: 2s; animation-delay: 2s; color: #0c343d; }
-    &:nth-child(3) { -webkit-animation-delay: 3s; -ms-animation-delay: 3s; animation-delay: 3s; color: #134f5c; }
-    &:nth-child(4) { -webkit-animation-delay: 4s; -ms-animation-delay: 4s; animation-delay: 4s; color: #134f5c; }
-    &:nth-child(5) { -webkit-animation-delay: 5s; -ms-animation-delay: 5s; animation-delay: 5s; color: #45818e; }
-    &:nth-child(6) { -webkit-animation-delay: 6s; -ms-animation-delay: 6s; animation-delay: 6s; color: #76a5af; }
-    &:nth-child(7) { -webkit-animation-delay: 7s; -ms-animation-delay: 7s; animation-delay: 7s; color: #a2c4c9; }
-    &:nth-child(8) { -webkit-animation-delay: 8s; -ms-animation-delay: 8s; animation-delay: 8s; color: #d0e0e3; }
+    &:nth-child(2) { -webkit-animation-delay: 2s; -ms-animation-delay: 2s; animation-delay: 2s; color: #134f5c; }
+    &:nth-child(3) { -webkit-animation-delay: 3s; -ms-animation-delay: 3s; animation-delay: 3s; color: #45818e; }
+    &:nth-child(4) { -webkit-animation-delay: 4s; -ms-animation-delay: 4s; animation-delay: 4s; color: #76a5af; }
+    &:nth-child(5) { -webkit-animation-delay: 5s; -ms-animation-delay: 5s; animation-delay: 5s; color: #a2c4c9; }
+    &:nth-child(6) { -webkit-animation-delay: 6s; -ms-animation-delay: 6s; animation-delay: 6s; color: #d0e0e3; }
   }
 }
 

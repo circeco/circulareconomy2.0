@@ -109,11 +109,11 @@ p {
   .rw-wrapper h2, span { font-size: 30px !important }
   #circular_action h4, p { font-size: 24px !important }
   #sidebar { width: 98% !important }
-  #reuse, #refuse, #reduce, #repair, #remanu, #recycle { height: 200px }
+  #reuse, #refuse, #reduce, #repair, #reporpouse, #recycle { height: 200px }
 }
 
 @media screen and (max-width: 450px){
-  #reuse, #refuse, #reduce, #repair, #remanu, #recycle { height: 120px; width: 90% }
+  #reuse, #refuse, #reduce, #repair, #reporpouse, #recycle { height: 120px; width: 90% }
   .circactions {
     h4 { top: 20% !important }
     p { top: 5% !important }
