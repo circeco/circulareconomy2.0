@@ -22,10 +22,12 @@ export interface FeatureCollection { type:'FeatureCollection'; features: Feature
 @Injectable({ providedIn: 'root' })
 export class PlacesFilter {
   readonly CATEGORY_IDS = ['apparel','home','cycling-sports','electronics-books-music'];
+  readonly ACTION_TAG_IDS = ['refuse', 'reuse', 'repair', 'repurpose', 'recycle', 'reduce'];
 
   private allFeatures$ = new BehaviorSubject<Feature[]>([]);
   private filterText$ = new BehaviorSubject<string>('');
   private enabledCats$ = new BehaviorSubject<Set<string>>(new Set(this.CATEGORY_IDS));
+  private enabledActionTags$ = new BehaviorSubject<Set<string>>(new Set(this.ACTION_TAG_IDS));
 
   private placesIndexByNameAddr = new Map<string, Feature>();
   private placesIndexByCoord = new Map<string, Feature>();
@@ -39,6 +41,7 @@ export class PlacesFilter {
     this.enabledCats$.next(next);
   }
   setCategories(set: Set<string>) { this.enabledCats$.next(new Set(set)); }
+  setActionTags(set: Set<string>) { this.enabledActionTags$.next(new Set(set)); }
 
   buildIndex(fc: FeatureCollection) {
     try { (fc.features||[]).forEach(f => this.indexFeature(f)); this.placesIndexReady = true; }
@@ -46,11 +49,13 @@ export class PlacesFilter {
   }
 
   readonly enabledCategories$ = this.enabledCats$.asObservable();
-  readonly filteredFeatures$ = combineLatest([this.allFeatures$, this.filterText$]).pipe(
-    map(([all, typed]) => {
+  readonly enabledActionTagsState$ = this.enabledActionTags$.asObservable();
+  readonly filteredFeatures$ = combineLatest([this.allFeatures$, this.filterText$, this.enabledActionTags$]).pipe(
+    map(([all, typed, enabledTags]) => {
       const list = this.dedupe(all);
-      if (!typed) return list;
-      return list.filter((f: Feature) => {
+      const withTags = list.filter((f: Feature) => this.matchesActionTags(f, enabledTags));
+      if (!typed) return withTags;
+      return withTags.filter((f: Feature) => {
         const p = this.enrichProps(f);
         const descr = (p.DESCRIPTION || '').toLowerCase();
         const name  = (p.STORE_NAME || p.NAME || '').toLowerCase();
@@ -134,6 +139,25 @@ export class PlacesFilter {
       }
     }
     return Object.values(byKey);
+  }
+
+  private matchesActionTags(feature: Feature, enabledTags: Set<string>) {
+    if (!enabledTags.size) return false;
+    if (enabledTags.size === this.ACTION_TAG_IDS.length) return true;
+    const props = this.enrichProps(feature) as any;
+    const rawTagsUpper = Array.isArray(props?.ACTION_TAGS) ? props.ACTION_TAGS : [];
+    const rawTagsLower = Array.isArray(props?.actionTags) ? props.actionTags : [];
+    const tagSet = new Set<string>(
+      [...rawTagsUpper, ...rawTagsLower]
+        .map((t: unknown) => String(t || '').trim().toLowerCase())
+        .filter(Boolean)
+    );
+    const primary = String(props?.ACTION_TAG || props?.actionTag || '').toLowerCase();
+    if (primary) tagSet.add(primary);
+    for (const t of enabledTags) {
+      if (tagSet.has(String(t).toLowerCase())) return true;
+    }
+    return false;
   }
 
   private computePlaceKey(props: PlaceProps, coords?: [number, number], legacyId?: string | number | null) {

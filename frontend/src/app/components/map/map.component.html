@@ -45,6 +45,18 @@
     </div>
   </div>
 
+  <div class="map-action-tags-row" (click)="$event.stopPropagation()">
+    <button *ngFor="let tag of actionTagIds"
+            type="button"
+            class="map-action-tag-toggle"
+            [class.active]="isActionTagEnabled(tag)"
+            [style.--tag-color]="actionTagColor(tag)"
+            [style.--tag-text-color]="actionTagTextColor(tag)"
+            (click)="onToggleActionTag($event, tag)">
+      {{ actionTagLabel(tag) }}
+    </button>
+  </div>
+
   <span id="search_button" (click)="toggleList()"></span>
   <div id="map" #mapHost></div>
 </section>

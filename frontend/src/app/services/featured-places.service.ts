@@ -6,6 +6,7 @@ import { catchError, combineLatest, map, Observable, of, switchMap } from 'rxjs'
 
 import { FS_PATHS } from '../data/firestore-paths';
 import { CityContextService } from './city-context.service';
+import { canonicalizeActionTag } from '../data/taxonomy';
 
 export interface FeaturedPlace {
   id: string;
@@ -16,6 +17,7 @@ export interface FeaturedPlace {
   label: string;
   category?: string;
   categories?: string[];
+  actionTags?: string[];
   web?: string;
   coords?: { lng: number; lat: number };
 }
@@ -26,8 +28,11 @@ export class FeaturedPlacesService {
   private cityContext = inject(CityContextService);
   private readonly DATA_URL = 'assets/data/circular_places.geojson';
   private cached: FeaturedPlace[] | null = null;
+  private unknownActionTagsLogged = false;
 
   constructor(private http: HttpClient) {}
+
+  private readonly ATLAS_ACTION_TAGS = ['refuse', 'reuse', 'repair', 'repurpose', 'recycle', 'reduce'] as const;
 
   private toAtlasCategories(raw: unknown): string[] {
     const sectors = Array.isArray(raw) ? raw : [];
@@ -48,11 +53,70 @@ export class FeaturedPlacesService {
     return 'apparel';
   }
 
+  private toAtlasActionTag(raw: unknown): string | null {
+    const canonical = canonicalizeActionTag(String(raw ?? ''));
+    if (!canonical) return null;
+    if (canonical === 'rethink') return 'refuse';
+    if (canonical === 'refurbish') return 'repair';
+    if (canonical === 'remanufacture') return 'repurpose';
+    if (canonical === 'share' || canonical === 'rental') return 'reuse';
+    if ((this.ATLAS_ACTION_TAGS as readonly string[]).includes(canonical)) return canonical;
+    return null;
+  }
+
+  private deriveActionTagsFromText(raw: unknown): string[] {
+    const text = String(raw ?? '').toLowerCase();
+    if (!text) return [];
+    const out = new Set<string>();
+    if (text.includes('refuse')) out.add('refuse');
+    if (text.includes('reuse') || text.includes('share') || text.includes('rental')) out.add('reuse');
+    if (text.includes('repair') || text.includes('refurbish')) out.add('repair');
+    if (text.includes('repurpose') || text.includes('reporpouse') || text.includes('remanufacture')) out.add('repurpose');
+    if (text.includes('recycle')) out.add('recycle');
+    if (text.includes('reduce')) out.add('reduce');
+    return Array.from(out);
+  }
+
+  private normalizeActionTags(rawTags: unknown, contextForFallback: unknown[] = [], logContext?: string): string[] {
+    const out = new Set<string>();
+    const unknown: string[] = [];
+    const tags = Array.isArray(rawTags) ? rawTags : [];
+
+    for (const t of tags) {
+      const mapped = this.toAtlasActionTag(t);
+      if (mapped) out.add(mapped);
+      else if (String(t ?? '').trim()) unknown.push(String(t));
+    }
+
+    if (!out.size) {
+      for (const ctx of contextForFallback) {
+        this.deriveActionTagsFromText(ctx).forEach((t) => out.add(t));
+      }
+    }
+
+    if (unknown.length && !this.unknownActionTagsLogged) {
+      this.unknownActionTagsLogged = true;
+      console.warn('[atlas] Unknown action tags found; review taxonomy mapping.', { sample: unknown, context: logContext || 'n/a' });
+    }
+
+    if (!out.size) {
+      console.warn('[atlas] Missing action tags for place; defaulting to reuse. Review source data.', { context: logContext || 'n/a' });
+      out.add('reuse');
+    }
+
+    return Array.from(out);
+  }
+
   private parsePlaces(features: unknown[]): FeaturedPlace[] {
     return features.map((f: unknown) => {
       const feat = f as { id?: string; properties?: Record<string, unknown>; geometry?: { coordinates?: number[] } };
       const p = (feat.properties ?? {}) as Record<string, unknown>;
       const coords = feat.geometry?.coordinates;
+      const actionTags = this.normalizeActionTags(
+        p['ACTION_TAGS'] ?? p['actionTags'] ?? [],
+        [p['STORE_TYPE'], p['CATEGORY'], ...(Array.isArray(p['CATEGORIES']) ? p['CATEGORIES'] : [])],
+        String(feat.id ?? p['STORE_NAME'] ?? p['NAME'] ?? '')
+      );
       const place: FeaturedPlace = {
         id: String(feat.id ?? p['id'] ?? ''),
         name: String(p['STORE_NAME'] ?? p['NAME'] ?? 'Unknown'),
@@ -62,6 +126,7 @@ export class FeaturedPlacesService {
         label: String(p['LABEL'] ?? ''),
         category: String(p['CATEGORY'] ?? ''),
         categories: Array.isArray(p['CATEGORIES']) ? (p['CATEGORIES'] as string[]) : [],
+        actionTags,
         web: String(p['WEB'] ?? ''),
       };
       if (Array.isArray(coords) && coords.length >= 2 && typeof coords[0] === 'number' && typeof coords[1] === 'number') {
@@ -102,6 +167,8 @@ export class FeaturedPlacesService {
               STORE_TYPE: p.storeType || p.category || 'reuse',
               CATEGORY: p.category || p.storeType || 'reuse',
               CATEGORIES: p.categories?.length ? p.categories : (p.label ? [p.label] : []),
+              ACTION_TAGS: p.actionTags?.length ? p.actionTags : [],
+              ACTION_TAG: p.actionTags?.[0] || '',
               WEB: p.web || '',
             },
           })),
@@ -125,6 +192,11 @@ export class FeaturedPlacesService {
           const lat = typeof c?.lat === 'number' ? c.lat : undefined;
           const lng = typeof c?.lng === 'number' ? c.lng : undefined;
           const atlasCategories = this.toAtlasCategories(d['sectorCategories']);
+          const actionTags = this.normalizeActionTags(
+            d['actionTags'],
+            [d['storeType'], d['description']],
+            String(d['id'] ?? d['name'] ?? '')
+          );
           return {
             id: String(d['id'] ?? ''),
             name: String(d['name'] ?? 'Unknown'),
@@ -134,6 +206,7 @@ export class FeaturedPlacesService {
             label: String((d['actionTags'] as string[] | undefined)?.[0] ?? ''),
             category: this.primaryAtlasCategory(atlasCategories),
             categories: atlasCategories,
+            actionTags,
             web: typeof d['website'] === 'string' ? d['website'] : '',
             coords:
               lat != null && lng != null && isFinite(lat) && isFinite(lng)

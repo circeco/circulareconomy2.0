@@ -26,7 +26,7 @@ export class FavoritesServiceStub implements Partial<FavoritesService> {
   computePlaceKey() { return '' as any; }
 }
 
-export class MapServiceStub implements Pick<MapService, 'init' | 'onReady' | 'queryRenderedFeatures$' | 'onFeatureClick' | 'openPopup' | 'flyTo' | 'setFavoritesVisibility' | 'setCategoryFilter' | 'resize' | 'destroy'> {
+export class MapServiceStub implements Pick<MapService, 'init' | 'onReady' | 'queryRenderedFeatures$' | 'onFeatureClick' | 'openPopup' | 'flyTo' | 'setFavoritesVisibility' | 'setCategoryFilter' | 'setActionTagFilter' | 'resize' | 'destroy'> {
   private ready$ = new Subject<boolean>();
   private features$ = new Subject<any[]>();
   private click$ = new Subject<{ feature: any; coords: [number, number] }>();
@@ -40,18 +40,22 @@ export class MapServiceStub implements Pick<MapService, 'init' | 'onReady' | 'qu
   flyTo() {}
   setFavoritesVisibility(_v: boolean) {}
   setCategoryFilter(_set: Set<string>) {}
+  setActionTagFilter(_set: Set<string>) {}
   resize() {}
   destroy() {}
 }
 
 export class PlacesFilterStub implements Partial<PlacesFilter> {
   CATEGORY_IDS: string[] = [];
+  ACTION_TAG_IDS: string[] = [];
   enabledCategories$ = of(new Set<string>());
+  enabledActionTagsState$ = of(new Set<string>());
   filteredFeatures$ = of([]);
 
   setAllFeatures(_features: any) {}
   setFilter(_query: string) {}
   setCategories(_set: Set<string>) {}
+  setActionTags(_set: Set<string>) {}
   enrichForUI(_feature: any) { return {} as any; }
   buildIndex(_fc: any) {}
 }

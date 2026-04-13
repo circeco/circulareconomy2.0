@@ -40,6 +40,16 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   // categories and enabled set get initialized in ngOnInit (after DI available)
   categoryIds: string[] = [];
   enabledCategories = new Set<string>();
+  actionTagIds: string[] = ['refuse', 'reuse', 'repair', 'repurpose', 'recycle', 'reduce'];
+  enabledActionTags = new Set<string>(this.actionTagIds);
+  private readonly actionTagColors: Record<string, string> = {
+    refuse: '#0c343d',
+    reuse: '#134f5c',
+    repair: '#45818e',
+    repurpose: '#76a5af',
+    recycle: '#a2c4c9',
+    reduce: '#d0e0e3',
+  };
 
   // filtered list snapshot for template
   filteredList: Feature[] = [];
@@ -72,6 +82,10 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
     // keep map filter in sync with categories (map-side work is fine outside zone)
     this.filter.enabledCategories$.subscribe(set => this.map.setCategoryFilter(set));
+    this.filter.enabledActionTagsState$.subscribe(set => this.map.setActionTagFilter(set));
+
+    // initialize action tags filter with all tags enabled
+    this.filter.setActionTags(this.enabledActionTags);
 
     // Drive favorites toggle state from real auth stream to avoid window-event timing races.
     this.subs.push(
@@ -189,6 +203,20 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   }
 
   isCatEnabled(cat: string) { return this.enabledCategories.has(cat); }
+
+  onToggleActionTag(ev: Event, tag: string) {
+    ev.preventDefault(); ev.stopPropagation();
+    if (this.enabledActionTags.has(tag)) this.enabledActionTags.delete(tag);
+    else this.enabledActionTags.add(tag);
+    this.filter.setActionTags(this.enabledActionTags);
+  }
+
+  isActionTagEnabled(tag: string) { return this.enabledActionTags.has(tag); }
+  actionTagLabel(tag: string) { return tag.charAt(0).toUpperCase() + tag.slice(1); }
+  actionTagColor(tag: string) { return this.actionTagColors[tag] || '#45818e'; }
+  actionTagTextColor(tag: string) {
+    return tag === 'recycle' || tag === 'reduce' ? '#0c343d' : '#ffffff';
+  }
 
   onToggleFavorites(ev: Event) {
     ev.preventDefault(); ev.stopPropagation();

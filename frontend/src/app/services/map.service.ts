@@ -13,6 +13,8 @@ export class MapService {
   private favoriteKeys = new Set<string>();
   private favoritesVisible = true;
   private lastCategorySet = new Set<string>();
+  private readonly allActionTags = ['refuse', 'reuse', 'repair', 'repurpose', 'recycle', 'reduce'];
+  private lastActionTagSet = new Set<string>(this.allActionTags);
   private readonly baseColor = 'rgb(69,129,142)';
 
   private ready$ = new ReplaySubject<boolean>(1); // emits when BOTH are true
@@ -182,6 +184,11 @@ export class MapService {
     this.applyFilters();
   }
 
+  setActionTagFilter(enabled: Set<string>) {
+    this.lastActionTagSet = new Set(enabled);
+    this.applyFilters();
+  }
+
   setFavoritesVisibility(v: boolean) {
     this.favoritesVisible = v;
     if (this.getLayer('favorites')) {
@@ -298,6 +305,22 @@ export class MapService {
         expr = ['==', ['literal', 1], 0];
       }
     }
+
+    const shouldApplyActionFilter =
+      this.lastActionTagSet.size > 0 && this.lastActionTagSet.size < this.allActionTags.length;
+    if (shouldApplyActionFilter) {
+      const actionTests: any[] = [];
+      this.lastActionTagSet.forEach((tag) => {
+        actionTests.push(['in', tag, ['coalesce', ['get', 'ACTION_TAGS'], ['literal', []]]]);
+        actionTests.push(['in', tag, ['coalesce', ['get', 'actionTags'], ['literal', []]]]);
+        actionTests.push(['==', ['downcase', ['coalesce', ['get', 'ACTION_TAG'], '']], tag]);
+        actionTests.push(['==', ['downcase', ['coalesce', ['get', 'actionTag'], '']], tag]);
+      });
+      expr = ['all', expr, ['any', ...actionTests]];
+    } else if (!this.lastActionTagSet.size) {
+      expr = ['==', ['literal', 1], 0];
+    }
+
     if (this.getLayer('places')) {
       this.map.setFilter('places', expr);
     }

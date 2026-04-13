@@ -1,0 +1,31 @@
+#circular_atlas {
+  position: relative;
+}
+
+.map-action-tags-row {
+  position: absolute;
+  top: 72px;
+  left: calc(20% + 10px);
+  right: 12px;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.map-action-tag-toggle {
+  border: 1px solid var(--tag-color, #45818e);
+  background: #ffffff;
+  color: var(--tag-color, #45818e);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: capitalize;
+  padding: 6px 10px;
+  cursor: pointer;
+  width: fit-content;
+}
+
+.map-action-tag-toggle.active {
+  background: var(--tag-color, #45818e);
+  color: var(--tag-text-color, #ffffff);
+}
