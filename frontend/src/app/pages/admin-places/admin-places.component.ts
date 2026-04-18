@@ -16,6 +16,14 @@ import {
 import { FS_PATHS } from '../../data/firestore-paths';
 import type { PlaceDoc } from '../../data/models';
 import { CityContextService } from '../../services/city-context.service';
+import {
+  ACTION_TAG_LABELS,
+  ACTION_TAGS,
+  canonicalizeActionTags,
+  canonicalizeSectorCategories,
+  SECTOR_CATEGORIES,
+  SECTOR_CATEGORY_LABELS,
+} from '../../data/taxonomy';
 
 type PlaceRow = PlaceDoc & { id: string };
 
@@ -25,8 +33,8 @@ interface PlaceEditForm {
   locationName: string;
   website: string;
   description: string;
-  sectorCategoriesText: string;
-  actionTagsText: string;
+  sectorCategories: string[];
+  actionTags: string[];
   latStr: string;
   lngStr: string;
 }
@@ -39,6 +47,8 @@ interface PlaceEditForm {
   styleUrl: './admin-places.component.scss',
 })
 export class AdminPlacesComponent {
+  readonly sectorOptions = SECTOR_CATEGORIES.slice();
+  readonly actionTagOptions = ACTION_TAGS.slice();
   private fs = inject(Firestore);
   private cityContext = inject(CityContextService);
 
@@ -132,8 +142,8 @@ export class AdminPlacesComponent {
       locationName: row.locationName || '',
       website: row.website || '',
       description: row.description || '',
-      sectorCategoriesText: this.displaySectorCategories(row.sectorCategories).join(', '),
-      actionTagsText: (row.actionTags || []).join(', '),
+      sectorCategories: canonicalizeSectorCategories(this.showList(row.sectorCategories)),
+      actionTags: canonicalizeActionTags(this.showList(row.actionTags)),
       latStr: lat != null && isFinite(lat) ? String(lat) : '',
       lngStr: lng != null && isFinite(lng) ? String(lng) : '',
     });
@@ -156,8 +166,8 @@ export class AdminPlacesComponent {
         locationName: form.locationName.trim(),
         website: form.website.trim(),
         description: form.description.trim(),
-        sectorCategories: this.normalizeSectorCategories(this.splitCsv(form.sectorCategoriesText)),
-        actionTags: this.splitCsv(form.actionTagsText),
+        sectorCategories: canonicalizeSectorCategories(form.sectorCategories),
+        actionTags: canonicalizeActionTags(form.actionTags),
         status: 'approved',
         updatedAt: serverTimestamp(),
       };
@@ -209,13 +219,6 @@ export class AdminPlacesComponent {
     }
   }
 
-  private splitCsv(v: string): string[] {
-    return String(v || '')
-      .split(/[;,]/)
-      .map((s) => s.trim())
-      .filter(Boolean);
-  }
-
   showList(v: unknown): string[] {
     if (!Array.isArray(v)) return [];
     return v
@@ -224,29 +227,31 @@ export class AdminPlacesComponent {
   }
 
   displaySectorCategories(v: unknown): string[] {
-    return this.showList(v)
-      .map((x) =>
-        x
-          .replace(/^shop:/i, '')
-          .replace(/^amenity:/i, '')
-          .replace(/^craft:/i, '')
-          .trim()
-      )
-      .filter(Boolean);
+    return canonicalizeSectorCategories(this.showList(v)).map((s) => SECTOR_CATEGORY_LABELS[s]);
   }
 
-  private normalizeSectorCategories(values: string[]): string[] {
-    const out: string[] = [];
-    for (const raw of values) {
-      const cleaned = String(raw || '')
-        .replace(/^shop:/i, '')
-        .replace(/^amenity:/i, '')
-        .replace(/^craft:/i, '')
-        .toLowerCase()
-        .trim();
-      if (cleaned && !out.includes(cleaned)) out.push(cleaned);
-    }
-    return out;
+  displayActionTags(v: unknown): string[] {
+    return canonicalizeActionTags(this.showList(v)).map((t) => ACTION_TAG_LABELS[t]);
+  }
+
+  sectorLabel(id: string): string {
+    return SECTOR_CATEGORY_LABELS[id as keyof typeof SECTOR_CATEGORY_LABELS] || id;
+  }
+
+  actionTagLabel(id: string): string {
+    return ACTION_TAG_LABELS[id as keyof typeof ACTION_TAG_LABELS] || id;
+  }
+
+  isSelected(values: string[] | undefined, id: string): boolean {
+    return Array.isArray(values) && values.includes(id);
+  }
+
+  toggleSelection(values: string[] | undefined, id: string, checked: boolean): string[] {
+    const current = Array.isArray(values) ? values.slice() : [];
+    const idx = current.indexOf(id);
+    if (checked && idx === -1) current.push(id);
+    if (!checked && idx !== -1) current.splice(idx, 1);
+    return current;
   }
 
   private isPermissionDenied(e: unknown): boolean {

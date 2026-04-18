@@ -1,6 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import {
   Firestore,
   collection,
@@ -18,6 +19,14 @@ import { map, shareReplay, catchError, tap, switchMap, distinctUntilChanged } fr
 
 import { FS_PATHS } from '../../data/firestore-paths';
 import { CityContextService } from '../../services/city-context.service';
+import {
+  ACTION_TAG_LABELS,
+  ACTION_TAGS,
+  canonicalizeActionTags,
+  canonicalizeSectorCategories,
+  SECTOR_CATEGORIES,
+  SECTOR_CATEGORY_LABELS,
+} from '../../data/taxonomy';
 import type {
   EventCandidate,
   LatLng,
@@ -81,8 +90,8 @@ export interface EventEditForm {
   website: string;
   description: string;
   timeDisplay: string;
-  sectorCategoriesText: string;
-  actionTagsText: string;
+  sectorCategories: string[];
+  actionTags: string[];
 }
 
 /** Flat form for editing a place candidate */
@@ -92,8 +101,8 @@ export interface PlaceEditForm {
   description: string;
   website: string;
   locationName: string;
-  sectorCategoriesText: string;
-  actionTagsText: string;
+  sectorCategories: string[];
+  actionTags: string[];
   latStr: string;
   lngStr: string;
 }
@@ -108,6 +117,7 @@ export interface PlaceEditForm {
 export class AdminReviewComponent {
   private fs = inject(Firestore);
   private cityContext = inject(CityContextService);
+  private route = inject(ActivatedRoute);
   private readonly rejectOnlyRetentionDays = 180;
 
   readonly placeQueue$: Observable<ReviewQueuePlaceRow[]>;
@@ -117,6 +127,9 @@ export class AdminReviewComponent {
   readonly busyIds = signal<Set<string>>(new Set());
   readonly lastError = signal<string | null>(null);
   readonly rejectSimilarByRowId = signal<Record<string, boolean>>({});
+  readonly sectorOptions = SECTOR_CATEGORIES.slice();
+  readonly actionTagOptions = ACTION_TAGS.slice();
+  readonly reviewKind = signal<'places' | 'events' | 'all'>('all');
 
   /** Row id whose event editor is open (one at a time per kind) */
   editingEventRowId: string | null = null;
@@ -130,6 +143,12 @@ export class AdminReviewComponent {
   newPlaceEdit: PlaceEditForm | null = null;
 
   constructor() {
+    this.route.data.subscribe((data) => {
+      const kind = String(data['reviewKind'] ?? 'all');
+      if (kind === 'places' || kind === 'events') this.reviewKind.set(kind);
+      else this.reviewKind.set('all');
+    });
+
     const col = collection(this.fs, FS_PATHS.reviewQueue);
     const queue$ = this.cityContext.cityId$.pipe(
       distinctUntilChanged(),
@@ -157,6 +176,27 @@ export class AdminReviewComponent {
     this.placeQueue$ = queue$.pipe(map((x) => x.places));
     this.eventQueue$ = queue$.pipe(map((x) => x.events));
     this.placeQueue$.subscribe((rows) => this.placeRows.set(rows));
+  }
+
+  showPlacesPanel(): boolean {
+    const kind = this.reviewKind();
+    return kind === 'all' || kind === 'places';
+  }
+
+  showEventsPanel(): boolean {
+    const kind = this.reviewKind();
+    return kind === 'all' || kind === 'events';
+  }
+
+  isSinglePanelMode(): boolean {
+    return this.showPlacesPanel() !== this.showEventsPanel();
+  }
+
+  pageTitle(): string {
+    const kind = this.reviewKind();
+    if (kind === 'places') return 'Places Review Queue';
+    if (kind === 'events') return 'Events Review Queue';
+    return 'Review Queue';
   }
 
   toggleEventEdit(row: ReviewQueueEventRow): void {
@@ -559,8 +599,8 @@ export class AdminReviewComponent {
       website: c.website ?? '',
       description: c.description ?? '',
       timeDisplay: c.timeDisplay ?? '',
-      sectorCategoriesText: (c.sectorCategories ?? []).join(', '),
-      actionTagsText: (c.actionTags ?? []).join(', '),
+      sectorCategories: canonicalizeSectorCategories((c.sectorCategories ?? []) as string[]),
+      actionTags: canonicalizeActionTags((c.actionTags ?? []) as string[]),
     };
   }
 
@@ -573,8 +613,8 @@ export class AdminReviewComponent {
       description: c.description ?? '',
       website: c.website ?? '',
       locationName: c.locationName ?? '',
-      sectorCategoriesText: (c.sectorCategories ?? []).join(', '),
-      actionTagsText: (c.actionTags ?? []).join(', '),
+      sectorCategories: canonicalizeSectorCategories((c.sectorCategories ?? []) as string[]),
+      actionTags: canonicalizeActionTags((c.actionTags ?? []) as string[]),
       latStr: lat != null && isFinite(lat) ? String(lat) : '',
       lngStr: lng != null && isFinite(lng) ? String(lng) : '',
     };
@@ -592,8 +632,8 @@ export class AdminReviewComponent {
       website: f.website.trim(),
       description: f.description.trim(),
       timeDisplay: f.timeDisplay.trim(),
-      sectorCategories: this.normalizeSectorCategories(this.splitCsv(f.sectorCategoriesText)),
-      actionTags: this.splitCsv(f.actionTagsText) as EventCandidate['actionTags'],
+      sectorCategories: canonicalizeSectorCategories(f.sectorCategories),
+      actionTags: canonicalizeActionTags(f.actionTags) as EventCandidate['actionTags'],
     };
   }
 
@@ -606,8 +646,8 @@ export class AdminReviewComponent {
       description: f.description.trim(),
       website: f.website.trim(),
       locationName: f.locationName.trim(),
-      sectorCategories: this.normalizeSectorCategories(this.splitCsv(f.sectorCategoriesText)),
-      actionTags: this.splitCsv(f.actionTagsText) as PlaceCandidate['actionTags'],
+      sectorCategories: canonicalizeSectorCategories(f.sectorCategories),
+      actionTags: canonicalizeActionTags(f.actionTags) as PlaceCandidate['actionTags'],
     };
     if (isFinite(lat) && isFinite(lng)) {
       base.coords = { lat, lng };
@@ -615,50 +655,32 @@ export class AdminReviewComponent {
     return base;
   }
 
-  private splitCsv(s: string): string[] {
-    return s
-      .split(/[;,]/)
-      .map((x) => x.trim())
-      .filter(Boolean);
-  }
-
-  private normalizeSectorCategories(values: string[]): string[] {
-    const allowed = new Set([
-      'books',
-      'music',
-      'electronics',
-      'clothing',
-      'accessories',
-      'furniture',
-      'antiques',
-      'sport',
-    ]);
-    const out: string[] = [];
-    for (const raw of values) {
-      const v = String(raw || '').toLowerCase().trim();
-      if (allowed.has(v) && !out.includes(v)) out.push(v);
-    }
-    return out;
-  }
-
   displayActionTags(values: string[] | undefined): string[] {
-    return this.expandDelimited(values);
+    return canonicalizeActionTags(this.expandDelimited(values)).map((t) => ACTION_TAG_LABELS[t]);
   }
 
   displaySectorCategories(values: string[] | undefined): string[] {
-    const allowed = new Set([
-      'books',
-      'music',
-      'electronics',
-      'clothing',
-      'accessories',
-      'furniture',
-      'antiques',
-      'sport',
-    ]);
-    return this.expandDelimited(values)
-      .map((v) => v.replace(/^shop:/, '').replace(/^amenity:/, '').replace(/^craft:/, ''))
-      .filter((v) => allowed.has(v));
+    return canonicalizeSectorCategories(this.expandDelimited(values)).map((s) => SECTOR_CATEGORY_LABELS[s]);
+  }
+
+  sectorLabel(id: string): string {
+    return SECTOR_CATEGORY_LABELS[id as keyof typeof SECTOR_CATEGORY_LABELS] || id;
+  }
+
+  actionTagLabel(id: string): string {
+    return ACTION_TAG_LABELS[id as keyof typeof ACTION_TAG_LABELS] || id;
+  }
+
+  isSelected(values: string[] | undefined, id: string): boolean {
+    return Array.isArray(values) && values.includes(id);
+  }
+
+  toggleSelection(values: string[] | undefined, id: string, checked: boolean): string[] {
+    const current = Array.isArray(values) ? values.slice() : [];
+    const idx = current.indexOf(id);
+    if (checked && idx === -1) current.push(id);
+    if (!checked && idx !== -1) current.splice(idx, 1);
+    return current;
   }
 
   private expandDelimited(values: string[] | undefined): string[] {

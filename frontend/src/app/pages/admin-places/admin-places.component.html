@@ -28,7 +28,7 @@
           <div class="meta" *ngIf="row.description">{{ row.description }}</div>
           <div class="chips" *ngIf="showList(row.actionTags).length > 0">
             <span class="chip-label">Action tags:</span>
-            <span class="chip" *ngFor="let t of showList(row.actionTags)">{{ t }}</span>
+            <span class="chip" *ngFor="let t of displayActionTags(row.actionTags)">{{ t }}</span>
           </div>
           <div class="chips" *ngIf="displaySectorCategories(row.sectorCategories).length > 0">
             <span class="chip-label">Categories:</span>
@@ -50,8 +50,28 @@
           <label class="full"><span>Description</span><textarea rows="2" [(ngModel)]="f.description"></textarea></label>
           <label><span>Latitude</span><input type="text" [(ngModel)]="f.latStr" /></label>
           <label><span>Longitude</span><input type="text" [(ngModel)]="f.lngStr" /></label>
-          <label class="full"><span>Sector Categories</span><input type="text" [(ngModel)]="f.sectorCategoriesText" /></label>
-          <label class="full"><span>Action Tags</span><input type="text" [(ngModel)]="f.actionTagsText" /></label>
+          <div class="full">
+            <span>Sector Categories</span>
+            <div class="chips">
+              <label class="chip option-chip" *ngFor="let c of sectorOptions">
+                <input type="checkbox"
+                       [checked]="isSelected(f.sectorCategories, c)"
+                       (change)="f.sectorCategories = toggleSelection(f.sectorCategories, c, $any($event.target).checked)" />
+                {{ sectorLabel(c) }}
+              </label>
+            </div>
+          </div>
+          <div class="full">
+            <span>Action Tags</span>
+            <div class="chips">
+              <label class="chip option-chip" *ngFor="let t of actionTagOptions">
+                <input type="checkbox"
+                       [checked]="isSelected(f.actionTags, t)"
+                       (change)="f.actionTags = toggleSelection(f.actionTags, t, $any($event.target).checked)" />
+                {{ actionTagLabel(t) }}
+              </label>
+            </div>
+          </div>
         </div>
         <div class="actions">
           <button type="button" [disabled]="isBusy(row.id)" (click)="saveEdit(row)">Save</button>

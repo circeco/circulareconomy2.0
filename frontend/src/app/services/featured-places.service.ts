@@ -6,7 +6,10 @@ import { catchError, combineLatest, map, Observable, of, switchMap } from 'rxjs'
 
 import { FS_PATHS } from '../data/firestore-paths';
 import { CityContextService } from './city-context.service';
-import { canonicalizeActionTag } from '../data/taxonomy';
+import {
+  canonicalizeActionTag,
+  canonicalizeSectorCategories,
+} from '../data/taxonomy';
 
 export interface FeaturedPlace {
   id: string;
@@ -35,31 +38,17 @@ export class FeaturedPlacesService {
   private readonly ATLAS_ACTION_TAGS = ['refuse', 'reuse', 'repair', 'repurpose', 'recycle', 'reduce'] as const;
 
   private toAtlasCategories(raw: unknown): string[] {
-    const sectors = Array.isArray(raw) ? raw : [];
-    const out = new Set<string>();
-    for (const s of sectors) {
-      const v = String(s || '').toLowerCase().trim();
-      if (!v) continue;
-      if (v === 'clothing' || v === 'accessories') out.add('apparel');
-      else if (v === 'furniture' || v === 'antiques') out.add('home');
-      else if (v === 'sport') out.add('cycling-sports');
-      else if (v === 'electronics' || v === 'books' || v === 'music') out.add('electronics-books-music');
-    }
-    return Array.from(out);
+    return canonicalizeSectorCategories(Array.isArray(raw) ? (raw as string[]) : []);
   }
 
   private primaryAtlasCategory(atlasCategories: string[]): string {
     if (atlasCategories.length) return atlasCategories[0];
-    return 'apparel';
+    return 'home-garden';
   }
 
   private toAtlasActionTag(raw: unknown): string | null {
     const canonical = canonicalizeActionTag(String(raw ?? ''));
     if (!canonical) return null;
-    if (canonical === 'rethink') return 'refuse';
-    if (canonical === 'refurbish') return 'repair';
-    if (canonical === 'remanufacture') return 'repurpose';
-    if (canonical === 'share' || canonical === 'rental') return 'reuse';
     if ((this.ATLAS_ACTION_TAGS as readonly string[]).includes(canonical)) return canonical;
     return null;
   }
@@ -112,6 +101,11 @@ export class FeaturedPlacesService {
       const feat = f as { id?: string; properties?: Record<string, unknown>; geometry?: { coordinates?: number[] } };
       const p = (feat.properties ?? {}) as Record<string, unknown>;
       const coords = feat.geometry?.coordinates;
+      const rawCategories = Array.isArray(p['CATEGORIES']) ? (p['CATEGORIES'] as string[]) : [];
+      const normalizedCategories = canonicalizeSectorCategories([
+        ...rawCategories,
+        String(p['CATEGORY'] ?? ''),
+      ]);
       const actionTags = this.normalizeActionTags(
         p['ACTION_TAGS'] ?? p['actionTags'] ?? [],
         [p['STORE_TYPE'], p['CATEGORY'], ...(Array.isArray(p['CATEGORIES']) ? p['CATEGORIES'] : [])],
@@ -124,8 +118,8 @@ export class FeaturedPlacesService {
         description: String(p['DESCRIPTION'] ?? ''),
         storeType: String(p['STORE_TYPE'] ?? ''),
         label: String(p['LABEL'] ?? ''),
-        category: String(p['CATEGORY'] ?? ''),
-        categories: Array.isArray(p['CATEGORIES']) ? (p['CATEGORIES'] as string[]) : [],
+        category: normalizedCategories[0] || this.primaryAtlasCategory(this.toAtlasCategories(rawCategories)),
+        categories: normalizedCategories.length ? normalizedCategories : this.toAtlasCategories(rawCategories),
         actionTags,
         web: String(p['WEB'] ?? ''),
       };

@@ -1,11 +1,11 @@
 <section class="review-shell">
   <header class="review-header">
-    <h1>Review Queue</h1>
+    <h1>{{ pageTitle() }}</h1>
     <p *ngIf="lastError() as err" class="review-error" role="alert">{{ err }}</p>
   </header>
 
-  <div class="review-grid">
-    <section class="review-panel places-panel">
+  <div class="review-grid" [class.single-panel]="isSinglePanelMode()">
+    <section class="review-panel places-panel" *ngIf="showEventsPanel()">
       <div class="panel-title-row">
         <h2>Events (needs review)</h2>
         <button
@@ -31,8 +31,28 @@
             <label class="field full"><span class="field-label">Website</span><input type="url" [(ngModel)]="ef.website" name="new-ev-web" /></label>
             <label class="field full"><span class="field-label">Description</span><textarea [(ngModel)]="ef.description" name="new-ev-desc" rows="2"></textarea></label>
             <label class="field"><span class="field-label">Time (display)</span><input type="text" [(ngModel)]="ef.timeDisplay" name="new-ev-time" placeholder="e.g. Sat 10AM–2PM" /></label>
-            <label class="field full"><span class="field-label">Sector categories</span><input type="text" [(ngModel)]="ef.sectorCategoriesText" name="new-ev-sec" placeholder="comma/semicolon-separated" /></label>
-            <label class="field full"><span class="field-label">Action tags</span><input type="text" [(ngModel)]="ef.actionTagsText" name="new-ev-tags" placeholder="reuse, repair, …" /></label>
+            <div class="field full">
+              <span class="field-label">Sector categories</span>
+              <div class="tag-list">
+                <label class="tag-chip" *ngFor="let c of sectorOptions">
+                  <input type="checkbox"
+                         [checked]="isSelected(ef.sectorCategories, c)"
+                         (change)="ef.sectorCategories = toggleSelection(ef.sectorCategories, c, $any($event.target).checked)" />
+                  {{ sectorLabel(c) }}
+                </label>
+              </div>
+            </div>
+            <div class="field full">
+              <span class="field-label">Action tags</span>
+              <div class="tag-list">
+                <label class="tag-chip" *ngFor="let t of actionTagOptions">
+                  <input type="checkbox"
+                         [checked]="isSelected(ef.actionTags, t)"
+                         (change)="ef.actionTags = toggleSelection(ef.actionTags, t, $any($event.target).checked)" />
+                  {{ actionTagLabel(t) }}
+                </label>
+              </div>
+            </div>
           </div>
           <div class="row-actions">
             <button type="button" class="btn btn-save" [disabled]="isBusy('manual:add-event')" (click)="createEvent()">Create event</button>
@@ -63,8 +83,28 @@
               <label class="field full"><span class="field-label">Website</span><input type="url" [(ngModel)]="ef.website" name="ev-web-{{ row.id }}" /></label>
               <label class="field full"><span class="field-label">Description</span><textarea [(ngModel)]="ef.description" name="ev-desc-{{ row.id }}" rows="2"></textarea></label>
               <label class="field"><span class="field-label">Time (display)</span><input type="text" [(ngModel)]="ef.timeDisplay" name="ev-time-{{ row.id }}" placeholder="e.g. Sat 10AM–2PM" /></label>
-              <label class="field full"><span class="field-label">Sector categories</span><input type="text" [(ngModel)]="ef.sectorCategoriesText" name="ev-sec-{{ row.id }}" placeholder="comma-separated" /></label>
-              <label class="field full"><span class="field-label">Action tags</span><input type="text" [(ngModel)]="ef.actionTagsText" name="ev-tags-{{ row.id }}" placeholder="reuse, repair, …" /></label>
+              <div class="field full">
+                <span class="field-label">Sector categories</span>
+                <div class="tag-list">
+                  <label class="tag-chip" *ngFor="let c of sectorOptions">
+                    <input type="checkbox"
+                           [checked]="isSelected(ef.sectorCategories, c)"
+                           (change)="ef.sectorCategories = toggleSelection(ef.sectorCategories, c, $any($event.target).checked)" />
+                    {{ sectorLabel(c) }}
+                  </label>
+                </div>
+              </div>
+              <div class="field full">
+                <span class="field-label">Action tags</span>
+                <div class="tag-list">
+                  <label class="tag-chip" *ngFor="let t of actionTagOptions">
+                    <input type="checkbox"
+                           [checked]="isSelected(ef.actionTags, t)"
+                           (change)="ef.actionTags = toggleSelection(ef.actionTags, t, $any($event.target).checked)" />
+                    {{ actionTagLabel(t) }}
+                  </label>
+                </div>
+              </div>
             </div>
             <button type="button" class="btn btn-save" [disabled]="isBusy(row.id) || isBusy(row.id + ':save-event')" (click)="saveEventDraft(row)">Save changes</button>
           </div>
@@ -102,7 +142,7 @@
       </ng-template>
     </section>
 
-    <section class="review-panel">
+    <section class="review-panel" *ngIf="showPlacesPanel()">
       <div class="panel-title-row">
         <h2>Places (needs review)</h2>
         <button
@@ -127,8 +167,28 @@
             <label class="field full"><span class="field-label">Description</span><textarea [(ngModel)]="pf.description" name="new-pl-desc" rows="2"></textarea></label>
             <label class="field"><span class="field-label">Latitude</span><input type="text" [(ngModel)]="pf.latStr" name="new-pl-lat" placeholder="optional" /></label>
             <label class="field"><span class="field-label">Longitude</span><input type="text" [(ngModel)]="pf.lngStr" name="new-pl-lng" placeholder="optional" /></label>
-            <label class="field full"><span class="field-label">Sector categories</span><input type="text" [(ngModel)]="pf.sectorCategoriesText" name="new-pl-sec" placeholder="comma/semicolon-separated" /></label>
-            <label class="field full"><span class="field-label">Action tags</span><input type="text" [(ngModel)]="pf.actionTagsText" name="new-pl-tags" placeholder="reuse, repair, …" /></label>
+            <div class="field full">
+              <span class="field-label">Sector categories</span>
+              <div class="tag-list">
+                <label class="tag-chip" *ngFor="let c of sectorOptions">
+                  <input type="checkbox"
+                         [checked]="isSelected(pf.sectorCategories, c)"
+                         (change)="pf.sectorCategories = toggleSelection(pf.sectorCategories, c, $any($event.target).checked)" />
+                  {{ sectorLabel(c) }}
+                </label>
+              </div>
+            </div>
+            <div class="field full">
+              <span class="field-label">Action tags</span>
+              <div class="tag-list">
+                <label class="tag-chip" *ngFor="let t of actionTagOptions">
+                  <input type="checkbox"
+                         [checked]="isSelected(pf.actionTags, t)"
+                         (change)="pf.actionTags = toggleSelection(pf.actionTags, t, $any($event.target).checked)" />
+                  {{ actionTagLabel(t) }}
+                </label>
+              </div>
+            </div>
           </div>
           <div class="row-actions">
             <button type="button" class="btn btn-save" [disabled]="isBusy('manual:add-place')" (click)="createPlace()">Create place</button>
@@ -222,8 +282,28 @@
               <label class="field full"><span class="field-label">Description</span><textarea [(ngModel)]="pf.description" name="pl-desc-{{ row.id }}" rows="2"></textarea></label>
               <label class="field"><span class="field-label">Latitude</span><input type="text" [(ngModel)]="pf.latStr" name="pl-lat-{{ row.id }}" placeholder="optional" /></label>
               <label class="field"><span class="field-label">Longitude</span><input type="text" [(ngModel)]="pf.lngStr" name="pl-lng-{{ row.id }}" placeholder="optional" /></label>
-              <label class="field full"><span class="field-label">Sector categories</span><input type="text" [(ngModel)]="pf.sectorCategoriesText" name="pl-sec-{{ row.id }}" placeholder="comma-separated" /></label>
-              <label class="field full"><span class="field-label">Action tags</span><input type="text" [(ngModel)]="pf.actionTagsText" name="pl-tags-{{ row.id }}" placeholder="reuse, repair, …" /></label>
+              <div class="field full">
+                <span class="field-label">Sector categories</span>
+                <div class="tag-list">
+                  <label class="tag-chip" *ngFor="let c of sectorOptions">
+                    <input type="checkbox"
+                           [checked]="isSelected(pf.sectorCategories, c)"
+                           (change)="pf.sectorCategories = toggleSelection(pf.sectorCategories, c, $any($event.target).checked)" />
+                    {{ sectorLabel(c) }}
+                  </label>
+                </div>
+              </div>
+              <div class="field full">
+                <span class="field-label">Action tags</span>
+                <div class="tag-list">
+                  <label class="tag-chip" *ngFor="let t of actionTagOptions">
+                    <input type="checkbox"
+                           [checked]="isSelected(pf.actionTags, t)"
+                           (change)="pf.actionTags = toggleSelection(pf.actionTags, t, $any($event.target).checked)" />
+                    {{ actionTagLabel(t) }}
+                  </label>
+                </div>
+              </div>
             </div>
             <button type="button" class="btn btn-save" [disabled]="isBusy(row.id) || isBusy(row.id + ':save-place')" (click)="savePlaceDraft(row)">Save changes</button>
           </div>

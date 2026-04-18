@@ -20,6 +20,14 @@ import { CityContextService } from '../../services/city-context.service';
 import { CitiesService } from '../../services/cities.service';
 import { FeaturedPlacesService } from '../../services/featured-places.service';
 import { AuthService } from '../../services/auth.service';
+import {
+  ACTION_TAG_COLORS,
+  ACTION_TAGS,
+  ACTION_TAG_LABELS,
+  ActionTag,
+  SECTOR_CATEGORY_LABELS,
+  SectorCategory,
+} from '../../data/taxonomy';
 
 @Component({
   selector: 'atlas-map',
@@ -40,16 +48,9 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   // categories and enabled set get initialized in ngOnInit (after DI available)
   categoryIds: string[] = [];
   enabledCategories = new Set<string>();
-  actionTagIds: string[] = ['refuse', 'reuse', 'repair', 'repurpose', 'recycle', 'reduce'];
+  actionTagIds: string[] = ACTION_TAGS.slice();
   enabledActionTags = new Set<string>(this.actionTagIds);
-  private readonly actionTagColors: Record<string, string> = {
-    refuse: '#0c343d',
-    reuse: '#134f5c',
-    repair: '#45818e',
-    repurpose: '#76a5af',
-    recycle: '#a2c4c9',
-    reduce: '#d0e0e3',
-  };
+  private readonly actionTagColors: Record<string, string> = ACTION_TAG_COLORS as Record<string, string>;
 
   // filtered list snapshot for template
   filteredList: Feature[] = [];
@@ -212,11 +213,12 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   }
 
   isActionTagEnabled(tag: string) { return this.enabledActionTags.has(tag); }
-  actionTagLabel(tag: string) { return tag.charAt(0).toUpperCase() + tag.slice(1); }
+  actionTagLabel(tag: string) { return ACTION_TAG_LABELS[tag as ActionTag] || tag; }
   actionTagColor(tag: string) { return this.actionTagColors[tag] || '#45818e'; }
   actionTagTextColor(tag: string) {
     return tag === 'recycle' || tag === 'reduce' ? '#0c343d' : '#ffffff';
   }
+  categoryLabel(cat: string) { return SECTOR_CATEGORY_LABELS[cat as SectorCategory] || cat; }
 
   onToggleFavorites(ev: Event) {
     ev.preventDefault(); ev.stopPropagation();
@@ -303,6 +305,20 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     }
     if (props.DESCRIPTION) {
       const d = document.createElement('p'); d.textContent = props.DESCRIPTION; el.appendChild(d);
+    }
+    const sectors = Array.isArray((props as any).CATEGORIES) ? (props as any).CATEGORIES : [];
+    if (sectors.length) {
+      const s = document.createElement('p');
+      s.style.margin = '4px 0';
+      s.textContent = `Categories: ${sectors.map((x: string) => this.categoryLabel(String(x))).join(', ')}`;
+      el.appendChild(s);
+    }
+    const tags = Array.isArray((props as any).ACTION_TAGS) ? (props as any).ACTION_TAGS : [];
+    if (tags.length) {
+      const t = document.createElement('p');
+      t.style.margin = '4px 0';
+      t.textContent = `Action tags: ${tags.map((x: string) => this.actionTagLabel(String(x))).join(', ')}`;
+      el.appendChild(t);
     }
 
     return el;

@@ -16,6 +16,14 @@ import {
 import { FS_PATHS } from '../../data/firestore-paths';
 import type { EventDoc } from '../../data/models';
 import { CityContextService } from '../../services/city-context.service';
+import {
+  ACTION_TAG_LABELS,
+  ACTION_TAGS,
+  canonicalizeActionTags,
+  canonicalizeSectorCategories,
+  SECTOR_CATEGORIES,
+  SECTOR_CATEGORY_LABELS,
+} from '../../data/taxonomy';
 
 type EventRow = EventDoc & { id: string };
 
@@ -28,8 +36,8 @@ interface EventEditForm {
   website: string;
   description: string;
   timeDisplay: string;
-  sectorCategoriesText: string;
-  actionTagsText: string;
+  sectorCategories: string[];
+  actionTags: string[];
 }
 
 @Component({
@@ -40,6 +48,8 @@ interface EventEditForm {
   styleUrl: './admin-events.component.scss',
 })
 export class AdminEventsComponent {
+  readonly sectorOptions = SECTOR_CATEGORIES.slice();
+  readonly actionTagOptions = ACTION_TAGS.slice();
   private fs = inject(Firestore);
   private cityContext = inject(CityContextService);
 
@@ -134,8 +144,8 @@ export class AdminEventsComponent {
       website: row.website || '',
       description: row.description || '',
       timeDisplay: row.timeDisplay || '',
-      sectorCategoriesText: (row.sectorCategories || []).join(', '),
-      actionTagsText: (row.actionTags || []).join(', '),
+      sectorCategories: canonicalizeSectorCategories((row.sectorCategories || []) as string[]),
+      actionTags: canonicalizeActionTags((row.actionTags || []) as string[]),
     });
   }
 
@@ -157,8 +167,8 @@ export class AdminEventsComponent {
         website: form.website.trim(),
         description: form.description.trim(),
         timeDisplay: form.timeDisplay.trim(),
-        sectorCategories: this.splitCsv(form.sectorCategoriesText),
-        actionTags: this.splitCsv(form.actionTagsText),
+        sectorCategories: canonicalizeSectorCategories(form.sectorCategories),
+        actionTags: canonicalizeActionTags(form.actionTags),
         status: 'approved',
         updatedAt: serverTimestamp(),
       };
@@ -209,11 +219,24 @@ export class AdminEventsComponent {
     }
   }
 
-  private splitCsv(v: string): string[] {
-    return String(v || '')
-      .split(/[;,]/)
-      .map((s) => s.trim())
-      .filter(Boolean);
+  sectorLabel(id: string): string {
+    return SECTOR_CATEGORY_LABELS[id as keyof typeof SECTOR_CATEGORY_LABELS] || id;
+  }
+
+  actionTagLabel(id: string): string {
+    return ACTION_TAG_LABELS[id as keyof typeof ACTION_TAG_LABELS] || id;
+  }
+
+  isSelected(values: string[] | undefined, id: string): boolean {
+    return Array.isArray(values) && values.includes(id);
+  }
+
+  toggleSelection(values: string[] | undefined, id: string, checked: boolean): string[] {
+    const current = Array.isArray(values) ? values.slice() : [];
+    const idx = current.indexOf(id);
+    if (checked && idx === -1) current.push(id);
+    if (!checked && idx !== -1) current.splice(idx, 1);
+    return current;
   }
 
   private isPermissionDenied(e: unknown): boolean {

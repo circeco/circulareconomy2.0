@@ -1,6 +1,7 @@
 import { Injectable, NgZone } from '@angular/core';
 import { Observable, ReplaySubject, Subject } from 'rxjs';
 import { environment } from '../../environments/environments';
+import { ACTION_TAG_COLORS, ACTION_TAGS } from '../data/taxonomy';
 
 declare const mapboxgl: any;
 
@@ -13,9 +14,10 @@ export class MapService {
   private favoriteKeys = new Set<string>();
   private favoritesVisible = true;
   private lastCategorySet = new Set<string>();
-  private readonly allActionTags = ['refuse', 'reuse', 'repair', 'repurpose', 'recycle', 'reduce'];
+  private readonly allActionTags = ACTION_TAGS.slice();
   private lastActionTagSet = new Set<string>(this.allActionTags);
   private readonly baseColor = 'rgb(69,129,142)';
+  private readonly actionTagColors: Record<string, string> = ACTION_TAG_COLORS as Record<string, string>;
 
   private ready$ = new ReplaySubject<boolean>(1); // emits when BOTH are true
   private click$ = new Subject<{ feature: any; coords: [number, number] }>();
@@ -363,12 +365,27 @@ export class MapService {
   private applyPaint() {
     if (!this.getLayer('places')) return;
     const favList = Array.from(this.favoriteKeys);
+    const actionColorExpr: any = ['case',
+      ['==', ['downcase', ['coalesce', ['get', 'ACTION_TAG'], ['get', 'actionTag'], '']], 'refuse'], this.actionTagColors['refuse'],
+      ['==', ['downcase', ['coalesce', ['get', 'ACTION_TAG'], ['get', 'actionTag'], '']], 'reuse'], this.actionTagColors['reuse'],
+      ['==', ['downcase', ['coalesce', ['get', 'ACTION_TAG'], ['get', 'actionTag'], '']], 'repair'], this.actionTagColors['repair'],
+      ['==', ['downcase', ['coalesce', ['get', 'ACTION_TAG'], ['get', 'actionTag'], '']], 'repurpose'], this.actionTagColors['repurpose'],
+      ['==', ['downcase', ['coalesce', ['get', 'ACTION_TAG'], ['get', 'actionTag'], '']], 'recycle'], this.actionTagColors['recycle'],
+      ['==', ['downcase', ['coalesce', ['get', 'ACTION_TAG'], ['get', 'actionTag'], '']], 'reduce'], this.actionTagColors['reduce'],
+      ['in', 'refuse', ['coalesce', ['get', 'ACTION_TAGS'], ['get', 'actionTags'], ['literal', []]]], this.actionTagColors['refuse'],
+      ['in', 'reuse', ['coalesce', ['get', 'ACTION_TAGS'], ['get', 'actionTags'], ['literal', []]]], this.actionTagColors['reuse'],
+      ['in', 'repair', ['coalesce', ['get', 'ACTION_TAGS'], ['get', 'actionTags'], ['literal', []]]], this.actionTagColors['repair'],
+      ['in', 'repurpose', ['coalesce', ['get', 'ACTION_TAGS'], ['get', 'actionTags'], ['literal', []]]], this.actionTagColors['repurpose'],
+      ['in', 'recycle', ['coalesce', ['get', 'ACTION_TAGS'], ['get', 'actionTags'], ['literal', []]]], this.actionTagColors['recycle'],
+      ['in', 'reduce', ['coalesce', ['get', 'ACTION_TAGS'], ['get', 'actionTags'], ['literal', []]]], this.actionTagColors['reduce'],
+      this.baseColor
+    ];
     const colorExpr = (this.favoritesVisible && favList.length)
       ? ['case',
           ['in', ['get', 'PLACE_KEY'], ['literal', favList]],
           '#FF5252',
-          this.baseColor]
-      : this.baseColor;
+          actionColorExpr]
+      : actionColorExpr;
     this.map.setPaintProperty('places', 'circle-color', colorExpr);
   }
 }

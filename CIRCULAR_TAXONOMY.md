@@ -12,7 +12,7 @@ It is intended to keep titles, order, descriptions, and colors consistent across
 5. Recycle
 6. Reduce
 
-## Category Definitions
+## Action Tag Definitions
 
 ### 1) Refuse
 - Description: Refuse ownership towards sharing systems. Remove redundancy. Make overconsumption unappealing and unnecessary. Make product use more intensive with multifunctional products and long-lasting design.

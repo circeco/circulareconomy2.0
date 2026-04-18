@@ -16,7 +16,7 @@
         <a *ngFor="let cat of categoryIds"
            href="#"
            [class.active]="isCatEnabled(cat)"
-           (click)="onToggleCategory($event, cat)">{{ cat }}</a>
+           (click)="onToggleCategory($event, cat)">{{ categoryLabel(cat) }}</a>
       </nav>
 
       <div id="listings" class="listings">

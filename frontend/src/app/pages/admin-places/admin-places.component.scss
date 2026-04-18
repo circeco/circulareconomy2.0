@@ -2,6 +2,7 @@
   padding: calc(var(--header-offset, 60px) + 1.2rem) 1.2rem 2rem;
   max-width: 760px;
   margin: 0 auto;
+  font-weight: 600;
 }
 
 .catalog-header {
@@ -104,6 +105,7 @@
 .meta {
   font-size: 0.82rem;
   color: #5a5a5a;
+  font-weight: 500;
 }
 
 .meta-link {
@@ -113,6 +115,7 @@
   color: #3c7f93;
   text-decoration: none;
   word-break: break-word;
+  font-weight: 700;
 }
 
 .chips {
@@ -128,14 +131,46 @@
   color: #666;
   text-transform: uppercase;
   letter-spacing: 0.02em;
+  font-weight: 700;
 }
 
 .chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
   border: 1px solid rgba(0, 0, 0, 0.12);
   border-radius: 999px;
   padding: 0.1rem 0.45rem;
   font-size: 0.72rem;
   background: #fff;
+  font-weight: 700;
+}
+
+.option-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 2px solid #e5e5e5;
+  border-radius: 1rem;
+  background: #fff;
+  padding: 0.11rem 0.56rem;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: #111;
+  font-weight: 700;
+}
+
+.grid .option-chip {
+  display: inline-flex;
+}
+
+.option-chip input[type='checkbox'] {
+  margin: 0;
+  display: inline-block;
+  width: auto;
+  height: auto;
+  vertical-align: middle;
+  flex: 0 0 auto;
 }
 
 .actions {
@@ -188,7 +223,7 @@
     text-transform: uppercase;
     font-size: 0.68rem;
     letter-spacing: 0.02em;
-    font-weight: 600;
+    font-weight: 700;
   }
 
   input,

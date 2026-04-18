@@ -41,8 +41,28 @@
           <label class="full"><span>Website</span><input type="url" [(ngModel)]="f.website" /></label>
           <label class="full"><span>Description</span><textarea rows="2" [(ngModel)]="f.description"></textarea></label>
           <label><span>Time Display</span><input type="text" [(ngModel)]="f.timeDisplay" /></label>
-          <label class="full"><span>Sector Categories</span><input type="text" [(ngModel)]="f.sectorCategoriesText" /></label>
-          <label class="full"><span>Action Tags</span><input type="text" [(ngModel)]="f.actionTagsText" /></label>
+          <div class="full">
+            <span>Sector Categories</span>
+            <div class="chips">
+              <label class="chip" *ngFor="let c of sectorOptions">
+                <input type="checkbox"
+                       [checked]="isSelected(f.sectorCategories, c)"
+                       (change)="f.sectorCategories = toggleSelection(f.sectorCategories, c, $any($event.target).checked)" />
+                {{ sectorLabel(c) }}
+              </label>
+            </div>
+          </div>
+          <div class="full">
+            <span>Action Tags</span>
+            <div class="chips">
+              <label class="chip" *ngFor="let t of actionTagOptions">
+                <input type="checkbox"
+                       [checked]="isSelected(f.actionTags, t)"
+                       (change)="f.actionTags = toggleSelection(f.actionTags, t, $any($event.target).checked)" />
+                {{ actionTagLabel(t) }}
+              </label>
+            </div>
+          </div>
         </div>
         <div class="actions">
           <button type="button" [disabled]="isBusy(row.id)" (click)="saveEdit(row)">Save</button>

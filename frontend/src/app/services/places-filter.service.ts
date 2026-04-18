@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, combineLatest, map } from 'rxjs';
+import { canonicalizeActionTag } from '../data/taxonomy';
 
 export interface PlaceProps {
   STORE_NAME?: string; NAME?: string;
@@ -21,7 +22,7 @@ export interface FeatureCollection { type:'FeatureCollection'; features: Feature
 
 @Injectable({ providedIn: 'root' })
 export class PlacesFilter {
-  readonly CATEGORY_IDS = ['apparel','home','cycling-sports','electronics-books-music'];
+  readonly CATEGORY_IDS = ['apparel', 'home-garden', 'cycling-sports', 'electronics', 'books-comics-magazines', 'music'];
   readonly ACTION_TAG_IDS = ['refuse', 'reuse', 'repair', 'repurpose', 'recycle', 'reduce'];
 
   private allFeatures$ = new BehaviorSubject<Feature[]>([]);
@@ -149,10 +150,11 @@ export class PlacesFilter {
     const rawTagsLower = Array.isArray(props?.actionTags) ? props.actionTags : [];
     const tagSet = new Set<string>(
       [...rawTagsUpper, ...rawTagsLower]
-        .map((t: unknown) => String(t || '').trim().toLowerCase())
+        .map((t: unknown) => canonicalizeActionTag(String(t || '').trim().toLowerCase()) || String(t || '').trim().toLowerCase())
         .filter(Boolean)
     );
-    const primary = String(props?.ACTION_TAG || props?.actionTag || '').toLowerCase();
+    const primaryRaw = String(props?.ACTION_TAG || props?.actionTag || '').toLowerCase();
+    const primary = canonicalizeActionTag(primaryRaw) || primaryRaw;
     if (primary) tagSet.add(primary);
     for (const t of enabledTags) {
       if (tagSet.has(String(t).toLowerCase())) return true;

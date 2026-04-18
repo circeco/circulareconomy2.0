@@ -6,6 +6,7 @@ import { catchError, map } from 'rxjs/operators';
 
 import { FS_PATHS } from '../data/firestore-paths';
 import { CityContextService } from './city-context.service';
+import { ACTION_TAGS, canonicalizeActionTag } from '../data/taxonomy';
 
 export interface EventItem {
   id: string;
@@ -21,10 +22,12 @@ export interface EventItem {
 
 export const EVENT_CATEGORIES = [
   { id: 'all', label: 'All', icon: '●' },
-  { id: 'repair', label: 'Repair', icon: '🔧' },
-  { id: 'recycle', label: 'Recycle', icon: '♻' },
-  { id: 'share', label: 'Share', icon: '↗' },
+  { id: 'refuse', label: 'Refuse', icon: '⛔' },
   { id: 'reuse', label: 'Reuse', icon: '📦' },
+  { id: 'repair', label: 'Repair', icon: '🔧' },
+  { id: 'repurpose', label: 'Repurpose', icon: '🔁' },
+  { id: 'recycle', label: 'Recycle', icon: '♻' },
+  { id: 'reduce', label: 'Reduce', icon: '⬇' },
 ] as const;
 
 const DEFAULT_EVENT_IMAGE =
@@ -43,7 +46,7 @@ export class EventsService {
       title: 'Clothing Swap',
       description:
         'Swap your gently used clothes and find new-to-you items. Bring clothes to trade and leave with a refreshed wardrobe.',
-      category: 'share',
+      category: 'reuse',
       location: 'Norrtullsgatan 31, Stockholm',
       time: 'Sat 10AM-2PM',
       image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop',
@@ -67,7 +70,7 @@ export class EventsService {
       title: 'Garden Day',
       description:
         'Grow food together and learn about sustainable agriculture. Join us for planting, harvesting, and workshops.',
-      category: 'share',
+      category: 'reuse',
       location: 'Nybrogatan 44, Stockholm',
       time: 'Wed 9AM-12PM',
       image: 'https://images.unsplash.com/photo-1592150621744-aca64f48394a?w=400&h=300&fit=crop',
@@ -172,14 +175,14 @@ export class EventsService {
 
   private pickUiCategory(actionTags: string[], sectorCategories: string[]): string {
     for (const t of actionTags) {
-      const k = String(t).toLowerCase();
-      if (UI_CATEGORY_SLUGS.includes(k)) return k;
+      const k = canonicalizeActionTag(String(t || '').toLowerCase());
+      if (k && UI_CATEGORY_SLUGS.includes(k)) return k;
     }
     for (const s of sectorCategories) {
-      const k = String(s).toLowerCase();
-      if (UI_CATEGORY_SLUGS.includes(k)) return k;
+      const k = canonicalizeActionTag(String(s || '').toLowerCase());
+      if (k && UI_CATEGORY_SLUGS.includes(k)) return k;
     }
-    return 'share';
+    return ACTION_TAGS.includes('reuse') ? 'reuse' : 'all';
   }
 
   /** Parse YYYY-MM-DD as local calendar date (avoids UTC off-by-one). */

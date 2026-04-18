@@ -3,6 +3,7 @@
   padding: calc(var(--header-offset, 60px) + 1.5rem) 1.5rem 3rem;
   max-width: 1100px;
   margin: 0 auto;
+  font-weight: 600;
 }
 
 .review-header {
@@ -38,6 +39,10 @@
   @media (min-width: 1100px) {
     grid-template-columns: 1fr 1fr;
   }
+}
+
+.review-grid.single-panel {
+  grid-template-columns: 1fr;
 }
 
 .review-panel {
@@ -97,7 +102,7 @@
 .row-main {
   .title {
     font-size: 0.95rem;
-    font-weight: 600;
+    font-weight: 800;
     line-height: 1.35;
     margin-bottom: 0.25rem;
     color: #1a1a1a;
@@ -106,6 +111,7 @@
   .sub {
     color: #3b3b3b;
     font-size: 0.875rem;
+    font-weight: 600;
   }
 }
 
@@ -122,6 +128,7 @@
   border-radius: 999px;
   background: rgba(69,129,142,0.10);
   color: #0c343d;
+  font-weight: 700;
 }
 
 .row-actions {
@@ -197,7 +204,7 @@
     text-transform: uppercase;
     letter-spacing: 0.01em;
     font-size: clamp(1rem, 1.25vw, 1.25rem);
-    font-weight: 800;
+    font-weight: 700;
     text-decoration: none;
     text-align: left;
     line-height: 1.15;
@@ -208,6 +215,7 @@
     line-height: 1.35;
     color: #202020;
     margin-bottom: 0.25rem;
+    font-weight: 500;
   }
 
   .place-website {
@@ -247,6 +255,9 @@
 }
 
 .tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
   border: 2px solid #e5e5e5;
   border-radius: 1rem;
   background: #fff;
@@ -254,11 +265,21 @@
   font-size: 0.72rem;
   line-height: 1.35;
   color: #111;
-  text-transform: lowercase;
+  text-transform: none;
+  font-weight: 700;
 
   &.muted {
     color: #7a7a7a;
   }
+}
+
+.tag-list .tag-chip input[type='checkbox'] {
+  margin: 0;
+  display: inline-block;
+  width: auto;
+  height: auto;
+  vertical-align: middle;
+  flex: 0 0 auto;
 }
 
 .place-actions {
@@ -385,7 +406,7 @@
   color: #444;
 
   .field-label {
-    font-weight: 600;
+    font-weight: 700;
     font-size: 0.72rem;
     text-transform: uppercase;
     letter-spacing: 0.02em;

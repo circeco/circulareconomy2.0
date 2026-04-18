@@ -43,7 +43,8 @@
           <div class="dropdown-item small text-muted">{{ user.email }}</div>
           <ng-container *ngIf="admin$ | async">
             <div class="dropdown-divider" style="height:1px;background:#eee;margin:.25rem 0;"></div>
-            <a class="dropdown-item admin-link" routerLink="/admin/review">Review queue</a>
+            <a class="dropdown-item admin-link" routerLink="/admin/review/places">Places review queue</a>
+            <a class="dropdown-item admin-link" routerLink="/admin/review/events">Events review queue</a>
             <a class="dropdown-item admin-link" routerLink="/admin/places">Places catalogue</a>
             <a class="dropdown-item admin-link" routerLink="/admin/events">Events catalogue</a>
           </ng-container>

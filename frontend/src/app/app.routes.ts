@@ -32,10 +32,24 @@ export const routes: Routes = [
   },
   {
     path: 'admin/review',
+    redirectTo: 'admin/review/places',
+    pathMatch: 'full',
+  },
+  {
+    path: 'admin/review/places',
     loadComponent: () =>
       import('./pages/admin-review/admin-review.component').then(m => m.AdminReviewComponent),
     canActivate: [adminGuard],
-    title: 'Review Queue'
+    title: 'Places Review Queue',
+    data: { reviewKind: 'places' }
+  },
+  {
+    path: 'admin/review/events',
+    loadComponent: () =>
+      import('./pages/admin-review/admin-review.component').then(m => m.AdminReviewComponent),
+    canActivate: [adminGuard],
+    title: 'Events Review Queue',
+    data: { reviewKind: 'events' }
   },
   {
     path: 'admin/places',
