@@ -11,6 +11,13 @@ import { EventFavoritesService } from '../../services/event-favorites.service';
 import { CalendarComponent } from '../../components/calendar/calendar.component';
 import { ACTION_TAG_COLORS, ACTION_TAG_LABELS, ACTION_TAGS, SECTOR_CATEGORIES, SECTOR_CATEGORY_LABELS } from '../../data/taxonomy';
 
+interface EventCategoryOption {
+  id: string;
+  label: string;
+  emojiIcon: string;
+  imageIcons: string[];
+}
+
 @Component({
   selector: 'events-page',
   standalone: true,
@@ -23,9 +30,11 @@ export class EventsComponent {
   private readonly actionTagColors: Record<string, string> = ACTION_TAG_COLORS as Record<string, string>;
 
   readonly actionTagIds = ACTION_TAGS.slice();
-  readonly categories = SECTOR_CATEGORIES.map((id) => ({
+  readonly categories: EventCategoryOption[] = SECTOR_CATEGORIES.map((id) => ({
     id,
     label: SECTOR_CATEGORY_LABELS[id],
+    emojiIcon: this.defaultCategoryEmoji(id),
+    imageIcons: this.categoryImageIcons(id),
   }));
   selectedActionTags = signal<Set<string>>(new Set(ACTION_TAGS));
   selectedCategory = signal<string | null>(null);
@@ -126,6 +135,59 @@ export class EventsComponent {
 
   actionTagTextColor(tag: string): string {
     return tag === 'recycle' || tag === 'reduce' ? '#0c343d' : '#ffffff';
+  }
+
+  private defaultCategoryEmoji(id: string): string {
+    const map: Record<string, string> = {
+      apparel: '👕',
+      'home-garden': '🏡',
+      'cycling-sports': '🚲',
+      electronics: '💻',
+      'books-comics-magazines': '📚',
+      music: '🎵',
+    };
+    return map[id] || '•';
+  }
+
+  private categoryImageIcons(id: string): string[] {
+    if (id === 'apparel') {
+      return [
+        'assets/icons/clothing-shirt.png',
+        'assets/icons/clothing-trainers.png',
+      ];
+    }
+    if (id === 'electronics') {
+      return [
+        'assets/icons/electronics-devices.png',
+        'assets/icons/electronics-fridge.png',
+      ];
+    }
+    if (id === 'music') {
+      return [
+        'assets/icons/music-hdd.png',
+        'assets/icons/electronics-headphones.png',
+      ];
+    }
+    if (id === 'home-garden') {
+      return [
+        'assets/icons/furniture-lamp.png',
+        'assets/icons/furniture-chair.png',
+      ];
+    }
+    if (id === 'books-comics-magazines') {
+      return [
+        'assets/icons/books-open.png',
+        'assets/icons/books-comics.png',
+      ];
+    }
+    if (id === 'cycling-sports') {
+      return [
+        'assets/icons/sports-bicycle.png',
+        'assets/icons/sports-basketball.png',
+        'assets/icons/sports-barbell.png',
+      ];
+    }
+    return [];
   }
 
   onSearchInput(ev: Event): void {

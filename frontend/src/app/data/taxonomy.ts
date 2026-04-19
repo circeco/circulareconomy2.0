@@ -38,7 +38,7 @@ export const SECTOR_CATEGORIES = [
 ] as const;
 
 export const SECTOR_CATEGORY_LABELS: Record<SectorCategory, string> = {
-  apparel: 'Apparel',
+  apparel: 'Clothing & Accessories',
   'home-garden': 'Home & Garden',
   'cycling-sports': 'Cycling & Sports',
   electronics: 'Electronics',

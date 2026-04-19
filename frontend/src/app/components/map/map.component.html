@@ -9,14 +9,35 @@
       <nav id="selectlayers">
         <a href="#"
            id="favorites-toggle"
+           class="atlas-category-link"
            [class.active]="favoritesVisible"
            [attr.aria-disabled]="favoritesDisabled ? 'true' : null"
-           (click)="onToggleFavorites($event)">favourites ♥︎</a>
+           (click)="onToggleFavorites($event)">
+          <span class="atlas-category-label">favourites</span>
+          <span class="atlas-category-icon" aria-hidden="true">
+            <span class="atlas-category-icon-emoji">♥︎</span>
+          </span>
+        </a>
 
         <a *ngFor="let cat of categoryIds"
            href="#"
+           class="atlas-category-link"
            [class.active]="isCatEnabled(cat)"
-           (click)="onToggleCategory($event, cat)">{{ categoryLabel(cat) }}</a>
+           (click)="onToggleCategory($event, cat)">
+          <span class="atlas-category-label">{{ categoryLabel(cat) }}</span>
+          <span class="atlas-category-icon" aria-hidden="true">
+            <ng-container *ngIf="categoryImageIcons(cat).length; else atlasEmojiIcon">
+              <span
+                *ngFor="let iconPath of categoryImageIcons(cat)"
+                class="atlas-category-icon-mask"
+                [style.--icon-url]="'url(' + iconPath + ')'"
+              ></span>
+            </ng-container>
+            <ng-template #atlasEmojiIcon>
+              <span class="atlas-category-icon-emoji">{{ categoryEmojiIcon(cat) }}</span>
+            </ng-template>
+          </span>
+        </a>
       </nav>
 
       <div id="listings" class="listings">

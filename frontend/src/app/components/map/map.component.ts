@@ -25,6 +25,7 @@ import {
   ACTION_TAGS,
   ACTION_TAG_LABELS,
   ActionTag,
+  canonicalizeSectorCategory,
   SECTOR_CATEGORY_LABELS,
   SectorCategory,
 } from '../../data/taxonomy';
@@ -310,35 +311,144 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
     header.appendChild(h); header.appendChild(btn); el.appendChild(header);
 
-    if (props.STORE_TYPE) {
-      const t = document.createElement('p'); t.style.margin = '4px 0'; t.textContent = props.STORE_TYPE; el.appendChild(t);
-    }
     if (props.ADDRESS_LINE1 || props.ADDRESS) {
       const a = document.createElement('p'); a.className = 'address'; a.textContent = props.ADDRESS_LINE1 || props.ADDRESS || ''; el.appendChild(a);
     }
     const rawWeb = (props.WEB || '').replace(/^https?:\/\//i, ''); const href = this.normalizeWebHref(rawWeb);
     if (href) {
-      const a = document.createElement('a'); a.target = '_blank'; a.rel = 'noopener'; a.href = href; a.textContent = rawWeb; el.appendChild(a);
+      const a = document.createElement('a');
+      a.className = 'website-link';
+      a.target = '_blank';
+      a.rel = 'noopener';
+      a.href = href;
+      a.textContent = rawWeb;
+      el.appendChild(a);
     }
-    if (props.DESCRIPTION) {
-      const d = document.createElement('p'); d.textContent = props.DESCRIPTION; el.appendChild(d);
-    }
-    const sectors = Array.isArray((props as any).CATEGORIES) ? (props as any).CATEGORIES : [];
+
+    const sectors = this.popupSectorIdsFromProps(props as any);
     if (sectors.length) {
-      const s = document.createElement('p');
-      s.style.margin = '4px 0';
-      s.textContent = `Categories: ${sectors.map((x: string) => this.categoryLabel(String(x))).join(', ')}`;
-      el.appendChild(s);
+      const icons = document.createElement('div');
+      icons.className = 'popup-category-icons';
+      const renderedIconPaths = new Set<string>();
+      const renderedFallbacks = new Set<string>();
+      for (const sector of sectors) {
+        const paths = this.categoryImageIcons(sector);
+        if (paths.length) {
+          for (const path of paths) {
+            if (renderedIconPaths.has(path)) continue;
+            renderedIconPaths.add(path);
+            const icon = document.createElement('span');
+            icon.className = 'popup-category-icon';
+            icon.style.setProperty('--icon-url', `url('${path}')`);
+            icons.appendChild(icon);
+          }
+        } else {
+          const emoji = this.categoryEmojiIcon(sector);
+          if (renderedFallbacks.has(emoji)) continue;
+          renderedFallbacks.add(emoji);
+          const fallback = document.createElement('span');
+          fallback.className = 'popup-category-fallback';
+          fallback.textContent = emoji;
+          icons.appendChild(fallback);
+        }
+      }
+      el.appendChild(icons);
     }
-    const tags = Array.isArray((props as any).ACTION_TAGS) ? (props as any).ACTION_TAGS : [];
-    if (tags.length) {
-      const t = document.createElement('p');
-      t.style.margin = '4px 0';
-      t.textContent = `Action tags: ${tags.map((x: string) => this.actionTagLabel(String(x))).join(', ')}`;
-      el.appendChild(t);
+
+    if (props.DESCRIPTION) {
+      const d = document.createElement('p');
+      d.className = 'description';
+      d.textContent = props.DESCRIPTION;
+      el.appendChild(d);
     }
 
     return el;
+  }
+
+  private popupSectorIdsFromProps(props: any): string[] {
+    const out: SectorCategory[] = [];
+    const normalizeToken = (value: unknown): string => {
+      return String(value || '')
+        .trim()
+        .replace(/^[\[\]\{\}"']+|[\[\]\{\}"']+$/g, '')
+        .trim();
+    };
+    const tokensFromUnknown = (value: unknown): string[] => {
+      if (Array.isArray(value)) {
+        return value.map((v) => normalizeToken(v)).filter(Boolean);
+      }
+      if (typeof value === 'string') {
+        const raw = value.trim();
+        if (raw.startsWith('[') && raw.endsWith(']')) {
+          try {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) return parsed.map((v) => normalizeToken(v)).filter(Boolean);
+          } catch {
+            // fall back to delimiter split below
+          }
+        }
+        return raw.split(/[,;|/]/).map((v) => normalizeToken(v)).filter(Boolean);
+      }
+      if (value && typeof value === 'object') {
+        return Object.values(value as Record<string, unknown>)
+          .map((v) => normalizeToken(v))
+          .filter(Boolean);
+      }
+      return [];
+    };
+    const add = (raw: unknown) => {
+      const token = String(raw || '').trim().toLowerCase();
+      if (!token) return;
+      if (token === 'electronics-books-music') {
+        add('electronics');
+        add('books-comics-magazines');
+        add('music');
+        return;
+      }
+      const canonical = canonicalizeSectorCategory(token);
+      if (canonical && !out.includes(canonical)) out.push(canonical);
+    };
+
+    const fields = [
+      props?.CATEGORIES,
+      props?.CATEGORY,
+      props?.sectorCategories,
+      props?.sectorCategory,
+      props?.category,
+    ];
+    for (const field of fields) {
+      tokensFromUnknown(field).forEach((v) => add(v));
+    }
+
+    if (!out.length) {
+      for (const inferred of this.popupInferSectorsFromText(props)) {
+        if (!out.includes(inferred)) out.push(inferred);
+      }
+    }
+
+    return out;
+  }
+
+  private popupInferSectorsFromText(props: any): SectorCategory[] {
+    const textBits = [
+      props?.DESCRIPTION,
+      props?.STORE_TYPE,
+      props?.CATEGORY,
+      typeof props?.CATEGORIES === 'string' ? props.CATEGORIES : '',
+      Array.isArray(props?.CATEGORIES) ? props.CATEGORIES.join(' ') : '',
+    ];
+    const text = textBits.join(' ').toLowerCase();
+    const out: SectorCategory[] = [];
+    const add = (cat: SectorCategory) => { if (!out.includes(cat)) out.push(cat); };
+
+    if (/(book|comic|magazine|library)/.test(text)) add('books-comics-magazines');
+    if (/(cycle|cycling|bike|bicycle|sport|fitness|gym)/.test(text)) add('cycling-sports');
+    if (/(cloth|clothing|fashion|apparel|shoe|sneaker|accessor)/.test(text)) add('apparel');
+    if (/(electronic|device|phone|laptop|computer|appliance|repair\s*caf[eé])/.test(text)) add('electronics');
+    if (/(music|vinyl|record|instrument|audio|hifi|headphone)/.test(text)) add('music');
+    if (/(furniture|home|garden|chair|lamp|sofa|antique)/.test(text)) add('home-garden');
+
+    return out;
   }
 
   private mountHeart(btn: HTMLButtonElement, place: any) {

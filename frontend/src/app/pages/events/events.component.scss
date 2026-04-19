@@ -46,7 +46,8 @@
   top: 132px;
   left: calc(280px + 44px);
   right: 24px;
-  z-index: 2;
+  width: fit-content;
+  z-index: 1;
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
@@ -62,6 +63,16 @@
   padding: 6px 10px;
   cursor: pointer;
   width: fit-content;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.map-action-tag-toggle:focus,
+.map-action-tag-toggle:focus-visible,
+.map-action-tag-toggle:active {
+  outline: none;
+  border-color: #FF5252;
+  box-shadow: 0 0 0 1px #FF5252;
 }
 
 .map-action-tag-toggle.active {
@@ -78,7 +89,8 @@
 .category-pill {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  gap: 10px;
   padding: 10px 14px;
   border: 1px solid #e2e8f0;
   border-radius: 9999px;
@@ -98,7 +110,39 @@
     border-color: $brand-deep;
     color: white;
   }
+}
 
+.category-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 8px;
+}
+
+.category-icon-mask {
+  width: 16px;
+  height: 16px;
+  display: inline-block;
+  background-color: currentColor;
+  -webkit-mask-image: var(--icon-url);
+  mask-image: var(--icon-url);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+}
+
+.category-icon-emoji {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.category-pill-label {
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
 }
 
 .search-box {

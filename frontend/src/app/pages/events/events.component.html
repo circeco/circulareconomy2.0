@@ -42,7 +42,19 @@
             [class.active]="selectedCategory() === cat.id"
             (click)="selectCategory(cat.id)"
           >
-            <span>{{ cat.label }}</span>
+            <span class="category-pill-label">{{ cat.label }}</span>
+            <span class="category-icon" aria-hidden="true">
+              <ng-container *ngIf="cat.imageIcons.length; else emojiIcon">
+                <span
+                  *ngFor="let iconPath of cat.imageIcons"
+                  class="category-icon-mask"
+                  [style.--icon-url]="'url(' + iconPath + ')'"
+                ></span>
+              </ng-container>
+              <ng-template #emojiIcon>
+                <span class="category-icon-emoji">{{ cat.emojiIcon }}</span>
+              </ng-template>
+            </span>
           </button>
         </div>
       </div>
