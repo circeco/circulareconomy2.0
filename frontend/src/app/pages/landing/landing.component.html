@@ -48,7 +48,7 @@
           <div class="place-card-content">
             <div class="place-card-header">
               <div class="category-tag">{{ result.item.label || result.item.storeType | titlecase }}</div>
-              <button type="button" class="fav-btn" #placeHeartBtn (click)="$event.stopPropagation()">♡</button>
+              <button type="button" class="heart-btn" #placeHeartBtn (click)="$event.stopPropagation()">♥</button>
             </div>
             <h3 class="place-title">{{ result.item.name }}</h3>
             <p class="place-description">{{ result.item.description }}</p>
@@ -130,7 +130,7 @@
       <div class="place-card-content">
         <div class="place-card-header">
           <div class="category-tag">{{ place.label || place.storeType | titlecase }}</div>
-          <button type="button" class="fav-btn" #placeHeartBtn (click)="$event.stopPropagation()">♡</button>
+          <button type="button" class="heart-btn" #placeHeartBtn (click)="$event.stopPropagation()">♥</button>
         </div>
         <h3 class="place-title">{{ place.name }}</h3>
         <p class="place-description">{{ place.description }}</p>

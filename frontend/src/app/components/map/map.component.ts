@@ -95,9 +95,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         this.favoritesDisabled = !authed;
         if (!authed) {
           this.favoritesVisible = false;
-        } else {
-          // Default to selected/on once authenticated.
-          this.favoritesVisible = true;
         }
         this.map.setFavoritesVisibility(authed && this.favoritesVisible);
       })
@@ -219,6 +216,26 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     return tag === 'recycle' || tag === 'reduce' ? '#0c343d' : '#ffffff';
   }
   categoryLabel(cat: string) { return SECTOR_CATEGORY_LABELS[cat as SectorCategory] || cat; }
+  categoryImageIcons(cat: string): string[] {
+    if (cat === 'apparel') return ['assets/icons/clothing-shirt.png', 'assets/icons/clothing-trainers.png'];
+    if (cat === 'home-garden') return ['assets/icons/furniture-lamp.png', 'assets/icons/furniture-chair.png'];
+    if (cat === 'cycling-sports') return ['assets/icons/sports-bicycle.png', 'assets/icons/sports-basketball.png', 'assets/icons/sports-barbell.png'];
+    if (cat === 'electronics') return ['assets/icons/electronics-devices.png', 'assets/icons/electronics-fridge.png'];
+    if (cat === 'books-comics-magazines') return ['assets/icons/books-open.png', 'assets/icons/books-comics.png'];
+    if (cat === 'music') return ['assets/icons/music-hdd.png', 'assets/icons/electronics-headphones.png'];
+    return [];
+  }
+  categoryEmojiIcon(cat: string): string {
+    const map = {
+      apparel: '👕',
+      'home-garden': '🏡',
+      'cycling-sports': '🚲',
+      electronics: '💻',
+      'books-comics-magazines': '📚',
+      music: '🎵',
+    } as const;
+    return map[cat as keyof typeof map] || '•';
+  }
 
   onToggleFavorites(ev: Event) {
     ev.preventDefault(); ev.stopPropagation();
@@ -287,7 +304,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     h.textContent = props.STORE_NAME || props.NAME || 'Unknown place';
 
     const btn = document.createElement('button');
-    btn.className = 'heart-btn';
+    btn.className = 'heart-btn popup-heart-btn';
     btn.setAttribute('aria-pressed', 'false');
     this.mountHeart(btn, place);
 
@@ -333,7 +350,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     }
     else {
       this.heartMountQueue.push({ btn, place });
-      btn.textContent = '♡';
+      btn.textContent = '♥';
     }
   }
 

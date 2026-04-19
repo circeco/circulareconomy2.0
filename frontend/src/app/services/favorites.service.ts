@@ -36,6 +36,7 @@ export class FavoritesService {
       this.mountHeartButton(btn, placeOrFeature);
     g.circeco.favorites.buildPlaceFromFeature = (f: any) => this.buildPlaceFromFeature(f);
     g.circeco.favorites.computePlaceKey = (p: any) => this.computePlaceKey(p);
+    g.circeco.favorites.getFavoriteKeys = () => Array.from(this.cache.keys());
     g.circeco.favourites = g.circeco.favorites; // UK alias
     window.dispatchEvent(new Event('favorites-ready'));
     window.addEventListener('map:favorites-source-ready', this.onMapFavoritesSourceReady);
@@ -151,7 +152,7 @@ export class FavoritesService {
     if (!place) {
       btn.setAttribute('disabled','true');
       btn.setAttribute('data-tip','Cannot save this place');
-      btn.textContent = '♡';
+      btn.textContent = '♥';
       return;
     }
 
@@ -230,7 +231,7 @@ export class FavoritesService {
   }
   private setHeart(btn: HTMLElement, fav: boolean) {
     btn.setAttribute('aria-pressed', fav ? 'true' : 'false');
-    btn.textContent = fav ? '♥' : '♡';
+    btn.textContent = '♥';
   }
 
   private pushToMapSource() {

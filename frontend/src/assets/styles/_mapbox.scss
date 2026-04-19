@@ -46,13 +46,81 @@
 
 .mapboxgl-popup-content {
   line-height: 1.2;
-  padding: 2%;
-  min-width: 120px;
-  width: min-content;
+  padding: 12px 14px;
+  min-width: 220px;
+  width: 220px;
   box-shadow: none;
 
-  .address {margin: 0;}
-  .description {margin: 10px 0;}
+  .popup-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .popup-header h4 {
+    flex: 1 1 auto;
+    min-width: 0;
+    margin: 0;
+  }
+
+  .address {
+    margin: 6px 0 4px;
+  }
+
+  .website-link {
+    display: inline-block;
+    margin: 0 0 8px;
+    color: $color-accent;
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  .popup-category-icons {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin: 0 0 8px;
+  }
+
+  .popup-category-icon {
+    width: 18px;
+    height: 18px;
+    display: inline-block;
+    background-color: $brand-deep;
+    -webkit-mask-image: var(--icon-url);
+    mask-image: var(--icon-url);
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    -webkit-mask-size: contain;
+    mask-size: contain;
+  }
+
+  .popup-category-fallback {
+    font-size: 14px;
+    line-height: 1;
+  }
+
+  .description {
+    margin: 0;
+  }
+
+  .popup-heart-btn {
+    font-family: $font-khand;
+    font-size: 18px;
+    line-height: 1;
+    width: 24px;
+    height: 24px;
+    flex: 0 0 24px;
+    padding: 0;
+    margin: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
 }
 
 .mapboxgl-popup-content-wrapper { padding: 1%; }
@@ -152,7 +220,8 @@ input {
 /* ---------------- Favourites ---------------- */
 .heart-btn {
   border: 0;
-  color: $color-accent;
+  color: transparent;
+  -webkit-text-stroke: 1.3px $color-accent;
   background: transparent;
   cursor: pointer;
   font-size: 18px;
@@ -160,6 +229,7 @@ input {
 
   &[aria-pressed="true"] {
     color: $color-accent;
+    -webkit-text-stroke: 0;
     border: 0;
   }
 

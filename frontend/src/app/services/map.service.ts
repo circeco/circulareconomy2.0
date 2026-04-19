@@ -12,7 +12,7 @@ export class MapService {
   private placesReady = false;           // geojson source fully loaded
 
   private favoriteKeys = new Set<string>();
-  private favoritesVisible = true;
+  private favoritesVisible = false;
   private lastCategorySet = new Set<string>();
   private readonly allActionTags = ACTION_TAGS.slice();
   private lastActionTagSet = new Set<string>(this.allActionTags);
@@ -42,6 +42,8 @@ export class MapService {
     }
     mapboxgl.accessToken = (environment as any)?.mapboxToken
       || 'pk.eyJ1IjoiY2lyY2VjbyIsImEiOiJjazczN3docmowNjMwM2ZwZGFkand4YTUxIn0.0pNRz0t74QkAc6y5shG0BA';
+
+    this.syncFavoriteKeysFromGlobal();
 
     this.zone.runOutsideAngular(() => {
       this.map = new mapboxgl.Map({
@@ -95,6 +97,7 @@ export class MapService {
       if (this.pendingCityCenter) {
         this.map.flyTo({ center: this.pendingCityCenter, zoom: 11 });
       }
+      this.syncFavoriteKeysFromGlobal();
       this.applyFilters(); // ensures stored favorites recolor once layers exist
       window.dispatchEvent(new Event('map:favorites-source-ready'));
     } catch (e) {
@@ -298,12 +301,11 @@ export class MapService {
     });
     const favList = Array.from(this.favoriteKeys);
     let expr: any = this.lastCategorySet.size ? ['any', ...tests] : ['==', ['literal', 1], 1];
-    if (!this.lastCategorySet.size) {
-      if (this.favoritesVisible && favList.length) {
-        expr = ['in', ['get', 'PLACE_KEY'], ['literal', favList]];
-      } else if (!this.favoritesVisible) {
-        expr = ['==', ['literal', 1], 0];
-      } else if (this.favoritesVisible && favList.length === 0) {
+
+    if (this.favoritesVisible) {
+      if (favList.length) {
+        expr = ['all', expr, ['in', ['get', 'PLACE_KEY'], ['literal', favList]]];
+      } else {
         expr = ['==', ['literal', 1], 0];
       }
     }
@@ -362,6 +364,16 @@ export class MapService {
     } catch {}
   };
 
+  private syncFavoriteKeysFromGlobal() {
+    try {
+      const getter = (window as any)?.circeco?.favorites?.getFavoriteKeys;
+      if (typeof getter !== 'function') return;
+      const keys = getter();
+      if (!Array.isArray(keys)) return;
+      this.favoriteKeys = new Set(keys.map((k: unknown) => String(k)));
+    } catch {}
+  }
+
   private applyPaint() {
     if (!this.getLayer('places')) return;
     const favList = Array.from(this.favoriteKeys);
@@ -380,7 +392,7 @@ export class MapService {
       ['in', 'reduce', ['coalesce', ['get', 'ACTION_TAGS'], ['get', 'actionTags'], ['literal', []]]], this.actionTagColors['reduce'],
       this.baseColor
     ];
-    const colorExpr = (this.favoritesVisible && favList.length)
+    const colorExpr = favList.length
       ? ['case',
           ['in', ['get', 'PLACE_KEY'], ['literal', favList]],
           '#FF5252',
