@@ -131,6 +131,12 @@ export class NavbarComponent implements AfterViewInit, OnDestroy {
     // Close menu on mobile
     this.menuOpen.set(false);
 
+    // Circular Events / Circular Atlas should route to dedicated pages.
+    if (id === 'circular_events') {
+      this.router.navigateByUrl('/events');
+      return;
+    }
+
     // Circular Atlas should route to the atlas page, not scroll on landing
     if (id === 'circular_atlas_demo') {
       this.router.navigateByUrl('/atlas');
