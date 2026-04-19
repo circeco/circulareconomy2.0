@@ -4,15 +4,12 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { combineLatest } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import {
-  EventsService,
-  EventItem,
-  EVENT_CATEGORIES,
-} from '../../services/events.service';
+import { EventItem, EventsService } from '../../services/events.service';
 import { SearchService } from '../../services/search.service';
 import { AuthService } from '../../services/auth.service';
 import { EventFavoritesService } from '../../services/event-favorites.service';
 import { CalendarComponent } from '../../components/calendar/calendar.component';
+import { ACTION_TAG_COLORS, ACTION_TAG_LABELS, ACTION_TAGS, SECTOR_CATEGORIES, SECTOR_CATEGORY_LABELS } from '../../data/taxonomy';
 
 @Component({
   selector: 'events-page',
@@ -23,9 +20,15 @@ import { CalendarComponent } from '../../components/calendar/calendar.component'
 })
 export class EventsComponent {
   private destroyRef = inject(DestroyRef);
+  private readonly actionTagColors: Record<string, string> = ACTION_TAG_COLORS as Record<string, string>;
 
-  readonly categories = EVENT_CATEGORIES;
-  selectedCategory = signal<string>('all');
+  readonly actionTagIds = ACTION_TAGS.slice();
+  readonly categories = SECTOR_CATEGORIES.map((id) => ({
+    id,
+    label: SECTOR_CATEGORY_LABELS[id],
+  }));
+  selectedActionTags = signal<Set<string>>(new Set(ACTION_TAGS));
+  selectedCategory = signal<string | null>(null);
   selectedDateTimes = signal<Set<number>>(new Set());
   selectedEventId = signal<string | null>(null);
   initialCalendarSelection: Date[] = [];
@@ -99,7 +102,30 @@ export class EventsComponent {
   }
 
   selectCategory(id: string): void {
-    this.selectedCategory.set(id);
+    this.selectedCategory.set(this.selectedCategory() === id ? null : id);
+  }
+
+  toggleActionTag(tag: string): void {
+    const next = new Set(this.selectedActionTags());
+    if (next.has(tag)) next.delete(tag);
+    else next.add(tag);
+    this.selectedActionTags.set(next);
+  }
+
+  isActionTagEnabled(tag: string): boolean {
+    return this.selectedActionTags().has(tag);
+  }
+
+  actionTagLabel(tag: string): string {
+    return ACTION_TAG_LABELS[tag as keyof typeof ACTION_TAG_LABELS] || tag;
+  }
+
+  actionTagColor(tag: string): string {
+    return this.actionTagColors[tag] || '#45818e';
+  }
+
+  actionTagTextColor(tag: string): string {
+    return tag === 'recycle' || tag === 'reduce' ? '#0c343d' : '#ffffff';
   }
 
   onSearchInput(ev: Event): void {
@@ -117,6 +143,7 @@ export class EventsComponent {
   filteredEvents = computed(() => {
     const query = this.searchService.query().toLowerCase();
     const category = this.selectedCategory();
+    const activeActionTags = this.selectedActionTags();
     const dateTimes = this.selectedDateTimes();
     const highlightEventId = this.selectedEventId();
 
@@ -128,8 +155,10 @@ export class EventsComponent {
         event.category.toLowerCase().includes(query) ||
         event.location.toLowerCase().includes(query);
 
-      const matchCategory =
-        category === 'all' || event.category === category;
+      const matchCategory = !category || event.sectorCategories.includes(category);
+      const matchActionTag =
+        activeActionTags.size === 0 ||
+        event.actionTags.some((tag) => activeActionTags.has(tag));
 
       const eventDayStart = new Date(
         event.date.getFullYear(),
@@ -139,7 +168,7 @@ export class EventsComponent {
       const matchDate =
         dateTimes.size === 0 || dateTimes.has(eventDayStart);
 
-      return matchSearch && matchCategory && matchDate;
+      return matchSearch && matchCategory && matchActionTag && matchDate;
     });
 
     if (highlightEventId) {

@@ -1,26 +1,24 @@
 <section class="events-page">
   <h1 class="events-page-title">Upcoming Events</h1>
 
+  <div class="map-action-tags-row">
+    <button
+      *ngFor="let tag of actionTagIds"
+      type="button"
+      class="map-action-tag-toggle"
+      [class.active]="isActionTagEnabled(tag)"
+      [style.--tag-color]="actionTagColor(tag)"
+      [style.--tag-text-color]="actionTagTextColor(tag)"
+      (click)="toggleActionTag(tag)"
+    >
+      {{ actionTagLabel(tag) }}
+    </button>
+  </div>
+
   <div class="events-layout">
     <aside class="events-sidebar">
-      <div class="filter-section">
-        <h3>Filter by Category</h3>
-        <div class="category-filters">
-          <button
-            *ngFor="let cat of categories"
-            type="button"
-            class="category-pill"
-            [class.active]="selectedCategory() === cat.id"
-            (click)="selectCategory(cat.id)"
-          >
-            <span class="category-icon">{{ cat.icon }}</span>
-            <span>{{ cat.label }}</span>
-          </button>
-        </div>
-      </div>
 
       <div class="filter-section">
-        <h3>Search Events</h3>
         <div class="search-box">
           <span class="search-icon" aria-hidden="true">🔍</span>
           <input
@@ -31,6 +29,21 @@
             (input)="onSearchInput($event)"
             aria-label="Search places and events"
           />
+        </div>
+      </div>
+      
+      <div class="filter-section">
+        <h3>Filter by Category</h3>
+        <div class="category-filters">
+          <button
+            *ngFor="let cat of categories"
+            type="button"
+            class="category-pill"
+            [class.active]="selectedCategory() === cat.id"
+            (click)="selectCategory(cat.id)"
+          >
+            <span>{{ cat.label }}</span>
+          </button>
         </div>
       </div>
 
