@@ -6,6 +6,7 @@ This document defines how the scheduled place discovery system works, how it fee
 
 The goal is to:
 - discover new circular places regularly (monthly),
+- discover new circular events regularly (weekly),
 - minimize duplicate/low-quality candidates,
 - learn from admin approvals/rejections,
 - keep costs and operations efficient while scaling to many cities.
@@ -52,22 +53,28 @@ flowchart LR
 ## Monthly Scheduled Discovery: How It Works
 
 ### Implementation status (current)
-- Scheduler workflow is implemented at `.github/workflows/monthly-discovery-learning.yml`.
-- Automatic schedule is monthly (`0 3 1 * *`, UTC) with manual `workflow_dispatch`.
+- Monthly places+learning workflow is implemented at `.github/workflows/monthly-discovery-learning.yml`.
+- Weekly events workflow is implemented at `.github/workflows/weekly-events-discovery.yml`.
+- Monthly schedule is `0 3 1 * *` (UTC); weekly events schedule is `0 3 * * 1` (UTC).
 - Discovery runner: `npm run discover:monthly` (`tools/scheduled-discovery-job.js`).
+- Event feed runner: `npm run discover:events` (`tools/discover-event-feeds.js`).
 - Learning runner: `npm run learning:report` (`tools/generate-learning-v1-report.js`).
 - Run telemetry writes to `discoveryRuns`; learning outputs write to `learningStats`.
 - City aliases include `torino -> turin` and `milano -> milan`.
 - Overpass resilience includes retries/mirror rotation plus adaptive radius fallback.
 
 ### 1) Trigger
-A scheduler runs monthly (for example: first day of month, off-peak hours).
+Schedulers run on two cadences:
+- monthly for places + learning,
+- weekly for events (upcoming-only by default).
 
 ### 2) Per-city execution
 Discovery runs city-by-city to limit load and isolate failures.
 
 ### 3) Source fetch and candidate extraction
-Initial source: OpenStreetMap/Overpass.
+Current sources:
+- places: OpenStreetMap/Overpass,
+- events: RSS/Atom/ICS feeds configured per city.
 Future sources can be added incrementally.
 
 ### 4) Normalization and feature generation

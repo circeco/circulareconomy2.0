@@ -37,7 +37,8 @@ These only appear **after you run** the discovery script against production (or 
 |--------|---------|---------|
 | Seed cities + sample queue | `npm run seed:firestore` | Upserts `cities/*` and sample `reviewQueue/*` per city (including Milan). |
 | OSM place discovery | `npm run discover:osm -- --city=<id> [opts]` | Queries Overpass, merges candidates into `reviewQueue` (places only). |
-| Monthly multi-city discovery | `npm run discover:monthly -- [opts]` | Runs discovery for all enabled cities (or provided list) and logs each run to `discoveryRuns`. |
+| Event feed discovery | `npm run discover:events -- --city=<id> [opts]` | Fetches RSS/Atom/ICS feeds and writes circular event candidates into `reviewQueue`. |
+| Scheduled multi-city discovery | `npm run discover:monthly -- [opts]` | Runs place and/or event discovery for enabled cities and logs each run to `discoveryRuns`. |
 | Monthly learning report | `npm run learning:report -- --period=YYYY-MM [--city=<id>]` | Aggregates moderation outcomes and writes per-city stats to `learningStats`. |
 | Admin claim | `npm run admin:set-claim -- <email>` | Sets Firebase Auth custom claim `admin: true` for the review UI. |
 
@@ -178,16 +179,22 @@ Now this has been tightened: generic `shop=books` entries are skipped unless the
 
 ```bash
 npm run discover:osm -- --city=milan --dry-run
+npm run discover:events -- --city=milan --dry-run
+npm run discover:events -- --city=milan --max-past-days=0 --feed=https://example.org/events.ics
 npm run discover:osm -- --city=turin --radius=12000 --limit=80
 npm run discover:osm -- --city=torino --radius=6000 --dry-run
 npm run discover:monthly -- --radius=6000 --limit=100 --dry-run
-npm run discover:monthly -- --cities=milan,stockholm,turin,uppsala --radius=6000 --limit=100
+npm run discover:monthly -- --cities=milan,stockholm,turin,uppsala --radius=6000 --limit=100 --sources=places
+npm run discover:monthly -- --cities=milan,stockholm --limit=100 --sources=events --event-max-past-days=0
 npm run learning:report -- --period=2026-03
 ```
 
 - **`--dry-run`**: calls Overpass, prints a sample of what would be written; **no Firestore writes**.
 - **`--radius`**: meters around city center (default `9000`).
 - **`--limit`**: max documents to write after dedupe (default `100`).
+- **`--max-past-days`** (`discover:events`): include events that started up to N days ago (default `0`, so only today/future).
+- **`--sources`** (`discover:monthly`): `places`, `events`, or both.
+- **`--event-max-past-days`** (`discover:monthly`): same upcoming filter forwarded to event discovery.
 - **`--city=torino`** is supported and mapped to `turin` automatically (`milano -> milan` as well).
 - For `discover:monthly`, omit `--cities` to run all enabled cities from `cities/*`.
 
@@ -206,17 +213,21 @@ If it still fails, wait a few minutes and retry, or run with `--radius=6000`.
 
 ### Scheduled automation
 
-- GitHub workflow: `.github/workflows/monthly-discovery-learning.yml`
-- Automatic trigger: day 1 of each month (`cron: 0 3 1 * *`, UTC)
-- Manual trigger: `workflow_dispatch` with inputs for `cities`, `radius`, `limit`, `period`
-- Uses Firebase service account secret `FIREBASE_SERVICE_ACCOUNT_CIRCECO_BF511`
-- Writes telemetry to `discoveryRuns` and monthly learning outputs to `learningStats`
+- Monthly places + learning: `.github/workflows/monthly-discovery-learning.yml`
+  - trigger day 1 monthly (`cron: 0 3 1 * *`, UTC)
+  - runs discovery with `--sources=places`, then learning report
+- Weekly events: `.github/workflows/weekly-events-discovery.yml`
+  - trigger weekly Monday (`cron: 0 3 * * 1`, UTC)
+  - runs discovery with `--sources=events` and `event_max_past_days` default `0`
+- Both workflows use Firebase service account secret `FIREBASE_SERVICE_ACCOUNT_CIRCECO_BF511`
+- Discovery telemetry is written to `discoveryRuns`; monthly learning outputs to `learningStats`
 
 ### Limitations (important)
 
 - **Data quality**: OSM is community-maintained. You will get **noise** (generic chains, weak addresses) and **misses** (many circular businesses are not mapped with our tag filter).
 - **Tag filter is opinionated**: we query a **subset** of tags (e.g. second_hand, charity, vintage, recycling). Expanding or tightening the Overpass query is an iterative task.
-- **No events yet**: this script only creates **place** candidates. Event discovery would be a **separate** script (ICS/RSS/API).
+- **Event feed coverage**: RSS/Atom/ICS availability varies by city; good source configuration (`cities/{cityId}.eventFeeds`) is required for stable weekly yield.
+- **Circular relevance gate**: event discovery intentionally skips non-circular events via keyword/action-tag signals and may miss weakly described circular events.
 - **Rate limits / etiquette**: public Overpass servers can throttle; avoid tight loops and huge radii in automation; prefer off-peak or a self-hosted Overpass for heavy use.
 - **Legal / licensing**: OSM data is ODbL; keep attribution requirements in mind for public-facing copy (see OSM attribution guidelines when you publish derived lists).
 - **Review is mandatory**: nothing here publishes to `places` / `events`; humans approve in `/admin/review`.
@@ -252,5 +263,8 @@ If it still fails, wait a few minutes and retry, or run with `--radius=6000`.
 | 2026-04-11 | Added `discover:monthly` + `learning:report` scripts and Firestore logging to `discoveryRuns` / `learningStats`. |
 | 2026-04-11 | Added monthly GitHub Actions workflow (`monthly-discovery-learning.yml`) for automated discovery + learning report generation. |
 | 2026-04-11 | Added city aliases (`torino -> turin`, `milano -> milan`) and adaptive radius fallback to improve reliability under Overpass timeouts. |
+| 2026-04-18 | Added `discover:events` (`tools/discover-event-feeds.js`) for RSS/Atom/ICS event ingestion with circular relevance filtering and dedupe. |
+| 2026-04-18 | Updated scheduled runner to support `--sources=places|events` and split cadence: monthly places + weekly events workflows. |
+| 2026-04-18 | Event discovery default changed to upcoming-only (`maxPastDays=0`) and now skips missing-location / non-circular events with explicit counters. |
 
 _Add a row when you change Overpass tags, add event ingestion, or change queue ID strategy._

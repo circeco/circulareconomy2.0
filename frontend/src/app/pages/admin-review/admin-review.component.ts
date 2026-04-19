@@ -319,6 +319,7 @@ export class AdminReviewComponent {
     }
     const cityId = this.cityContext.cityId();
     const reviewedAt = new Date().toISOString();
+    const eventSectorCategories = this.ensureEventSectorCategories(c);
     await this.runWrite('manual:add-event', async (batch) => {
       const newRef = doc(collection(this.fs, FS_PATHS.events));
       batch.set(newRef, {
@@ -334,9 +335,9 @@ export class AdminReviewComponent {
         description: c.description ?? '',
         timeDisplay: c.timeDisplay ?? '',
         imageUrl: c.imageUrl ?? '',
-        sectorCategories: c.sectorCategories ?? [],
+        sectorCategories: eventSectorCategories,
         actionTags: (c.actionTags ?? []) as string[],
-        sourceRefs: [],
+        sourceRefs: this.manualSourceRefs(c.website),
         status: 'approved',
         review: { reviewedAt },
         createdAt: serverTimestamp(),
@@ -523,6 +524,8 @@ export class AdminReviewComponent {
 
   async approveEvent(row: ReviewQueueEventRow): Promise<void> {
     const c = this.mergedEventCandidate(row);
+    const reviewedAt = new Date().toISOString();
+    const eventSectorCategories = this.ensureEventSectorCategories(c);
     await this.runWrite(row.id, async (batch) => {
       const newRef = doc(collection(this.fs, FS_PATHS.events));
       batch.set(newRef, {
@@ -538,18 +541,18 @@ export class AdminReviewComponent {
         description: c.description ?? '',
         timeDisplay: c.timeDisplay ?? '',
         imageUrl: c.imageUrl ?? '',
-        sectorCategories: c.sectorCategories ?? [],
+        sectorCategories: eventSectorCategories,
         actionTags: (c.actionTags ?? []) as string[],
-        sourceRefs: this.evidenceToSourceRefs(row),
+        sourceRefs: this.evidenceToSourceRefs(row, c.website),
         status: 'approved',
-        review: { reviewedAt: new Date().toISOString() },
+        review: { reviewedAt },
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
       batch.update(doc(this.fs, FS_PATHS.reviewQueue, row.id), {
         status: 'approved',
         publishedRef: { collection: 'events', id: newRef.id },
-        review: { reviewedAt: new Date().toISOString() },
+        review: { reviewedAt },
         updatedAt: serverTimestamp(),
       });
     });
@@ -635,6 +638,27 @@ export class AdminReviewComponent {
       sectorCategories: canonicalizeSectorCategories(f.sectorCategories),
       actionTags: canonicalizeActionTags(f.actionTags) as EventCandidate['actionTags'],
     };
+  }
+
+  private ensureEventSectorCategories(c: Partial<EventCandidate>): string[] {
+    const existing = canonicalizeSectorCategories((c.sectorCategories ?? []) as string[]);
+    if (existing.length) return existing;
+    const text = `${c.title || ''} ${c.description || ''} ${c.locationText || ''}`.toLowerCase();
+    const inferred = new Set<string>();
+    if (/(cloth|fashion|apparel|textile|wardrobe|abbigli|vestit)/.test(text)) inferred.add('apparel');
+    if (/(furniture|home|garden|house|arredo|mobili)/.test(text)) inferred.add('home-garden');
+    if (/(bike|bicycle|cycling|sport|cicl)/.test(text)) inferred.add('cycling-sports');
+    if (/(electronic|phone|laptop|computer|tech|elettron)/.test(text)) inferred.add('electronics');
+    if (/(book|books|comic|magazine|libri|fumett|rivist)/.test(text)) inferred.add('books-comics-magazines');
+    if (/(music|vinyl|record|strument|concerto)/.test(text)) inferred.add('music');
+    const actions = canonicalizeActionTags((c.actionTags ?? []) as string[]);
+    if (inferred.size === 0) {
+      if (actions.includes('repair')) inferred.add('electronics');
+      if (actions.includes('reuse')) inferred.add('apparel');
+      if (actions.some((x) => x === 'recycle' || x === 'reduce' || x === 'refuse' || x === 'repurpose')) inferred.add('home-garden');
+    }
+    if (inferred.size === 0) inferred.add('home-garden');
+    return canonicalizeSectorCategories([...inferred]);
   }
 
   private placeFormToCandidate(f: PlaceEditForm): Partial<PlaceCandidate> {
@@ -898,12 +922,31 @@ export class AdminReviewComponent {
     return null;
   }
 
-  private evidenceToSourceRefs(row: ReviewQueuePlaceRow | ReviewQueueEventRow) {
-    return (row.evidence || []).map((e) => ({
+  private evidenceToSourceRefs(row: ReviewQueuePlaceRow | ReviewQueueEventRow, preferredUrl?: string | null) {
+    const refs = (row.evidence || []).map((e) => ({
       sourceType: 'website' as const,
       url: e.url,
       retrievedAt: e.capturedAt,
     }));
+    const preferred = String(preferredUrl || '').trim();
+    if (preferred && !refs.some((r) => r.url === preferred)) {
+      refs.unshift({
+        sourceType: 'website' as const,
+        url: preferred,
+        retrievedAt: new Date().toISOString(),
+      });
+    }
+    return refs;
+  }
+
+  private manualSourceRefs(preferredUrl?: string): Array<{ sourceType: 'website'; url: string; retrievedAt: string }> {
+    const url = String(preferredUrl || '').trim();
+    if (!url) return [];
+    return [{
+      sourceType: 'website',
+      url,
+      retrievedAt: new Date().toISOString(),
+    }];
   }
 
   private async persistReviewMemoryLearning(

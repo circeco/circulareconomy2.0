@@ -1,44 +1,40 @@
-name: Monthly Discovery And Learning
+name: Weekly Events Discovery
 
 on:
   schedule:
-    # 03:00 UTC on day 1 of every month.
-    - cron: '0 3 1 * *'
+    # 03:00 UTC every Monday.
+    - cron: '0 3 * * 1'
   workflow_dispatch:
     inputs:
       cities:
         description: Comma-separated city IDs
         required: false
         default: milan,stockholm
-      radius:
-        description: Discovery radius in meters
-        required: false
-        default: '6000'
       limit:
         description: Max queue writes per city
         required: false
         default: '100'
-      period:
-        description: Learning period YYYY-MM (defaults to previous month)
+      event_max_past_days:
+        description: Include events started up to N days ago (0 = only today/future)
         required: false
-        default: ''
+        default: '0'
 
 permissions:
   contents: read
 
 concurrency:
-  group: monthly-discovery-learning
+  group: weekly-events-discovery
   cancel-in-progress: false
 
 jobs:
   run:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 30
     env:
       FIREBASE_PROJECT_ID: circeco-bf511
       DEFAULT_CITIES: milan,stockholm
-      DEFAULT_RADIUS: '6000'
       DEFAULT_LIMIT: '100'
+      DEFAULT_EVENT_MAX_PAST_DAYS: '0'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -68,31 +64,22 @@ jobs:
           set -euo pipefail
 
           CITIES='${{ github.event.inputs.cities }}'
-          RADIUS='${{ github.event.inputs.radius }}'
           LIMIT='${{ github.event.inputs.limit }}'
-          PERIOD='${{ github.event.inputs.period }}'
+          EVENT_MAX_PAST_DAYS='${{ github.event.inputs.event_max_past_days }}'
 
           if [ -z "${CITIES:-}" ]; then CITIES="$DEFAULT_CITIES"; fi
-          if [ -z "${RADIUS:-}" ]; then RADIUS="$DEFAULT_RADIUS"; fi
           if [ -z "${LIMIT:-}" ]; then LIMIT="$DEFAULT_LIMIT"; fi
-          if [ -z "${PERIOD:-}" ]; then
-            PERIOD="$(date -u -d "$(date -u +%Y-%m-01) -1 month" +%Y-%m)"
-          fi
+          if [ -z "${EVENT_MAX_PAST_DAYS:-}" ]; then EVENT_MAX_PAST_DAYS="$DEFAULT_EVENT_MAX_PAST_DAYS"; fi
 
           echo "cities=$CITIES" >> "$GITHUB_OUTPUT"
-          echo "radius=$RADIUS" >> "$GITHUB_OUTPUT"
           echo "limit=$LIMIT" >> "$GITHUB_OUTPUT"
-          echo "period=$PERIOD" >> "$GITHUB_OUTPUT"
+          echo "event_max_past_days=$EVENT_MAX_PAST_DAYS" >> "$GITHUB_OUTPUT"
 
-      - name: Run monthly discovery
+      - name: Run weekly events discovery
         run: |
           npm run discover:monthly -- \
             --cities='${{ steps.params.outputs.cities }}' \
-            --radius='${{ steps.params.outputs.radius }}' \
             --limit='${{ steps.params.outputs.limit }}' \
-            --sources='places'
-
-      - name: Run learning report
-        run: |
-          npm run learning:report -- --period='${{ steps.params.outputs.period }}'
-
+            --sources='events' \
+            --event-max-past-days='${{ steps.params.outputs.event_max_past_days }}' \
+            --run-label='weekly_events'
