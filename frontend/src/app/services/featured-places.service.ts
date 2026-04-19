@@ -229,9 +229,57 @@ export class FeaturedPlacesService {
     const byKey = new Map<string, FeaturedPlace>();
     for (const p of [...remote, ...fallback]) {
       const key = `${p.name.toLowerCase().trim()}|${this.canonicalAddressKey(p.address)}`;
-      if (!byKey.has(key)) byKey.set(key, p);
+      const prev = byKey.get(key);
+      if (!prev) {
+        byKey.set(key, p);
+      } else {
+        byKey.set(key, this.mergePlaceRecords(prev, p));
+      }
     }
     return Array.from(byKey.values());
+  }
+
+  private mergePlaceRecords(base: FeaturedPlace, incoming: FeaturedPlace): FeaturedPlace {
+    const mergedCategories = canonicalizeSectorCategories([
+      ...(base.categories || []),
+      base.category || '',
+      ...(incoming.categories || []),
+      incoming.category || '',
+    ]);
+
+    const mergedActionTags = Array.from(
+      new Set(
+        [...(base.actionTags || []), ...(incoming.actionTags || [])]
+          .map((tag) => canonicalizeActionTag(String(tag || '')) || String(tag || '').trim().toLowerCase())
+          .filter(Boolean)
+      )
+    );
+
+    const baseCoordsOk =
+      !!base.coords && isFinite(base.coords.lat) && isFinite(base.coords.lng);
+    const incomingCoordsOk =
+      !!incoming.coords && isFinite(incoming.coords.lat) && isFinite(incoming.coords.lng);
+
+    return {
+      ...base,
+      id: base.id || incoming.id,
+      name: base.name || incoming.name,
+      address: base.address || incoming.address,
+      description: base.description || incoming.description,
+      storeType: base.storeType || incoming.storeType,
+      label: base.label || incoming.label,
+      web: base.web || incoming.web,
+      actionTags: mergedActionTags.length ? mergedActionTags : (base.actionTags || incoming.actionTags || []),
+      categories: mergedCategories.length ? mergedCategories : (base.categories || incoming.categories),
+      category:
+        mergedCategories[0] ||
+        base.category ||
+        incoming.category ||
+        this.primaryAtlasCategory([]),
+      coords: baseCoordsOk
+        ? base.coords
+        : (incomingCoordsOk ? incoming.coords : base.coords || incoming.coords),
+    };
   }
 
   private canonicalAddressKey(v: string): string {
