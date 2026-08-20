@@ -18,6 +18,7 @@ export class LoginComponent {
   flipping = signal(false);
   loading  = signal(false);
   error    = signal<string | null>(null);
+  notice   = signal<string | null>(null);
 
   signInForm = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
@@ -35,6 +36,7 @@ export class LoginComponent {
         untracked(() => {
           this.flipping.set(false);
           this.error.set(null);
+          this.notice.set(null);
           this.loading.set(false);
         });
       }
@@ -48,7 +50,7 @@ export class LoginComponent {
   async doSignIn() {
     if (this.signInForm.invalid) return;
     const { email, password } = this.signInForm.value;
-    this.loading.set(true); this.error.set(null);
+    this.loading.set(true); this.error.set(null); this.notice.set(null);
     try { await this.auth.signInOnce(email!, password!); this.auth.closeModal(); }
     catch (err: any) { this.error.set(this.human(err?.code, err?.message)); }
     finally { this.loading.set(false); }
@@ -57,10 +59,33 @@ export class LoginComponent {
   async doSignUp() {
     if (this.signUpForm.invalid) return;
     const { email, password } = this.signUpForm.value;
-    this.loading.set(true); this.error.set(null);
+    this.loading.set(true); this.error.set(null); this.notice.set(null);
     try { await this.auth.signUpOnce(email!, password!); this.auth.closeModal(); }
     catch (err: any) { this.error.set(this.human(err?.code, err?.message)); }
     finally { this.loading.set(false); }
+  }
+
+  async doForgotPassword() {
+    const email = this.signInForm.controls.email.value?.trim() || '';
+    this.error.set(null);
+    this.notice.set(null);
+    if (!email) {
+      this.error.set('Enter your email first, then click Forgot password.');
+      return;
+    }
+    if (this.signInForm.controls.email.invalid) {
+      this.error.set('Please enter a valid email address.');
+      return;
+    }
+    this.loading.set(true);
+    try {
+      await this.auth.resetPasswordOnce(email);
+      this.notice.set('Password reset email sent. Check your inbox.');
+    } catch (err: any) {
+      this.error.set(this.human(err?.code, err?.message));
+    } finally {
+      this.loading.set(false);
+    }
   }
 
   private human(code?: string, fallback?: string): string {
@@ -69,6 +94,8 @@ export class LoginComponent {
       case 'auth/wrong-password': return 'Wrong password. Try again.';
       case 'auth/email-already-in-use': return 'Email already in use. Please sign in.';
       case 'auth/weak-password': return 'Password should be at least 6 characters.';
+      case 'auth/invalid-email': return 'Please enter a valid email address.';
+      case 'auth/too-many-requests': return 'Too many attempts. Please wait and try again.';
       default: return fallback || 'Something went wrong. Please try again.';
     }
   }

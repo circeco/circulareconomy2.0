@@ -9,7 +9,11 @@
       <input id="signInEmail" type="email" class="form-control" formControlName="email" required />
       <label for="signInPass">Password</label>
       <input id="signInPass" type="password" class="form-control" formControlName="password" required />
+      <div class="forgot-row">
+        <a href="#" id="forgotPassword" (click)="$event.preventDefault(); doForgotPassword()">Forgot password?</a>
+      </div>
       <div class="error" *ngIf="error()">{{ error() }}</div>
+      <div class="notice" *ngIf="notice()">{{ notice() }}</div>
       <button id="signInSubmit" class="btn btn-primary btn-sm" [disabled]="loading()">Sign in</button>
       <p>Don’t have an account?
         <a id="toSignup" href="#" (click)="$event.preventDefault(); flipping.set(true)">Create one</a>

@@ -44,10 +44,19 @@
 
 /* Small cosmetics matching your snippet */
 .error { color: #c62828; font-size: .9rem; min-height: 1.25em; margin: 6px 0; }
+.notice { color: #2e7d32; font-size: .9rem; min-height: 1.25em; margin: 6px 0; }
 #toSignin, #toSignup { color: $color-accent; } /* adjust to your $color-accent if needed */
+#forgotPassword {
+  color: #FF5252;;
+  font-size: .5rem;
+  text-decoration: underline;
+}
+.forgot-row {
+  text-align: right;
+}
 #signInSubmit, #signUpSubmit {
   background-color: $color-accent; /* adjust to your variable */
-  border: none; width: 80%; margin: 20px auto 10px;
+  border: none; width: 80%; margin: 10px auto 0;
 }
 #signUpForm, #signInForm {
   label { margin: 30px auto 10px; }

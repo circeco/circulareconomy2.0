@@ -3,7 +3,7 @@ import {
   Auth, user, signInWithEmailAndPassword, createUserWithEmailAndPassword,
   signOut, User
 } from '@angular/fire/auth';
-import { setPersistence, browserLocalPersistence, getIdTokenResult } from 'firebase/auth';
+import { setPersistence, browserLocalPersistence, getIdTokenResult, sendPasswordResetEmail } from 'firebase/auth';
 import { Observable, from, firstValueFrom, of } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 
@@ -47,6 +47,9 @@ export class AuthService {
     return from(createUserWithEmailAndPassword(this.auth, email, password));
   }
   signOut() { return from(signOut(this.auth)); }
+  resetPassword(email: string) {
+    return from(sendPasswordResetEmail(this.auth, email));
+  }
 
   /** Helpers for async/await usage from components */
   signInOnce(email: string, password: string) {
@@ -57,6 +60,9 @@ export class AuthService {
   }
   signOutOnce() {
     return firstValueFrom(this.signOut());
+  }
+  resetPasswordOnce(email: string) {
+    return firstValueFrom(this.resetPassword(email));
   }
 
   /** Convenience observable that resolves to true when a user is logged in. */

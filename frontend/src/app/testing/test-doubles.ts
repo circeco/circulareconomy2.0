@@ -5,7 +5,7 @@ import { FavoritesService } from '../services/favorites.service';
 import { MapService } from '../services/map.service';
 import { PlacesFilter } from '../services/places-filter.service';
 
-export class AuthServiceStub implements Pick<AuthService, 'user$' | 'modalOpen' | 'openModal' | 'closeModal' | 'signInOnce' | 'signUpOnce' | 'signOutOnce' | 'isAuthenticated' | 'isAdmin'> {
+export class AuthServiceStub implements Pick<AuthService, 'user$' | 'modalOpen' | 'openModal' | 'closeModal' | 'signInOnce' | 'signUpOnce' | 'signOutOnce' | 'resetPasswordOnce' | 'isAuthenticated' | 'isAdmin'> {
   user$ = of(null);
   modalOpen = signal(false);
 
@@ -15,6 +15,7 @@ export class AuthServiceStub implements Pick<AuthService, 'user$' | 'modalOpen' 
   signInOnce = async (_email: string, _password: string) => Promise.resolve({} as any);
   signUpOnce = async (_email: string, _password: string) => Promise.resolve({} as any);
   signOutOnce = async () => Promise.resolve();
+  resetPasswordOnce = async (_email: string) => Promise.resolve();
 
   isAuthenticated = () => of(false);
   isAdmin = () => of(false);
