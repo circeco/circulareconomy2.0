@@ -22,12 +22,17 @@ const MEMORY_SOFT_PENALTY_NAME_GEO = 0.14;
 const MEMORY_SOFT_PENALTY_NAME = 0.08;
 const MIN_CONFIDENCE_AFTER_MEMORY = 0.52;
 
-/** Try mirrors if the public endpoint is overloaded (502/503/504). Override with OVERPASS_URL. */
+/** Try mirrors if the public endpoint is overloaded or blocked. Override with OVERPASS_URL. */
 const DEFAULT_OVERPASS_MIRRORS = [
   'https://overpass-api.de/api/interpreter',
   'https://lz4.overpass-api.de/api/interpreter',
   'https://z.overpass-api.de/api/interpreter',
+  'https://overpass.kumi.systems/api/interpreter',
 ];
+
+/** Identify this client; Overpass rejects anonymous / generic agents with HTTP 406. */
+const OVERPASS_USER_AGENT =
+  'circeco-discovery-osm/1.0 (+https://github.com/circeco/circulareconomy2.0)';
 
 /** Fallback centers if `cities/{cityId}` is missing in Firestore */
 const FALLBACK_CENTERS = {
@@ -145,43 +150,60 @@ function sleep(ms) {
 async function runOverpass(query) {
   const urls = overpassMirrorUrls();
   const transient = (status) => status === 502 || status === 503 || status === 504;
+  // 406/403/429: switch mirror; do not treat as a flaky network error.
+  const switchMirror = (status) => transient(status) || status === 406 || status === 403 || status === 429;
   let lastErr = null;
 
   for (let i = 0; i < urls.length; i++) {
     const base = urls[i];
     for (let attempt = 1; attempt <= 3; attempt++) {
+      let res;
       try {
-        const res = await fetch(base, {
+        res = await fetch(base, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+            Accept: 'application/json',
+            'User-Agent': OVERPASS_USER_AGENT,
+          },
           body: `data=${encodeURIComponent(query)}`,
         });
-        if (!res.ok) {
-          const t = await res.text();
-          const err = new Error(`Overpass HTTP ${res.status}: ${t.slice(0, 400)}`);
-          if (transient(res.status) && attempt < 3) {
-            const wait = 2000 * attempt;
-            console.warn(`[discover-osm] ${base} attempt ${attempt} failed (${res.status}), retry in ${wait}ms…`);
-            await sleep(wait);
-            lastErr = err;
-            continue;
-          }
-          if (transient(res.status) && i < urls.length - 1) {
-            console.warn(`[discover-osm] ${base} gave ${res.status}, trying next mirror…`);
-            lastErr = err;
-            break;
-          }
-          throw err;
-        }
-        return res.json();
       } catch (e) {
         lastErr = e;
         if (attempt < 3) {
           const wait = 2000 * attempt;
           console.warn(`[discover-osm] network error on ${base}, retry in ${wait}ms…`, e.message || e);
           await sleep(wait);
+          continue;
         }
+        if (i < urls.length - 1) {
+          console.warn(`[discover-osm] ${base} network failed, trying next mirror…`);
+          break;
+        }
+        throw lastErr;
       }
+
+      if (res.ok) {
+        return res.json();
+      }
+
+      const t = await res.text();
+      const err = new Error(`Overpass HTTP ${res.status}: ${t.slice(0, 400)}`);
+      lastErr = err;
+
+      if (transient(res.status) && attempt < 3) {
+        const wait = 2000 * attempt;
+        console.warn(`[discover-osm] ${base} attempt ${attempt} failed (${res.status}), retry in ${wait}ms…`);
+        await sleep(wait);
+        continue;
+      }
+
+      if (switchMirror(res.status) && i < urls.length - 1) {
+        console.warn(`[discover-osm] ${base} gave ${res.status}, trying next mirror…`);
+        break;
+      }
+
+      throw err;
     }
   }
   throw lastErr || new Error('Overpass: all mirrors failed');

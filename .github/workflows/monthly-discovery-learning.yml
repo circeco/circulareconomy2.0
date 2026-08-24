@@ -85,6 +85,7 @@ jobs:
           echo "period=$PERIOD" >> "$GITHUB_OUTPUT"
 
       - name: Run monthly discovery
+        id: discovery
         run: |
           npm run discover:monthly -- \
             --cities='${{ steps.params.outputs.cities }}' \
@@ -92,7 +93,9 @@ jobs:
             --limit='${{ steps.params.outputs.limit }}' \
             --sources='places'
 
+      # Learning is independent of Overpass; keep generating reports even when discovery fails.
       - name: Run learning report
+        if: ${{ always() && !cancelled() && steps.params.outcome == 'success' }}
         run: |
           npm run learning:report -- --period='${{ steps.params.outputs.period }}'
 

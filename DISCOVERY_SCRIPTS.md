@@ -200,13 +200,15 @@ npm run learning:report -- --period=2026-03
 
 Optional env: `OVERPASS_URL` (single endpoint) or `OVERPASS_URLS` (comma-separated mirrors).
 
-### Overpass errors (502 / 503 / 504)
+### Overpass errors (406 / 502 / 503 / 504)
 
-Public Overpass servers can time out under load. This script now:
+Public Overpass servers can time out under load or reject anonymous clients.
 
 - Uses **two smaller queries** per run (shops vs amenities/craft) instead of one huge query.
 - Defaults to a **smaller radius** (9000 m) to reduce work; increase with `--radius=` if needed.
-- **Retries** transient errors and rotates **public mirrors** (`overpass-api.de`, `lz4`, `z`) unless you set `OVERPASS_URL` or `OVERPASS_URLS`.
+- Sends an identifying **User-Agent** + `Accept: application/json` (required; missing agent often returns **HTTP 406**).
+- **Retries** transient 502/503/504 and rotates **public mirrors** (`overpass-api.de`, `lz4`, `z`, `kumi.systems`) unless you set `OVERPASS_URL` or `OVERPASS_URLS`.
+- **406 / 403 / 429** switch to the next mirror immediately (not treated as a network flake).
 - Applies **adaptive radius fallback** on failure (`requested -> 4500 -> 3000 -> 2200`) so city runs can still produce candidates under load.
 
 If it still fails, wait a few minutes and retry, or run with `--radius=6000`.
@@ -215,12 +217,14 @@ If it still fails, wait a few minutes and retry, or run with `--radius=6000`.
 
 - Monthly places + learning: `.github/workflows/monthly-discovery-learning.yml`
   - trigger day 1 monthly (`cron: 0 3 1 * *`, UTC)
-  - runs discovery with `--sources=places`, then learning report
+  - runs discovery with `--sources=places`, then learning report (**learning still runs if discovery fails**)
 - Weekly events: `.github/workflows/weekly-events-discovery.yml`
   - trigger weekly Monday (`cron: 0 3 * * 1`, UTC)
   - runs discovery with `--sources=events` and `event_max_past_days` default `0`
-- Both workflows use Firebase service account secret `FIREBASE_SERVICE_ACCOUNT_CIRCECO_BF511`
+- Schedule keepalive: `.github/workflows/schedule-keepalive.yml` (empty commit mid-month) so public-repo crons are not auto-disabled after 60 quiet days
+- Both discovery workflows use Firebase service account secret `FIREBASE_SERVICE_ACCOUNT_CIRCECO_BF511`
 - Discovery telemetry is written to `discoveryRuns`; monthly learning outputs to `learningStats`
+- If Actions shows `disabled_inactivity`, re-enable the workflow in the Actions tab (or `gh workflow enable <file>`) and push to `main`
 
 ### Limitations (important)
 
@@ -266,5 +270,6 @@ If it still fails, wait a few minutes and retry, or run with `--radius=6000`.
 | 2026-04-18 | Added `discover:events` (`tools/discover-event-feeds.js`) for RSS/Atom/ICS event ingestion with circular relevance filtering and dedupe. |
 | 2026-04-18 | Updated scheduled runner to support `--sources=places|events` and split cadence: monthly places + weekly events workflows. |
 | 2026-04-18 | Event discovery default changed to upcoming-only (`maxPastDays=0`) and now skips missing-location / non-circular events with explicit counters. |
+| 2026-08-24 | Fixed Overpass CI 406s (User-Agent + Accept, kumi mirror, no network-retry on 406); learning step runs after discovery failure; added schedule keepalive for 60-day inactivity disable. |
 
 _Add a row when you change Overpass tags, add event ingestion, or change queue ID strategy._
