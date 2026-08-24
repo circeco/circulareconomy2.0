@@ -629,6 +629,7 @@ async function main() {
 
   const rawCandidates = [];
   const pageUrls = new Set(seedUrls);
+  const circularPageUrls = new Set();
   let searchHits = 0;
   let pagesFetched = 0;
   let feedsParsed = 0;
@@ -641,8 +642,13 @@ async function main() {
     for (const hit of results) {
       searchHits += 1;
       pageUrls.add(hit.url);
+      circularPageUrls.add(hit.url);
       const fromSnippet = candidateFromSnippet(hit, cityLabel);
-      if (fromSnippet) rawCandidates.push(fromSnippet);
+      if (fromSnippet) {
+        fromSnippet.fromCircularQuery = true;
+        fromSnippet.query = query;
+        rawCandidates.push(fromSnippet);
+      }
     }
     await sleep(800);
   }
@@ -654,16 +660,28 @@ async function main() {
     try {
       const { finalUrl, text } = await fetchText(pageUrl);
       pagesFetched += 1;
-      for (const ev of extractJsonLdEvents(text, finalUrl)) rawCandidates.push(ev);
-      for (const ev of extractHeuristicEventsFromHtml(text, finalUrl, cityLabel, keywords)) rawCandidates.push(ev);
+      const pageBoost = circularPageUrls.has(pageUrl) || circularPageUrls.has(finalUrl);
+      for (const ev of extractJsonLdEvents(text, finalUrl)) {
+        if (pageBoost) ev.fromCircularQuery = true;
+        rawCandidates.push(ev);
+      }
+      for (const ev of extractHeuristicEventsFromHtml(text, finalUrl, cityLabel, keywords)) {
+        if (pageBoost) ev.fromCircularQuery = true;
+        rawCandidates.push(ev);
+      }
       for (const feedUrl of extractFeedLinks(text, finalUrl)) {
         try {
           const feed = await fetchText(feedUrl, 'text/calendar, application/rss+xml, application/xml, text/xml, */*;q=0.5');
           feedsParsed += 1;
+          let parsed = [];
           if (/BEGIN:VCALENDAR|BEGIN:VEVENT/i.test(feed.text)) {
-            for (const ev of parseIcs(feed.text, feedUrl)) rawCandidates.push(ev);
+            parsed = parseIcs(feed.text, feedUrl);
           } else if (/<rss[\s>]|<feed[\s>]/i.test(feed.text)) {
-            for (const ev of parseRssOrAtom(feed.text, feedUrl)) rawCandidates.push(ev);
+            parsed = parseRssOrAtom(feed.text, feedUrl);
+          }
+          for (const ev of parsed) {
+            if (pageBoost) ev.fromCircularQuery = true;
+            rawCandidates.push(ev);
           }
         } catch (e) {
           console.warn(`[discover-events-agent] feed fetch failed ${feedUrl}:`, e.message || e);
@@ -700,9 +718,16 @@ async function main() {
       continue;
     }
 
-    const matched = circularSignals(raw.title, raw.description, keywords);
-    const actionTags = inferActionTags(raw.title, raw.description, matched.matchedActionTags);
-    const hasCircular = matched.matchedKeywords.length > 0 || actionTags.length > 0;
+    const matched = circularSignals(
+      raw.title,
+      `${raw.description || ''} ${raw.query || ''} ${raw.fromCircularQuery ? 'repair reuse swap recycle' : ''}`,
+      keywords
+    );
+    const actionTags = inferActionTags(raw.title, `${raw.description || ''} ${raw.query || ''}`, matched.matchedActionTags);
+    const hasCircular =
+      matched.matchedKeywords.length > 0 ||
+      actionTags.length > 0 ||
+      raw.fromCircularQuery === true;
     if (!hasCircular) {
       skippedNotCircular += 1;
       continue;
