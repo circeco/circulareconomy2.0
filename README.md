@@ -43,6 +43,12 @@ Places and events are organised by circular actions. Canonical descriptions and 
 
 - refuse, reuse, repair, reporpouse, recycle, reduce
 
+## Data & moderation
+
+Places and events are discovered from public sources (e.g. OpenStreetMap), held in a review queue, and published only after human approval. Approvals and rejections feed a memory layer so discovery skips duplicates and weak repeats; a monthly report summarizes which signals are working.
+
+Details: [`SCHEDULED_DISCOVERY_LEARNING_PLAN.md`](SCHEDULED_DISCOVERY_LEARNING_PLAN.md), [`LEARNING_V1_SPEC.md`](LEARNING_V1_SPEC.md), [`DISCOVERY_SCRIPTS.md`](DISCOVERY_SCRIPTS.md).
+
 ## Run locally
 
 ```bash
