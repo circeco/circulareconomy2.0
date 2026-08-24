@@ -58,8 +58,10 @@ flowchart LR
 - Monthly schedule is `0 3 1 * *` (UTC); weekly events schedule is `0 3 * * 1` (UTC).
 - Discovery runner: `npm run discover:monthly` (`tools/scheduled-discovery-job.js`).
 - Event feed runner: `npm run discover:events` (`tools/discover-event-feeds.js`).
+- Event web agent: `npm run discover:events:agent` (`tools/discover-events-agent.js`) — primary weekly path.
 - Learning runner: `npm run learning:report` (`tools/generate-learning-v1-report.js`).
-- Run telemetry writes to `discoveryRuns`; learning outputs write to `learningStats`.
+- Run telemetry writes to `discoveryRuns`; learning outputs write to `learningStats` (places + events).
+- Event approve/reject updates `eventReviewMemory` for next-run dedupe.
 - City aliases include `torino -> turin` and `milano -> milan`.
 - Overpass resilience includes retries/mirror rotation plus adaptive radius fallback.
 

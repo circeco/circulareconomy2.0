@@ -38,6 +38,7 @@ These only appear **after you run** the discovery script against production (or 
 | Seed cities + sample queue | `npm run seed:firestore` | Upserts `cities/*` and sample `reviewQueue/*` per city (including Milan). |
 | OSM place discovery | `npm run discover:osm -- --city=<id> [opts]` | Queries Overpass, merges candidates into `reviewQueue` (places only). |
 | Event feed discovery | `npm run discover:events -- --city=<id> [opts]` | Fetches RSS/Atom/ICS feeds and writes circular event candidates into `reviewQueue`. |
+| Event web agent | `npm run discover:events:agent -- --city=<id> [opts]` | Searches the open web for circular events, extracts candidates, applies memory gates, writes `reviewQueue`. |
 | Scheduled multi-city discovery | `npm run discover:monthly -- [opts]` | Runs place and/or event discovery for enabled cities and logs each run to `discoveryRuns`. |
 | Monthly learning report | `npm run learning:report -- --period=YYYY-MM [--city=<id>]` | Aggregates moderation outcomes and writes per-city stats to `learningStats`. |
 | Admin claim | `npm run admin:set-claim -- <email>` | Sets Firebase Auth custom claim `admin: true` for the review UI. |
@@ -180,6 +181,7 @@ Now this has been tightened: generic `shop=books` entries are skipped unless the
 ```bash
 npm run discover:osm -- --city=milan --dry-run
 npm run discover:events -- --city=milan --dry-run
+npm run discover:events:agent -- --city=milan --dry-run
 npm run discover:events -- --city=milan --max-past-days=0 --feed=https://example.org/events.ics
 npm run discover:osm -- --city=turin --radius=12000 --limit=80
 npm run discover:osm -- --city=torino --radius=6000 --dry-run
@@ -220,11 +222,25 @@ If it still fails, wait a few minutes and retry, or run with `--radius=6000`.
   - runs discovery with `--sources=places`, then learning report (**learning still runs if discovery fails**)
 - Weekly events: `.github/workflows/weekly-events-discovery.yml`
   - trigger weekly Monday (`cron: 0 3 * * 1`, UTC)
-  - runs discovery with `--sources=events` and `event_max_past_days` default `0`
+  - runs discovery with `--sources=events` (web search agent + optional feeds) and `event_max_past_days` default `0`
+  - admin approve/reject writes `eventReviewMemory` so later runs skip repeats
 - Schedule keepalive: `.github/workflows/schedule-keepalive.yml` (empty commit mid-month) so public-repo crons are not auto-disabled after 60 quiet days
 - Both discovery workflows use Firebase service account secret `FIREBASE_SERVICE_ACCOUNT_CIRCECO_BF511`
-- Discovery telemetry is written to `discoveryRuns`; monthly learning outputs to `learningStats`
+- Discovery telemetry is written to `discoveryRuns`; monthly learning outputs to `learningStats` (places + nested/companion event stats)
 - If Actions shows `disabled_inactivity`, re-enable the workflow in the Actions tab (or `gh workflow enable <file>`) and push to `main`
+
+### Event web agent (automated search)
+
+`npm run discover:events:agent -- --city=<id>`:
+
+1. Runs city search queries (defaults per city, or `cities/{id}.discovery.eventSearchQueries`)
+2. Optionally visits `discovery.eventSeedUrls`
+3. Extracts JSON-LD `Event`, linked ICS feeds, and dated search snippets
+4. Keeps only circular matches (keywords / action tags)
+5. Skips via approved events, reviewed queue ids, and `eventReviewMemory`
+6. Writes `reviewQueue` candidates for admin review
+
+This is the primary weekly path so the queue can fill without manually pasting events.
 
 ### Limitations (important)
 
@@ -271,5 +287,6 @@ If it still fails, wait a few minutes and retry, or run with `--radius=6000`.
 | 2026-04-18 | Updated scheduled runner to support `--sources=places|events` and split cadence: monthly places + weekly events workflows. |
 | 2026-04-18 | Event discovery default changed to upcoming-only (`maxPastDays=0`) and now skips missing-location / non-circular events with explicit counters. |
 | 2026-08-24 | Fixed Overpass CI 406s (User-Agent + Accept, kumi mirror, no network-retry on 406); learning step runs after discovery failure; added schedule keepalive for 60-day inactivity disable. |
+| 2026-08-24 | Added automated event web agent (`discover:events:agent`), event review memory on admin decisions, and event learning stats alongside places. |
 
 _Add a row when you change Overpass tags, add event ingestion, or change queue ID strategy._

@@ -59,6 +59,19 @@ service cloud.firestore {
       allow read, create, update, delete: if isAdmin();
     }
 
+    /** Event review memory for weekly discovery dedupe/learning: admin only */
+    match /eventReviewMemory/{memoryId} {
+      allow read, create, update, delete: if isAdmin();
+    }
+
+    match /eventReviewMemoryTitleIndex/{docId} {
+      allow read, create, update, delete: if isAdmin();
+    }
+
+    match /eventReviewMemoryRollups/{cityId} {
+      allow read, create, update, delete: if isAdmin();
+    }
+
     /** Discovery run telemetry (monthly job + per-city runs): admin only */
     match /discoveryRuns/{runId} {
       allow read, create, update, delete: if isAdmin();

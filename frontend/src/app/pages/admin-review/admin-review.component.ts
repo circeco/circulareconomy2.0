@@ -69,6 +69,17 @@ interface RollupDelta {
   rejectedInc: number;
 }
 
+interface EventTitleIndexDelta {
+  docId: string;
+  cityId: string;
+  titleNorm: string;
+  approvedInc: number;
+  rejectedInc: number;
+  lastDecision: DecisionType;
+  lastReviewedAt: string;
+  expiresAt: string | null;
+}
+
 interface PlaceConflict {
   id: string;
   name: string;
@@ -556,17 +567,25 @@ export class AdminReviewComponent {
         updatedAt: serverTimestamp(),
       });
     });
+    await this.persistEventReviewMemoryLearning([
+      { cityId: row.cityId, candidate: c, decision: 'approved', reviewedAtIso: reviewedAt },
+    ]);
     this.closeEditorsForRow(row.id);
   }
 
   async rejectEvent(row: ReviewQueueEventRow): Promise<void> {
+    const reviewedAt = new Date().toISOString();
+    const c = this.mergedEventCandidate(row);
     await this.runWrite(row.id, async (batch) => {
       batch.update(doc(this.fs, FS_PATHS.reviewQueue, row.id), {
         status: 'rejected',
-        review: { reviewedAt: new Date().toISOString() },
+        review: { reviewedAt },
         updatedAt: serverTimestamp(),
       });
     });
+    await this.persistEventReviewMemoryLearning([
+      { cityId: row.cityId, candidate: c, decision: 'rejected', reviewedAtIso: reviewedAt },
+    ]);
     this.closeEditorsForRow(row.id);
   }
 
@@ -1035,6 +1054,163 @@ export class AdminReviewComponent {
       // Keep moderation action successful even if optional learning/index writes fail.
       console.warn('[admin-review] review memory learning write failed', e);
     }
+  }
+
+  private async persistEventReviewMemoryLearning(
+    entries: Array<{
+      cityId: string;
+      candidate: Partial<EventCandidate>;
+      decision: DecisionType;
+      reviewedAtIso: string;
+    }>
+  ): Promise<void> {
+    if (!entries.length) return;
+    try {
+      const batch = writeBatch(this.fs);
+      const titleIndexDeltas = new Map<string, EventTitleIndexDelta>();
+      const rollupDeltas = new Map<string, RollupDelta>();
+      for (const entry of entries) {
+        batch.set(
+          doc(this.fs, FS_PATHS.eventReviewMemory, this.eventReviewMemoryDocId(entry.cityId, entry.candidate)),
+          this.eventReviewMemoryPayload(entry.cityId, entry.candidate, entry.decision, entry.reviewedAtIso),
+          { merge: true }
+        );
+        this.collectEventReviewMemoryIndexDeltas(
+          entry.cityId,
+          entry.candidate,
+          entry.decision,
+          entry.reviewedAtIso,
+          titleIndexDeltas,
+          rollupDeltas
+        );
+      }
+      for (const delta of titleIndexDeltas.values()) {
+        batch.set(
+          doc(this.fs, FS_PATHS.eventReviewMemoryTitleIndex, delta.docId),
+          {
+            cityId: delta.cityId,
+            titleNorm: delta.titleNorm,
+            keyType: 'title',
+            lastDecision: delta.lastDecision,
+            lastReviewedAt: delta.lastReviewedAt,
+            approvedCount: increment(delta.approvedInc),
+            rejectedCount: increment(delta.rejectedInc),
+            expiresAt: delta.expiresAt ?? deleteField(),
+            updatedAt: serverTimestamp(),
+            createdAt: serverTimestamp(),
+          },
+          { merge: true }
+        );
+      }
+      for (const delta of rollupDeltas.values()) {
+        batch.set(
+          doc(this.fs, FS_PATHS.eventReviewMemoryRollups, delta.cityId),
+          {
+            cityId: delta.cityId,
+            indexedCount: increment(delta.indexedInc),
+            approvedCount: increment(delta.approvedInc),
+            rejectedCount: increment(delta.rejectedInc),
+            updatedAt: serverTimestamp(),
+            createdAt: serverTimestamp(),
+          },
+          { merge: true }
+        );
+      }
+      await batch.commit();
+    } catch (e) {
+      console.warn('[admin-review] event review memory learning write failed', e);
+    }
+  }
+
+  private collectEventReviewMemoryIndexDeltas(
+    cityId: string,
+    candidate: Partial<EventCandidate>,
+    decision: DecisionType,
+    reviewedAtIso: string,
+    titleIndexDeltas: Map<string, EventTitleIndexDelta>,
+    rollupDeltas: Map<string, RollupDelta>
+  ): void {
+    const titleNorm = this.normalizeText(candidate.title || '');
+    if (!titleNorm) return;
+    const approvedInc = decision === 'approved' ? 1 : 0;
+    const rejectedInc = decision === 'rejected' ? 1 : 0;
+    const expiresAt = this.memoryExpiry(decision, reviewedAtIso);
+    const titleDocId = this.eventReviewMemoryTitleIndexDocId(cityId, titleNorm);
+    const titleDelta = titleIndexDeltas.get(titleDocId) ?? {
+      docId: titleDocId,
+      cityId,
+      titleNorm,
+      approvedInc: 0,
+      rejectedInc: 0,
+      lastDecision: decision,
+      lastReviewedAt: reviewedAtIso,
+      expiresAt,
+    };
+    titleDelta.approvedInc += approvedInc;
+    titleDelta.rejectedInc += rejectedInc;
+    titleDelta.lastDecision = decision;
+    titleDelta.lastReviewedAt = reviewedAtIso;
+    titleDelta.expiresAt = decision === 'approved' ? null : expiresAt;
+    titleIndexDeltas.set(titleDocId, titleDelta);
+
+    const rollup = rollupDeltas.get(cityId) ?? {
+      cityId,
+      indexedInc: 0,
+      approvedInc: 0,
+      rejectedInc: 0,
+    };
+    rollup.indexedInc += 1;
+    rollup.approvedInc += approvedInc;
+    rollup.rejectedInc += rejectedInc;
+    rollupDeltas.set(cityId, rollup);
+  }
+
+  private eventReviewMemoryPayload(
+    cityId: string,
+    candidate: Partial<EventCandidate>,
+    decision: DecisionType,
+    reviewedAtIso: string
+  ): Record<string, unknown> {
+    const titleNorm = this.normalizeText(candidate.title || '');
+    const locationNorm = this.normalizeText(candidate.locationText || candidate.address || '');
+    const startDate = String(candidate.startDate || '').trim();
+    const payload: Record<string, unknown> = {
+      cityId,
+      kind: 'event',
+      fingerprint: this.eventFingerprint(cityId, candidate.title || '', startDate, locationNorm),
+      eventKey: `${cityId}|${titleNorm}|${startDate}|${locationNorm}`,
+      titleNorm,
+      locationNorm,
+      startDate,
+      lastDecision: decision,
+      lastReviewedAt: reviewedAtIso,
+      approvedCount: increment(decision === 'approved' ? 1 : 0),
+      rejectedCount: increment(decision === 'rejected' ? 1 : 0),
+      expiresAt: this.memoryExpiry(decision, reviewedAtIso) ?? deleteField(),
+      updatedAt: serverTimestamp(),
+      createdAt: serverTimestamp(),
+    };
+    if (decision === 'rejected') {
+      payload['rejectionSignals'] = {
+        actionTags: (candidate.actionTags ?? []) as string[],
+        sectorCategories: candidate.sectorCategories ?? [],
+      };
+    }
+    return payload;
+  }
+
+  private eventReviewMemoryDocId(cityId: string, candidate: Partial<EventCandidate>): string {
+    const locationNorm = this.normalizeText(candidate.locationText || candidate.address || '');
+    const fp = this.eventFingerprint(cityId, candidate.title || '', String(candidate.startDate || ''), locationNorm);
+    return `${cityId}_${fp}`;
+  }
+
+  private eventReviewMemoryTitleIndexDocId(cityId: string, titleNorm: string): string {
+    return `${cityId}_${this.hashString(`eventtitle|${titleNorm}`)}`;
+  }
+
+  private eventFingerprint(cityId: string, title: string, startDate: string, locationNorm: string): string {
+    return this.hashString(`${cityId}|${this.normalizeText(title)}|${String(startDate || '').trim()}|${locationNorm}`);
   }
 
   private collectReviewMemoryIndexDeltas(

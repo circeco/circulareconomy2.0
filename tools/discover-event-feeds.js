@@ -22,6 +22,7 @@ const path = require('path');
 const { readFileSync, existsSync } = require('fs');
 const { initializeApp, cert, getApps } = require('firebase-admin/app');
 const { getFirestore, FieldValue } = require('firebase-admin/firestore');
+const { createEventMemoryLookup } = require('./lib/event-discovery-common');
 
 const PROJECT_ID = process.env.FIREBASE_PROJECT_ID || 'circeco-bf511';
 const CITY_ALIASES = { torino: 'turin', milano: 'milan' };
@@ -526,6 +527,7 @@ async function main() {
 
   const reviewedQueueIds = await loadReviewedQueueEventIds(db, args.city);
   const approvedKeys = await loadApprovedEventKeys(db, args.city);
+  const memoryLookup = await createEventMemoryLookup(db, args.city);
   const minDate = isoDayOffset(-args.maxPastDays);
 
   const byDocId = new Map();
@@ -538,6 +540,9 @@ async function main() {
   let skippedMissingLocation = 0;
   let skippedNotCircular = 0;
   let failedFeeds = 0;
+  let skippedMemoryHard = 0;
+  let skippedMemorySoft = 0;
+  let memoryPenalties = 0;
 
   for (const feed of feeds) {
     try {
@@ -581,18 +586,35 @@ async function main() {
           sectorCategories,
         };
 
+        const memorySignal = await memoryLookup.assess(candidate);
+        if (memorySignal.hardDuplicate) {
+          skippedMemoryHard++;
+          continue;
+        }
+        let confidence = confidenceForEvent(candidate);
+        if (memorySignal.penalty > 0) {
+          confidence = Math.max(0.05, confidence - memorySignal.penalty);
+          memoryPenalties++;
+          if (confidence < 0.52) {
+            skippedMemorySoft++;
+            continue;
+          }
+        }
+
         byDocId.set(docId, {
           docId,
           payload: {
             kind: 'event',
             cityId: args.city,
             status: 'needs_review',
-            confidence: confidenceForEvent(candidate),
+            confidence,
             candidate,
             evidence: [
               {
                 url: raw.website || raw.sourceUrl,
-                snippet: `${String(raw.evidenceSnippet || '').slice(0, 140)}; circularSignals=${matchedCircular.matchedKeywords.slice(0, 3).join(',')}; actionTags=${matchedCircular.matchedActionTags.join(',')}`.trim(),
+                snippet: `${String(raw.evidenceSnippet || '').slice(0, 140)}; circularSignals=${matchedCircular.matchedKeywords.slice(0, 3).join(',')}; actionTags=${matchedCircular.matchedActionTags.join(',')}${
+                  memorySignal.reasons.length ? `; memory=${memorySignal.reasons.join(',')}` : ''
+                }`.trim(),
                 capturedAt: nowIso(),
               },
             ],
@@ -614,6 +636,7 @@ async function main() {
     `[discover-events] fetched ${fetchedRaw} raw entries, ${byDocId.size} candidates after filters (` +
     `${skippedPast} past skipped; ${skippedReviewed} reviewed queue skipped; ${skippedApprovedExisting} existing approved skipped; ` +
     `${skippedRunDuplicates} run duplicates skipped; ${skippedMissingLocation} missing location skipped; ${skippedNotCircular} non-circular skipped; ` +
+    `${skippedMemoryHard} hard memory skips; ${skippedMemorySoft} soft-memory confidence skips; ${memoryPenalties} soft-memory penalties; ` +
     `${failedFeeds} feeds failed); writing ${sorted.length} (limit ${args.limit})`
   );
 

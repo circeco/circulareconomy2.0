@@ -90,21 +90,38 @@ function parsePlaceDiscoverMetrics(outputText) {
 }
 
 function parseEventDiscoverMetrics(outputText) {
-  const summary = outputText.match(/fetched (\d+) raw entries, (\d+) candidates after filters/) || [];
-  const skipped = outputText.match(/(\d+) past skipped;\s+(\d+) reviewed queue skipped;\s+(\d+) existing approved skipped;\s+(\d+) run duplicates skipped;\s+(\d+) missing location skipped;\s+(\d+) non-circular skipped;\s+(\d+) feeds failed/) || [];
-  const write = outputText.match(/writing (\d+) \(limit (\d+)\)/) || [];
+  const overviews = [...String(outputText || '').matchAll(/fetched (\d+) raw entries, (\d+) candidates after filters/g)];
+  let fetchedCount = 0;
+  let candidatesAfterFilters = 0;
+  for (const m of overviews) {
+    fetchedCount += Number(m[1] || 0);
+    candidatesAfterFilters += Number(m[2] || 0);
+  }
+  const skipped = outputText.match(/(\d+) past skipped;\s+(\d+) reviewed queue skipped;\s+(\d+) existing approved skipped;\s+(\d+) run duplicates skipped;\s+(\d+) missing location skipped;\s+(\d+) non-circular skipped/) || [];
+  const feedsFailed = outputText.match(/(\d+) feeds failed/) || outputText.match(/(\d+) queries without hits/) || [];
+  const memory = outputText.match(/(\d+) hard memory skips;\s+(\d+) soft-memory confidence skips;\s+(\d+) soft-memory penalties/) || [];
+  const writeMatches = [...String(outputText || '').matchAll(/writing (\d+) \(limit (\d+)\)/g)];
+  let queuedCount = 0;
+  let configuredLimit = 0;
+  for (const m of writeMatches) {
+    queuedCount += Number(m[1] || 0);
+    configuredLimit = Math.max(configuredLimit, Number(m[2] || 0));
+  }
   return {
-    fetchedCount: Number(summary[1] || 0),
-    candidatesAfterFilters: Number(summary[2] || 0),
+    fetchedCount,
+    candidatesAfterFilters,
     skippedPast: Number(skipped[1] || 0),
     skippedReviewedQueue: Number(skipped[2] || 0),
     skippedApproved: Number(skipped[3] || 0),
     skippedRunDuplicates: Number(skipped[4] || 0),
     skippedMissingLocation: Number(skipped[5] || 0),
     skippedNotCircular: Number(skipped[6] || 0),
-    failedFeeds: Number(skipped[7] || 0),
-    queuedCount: Number(write[1] || 0),
-    configuredLimit: Number(write[2] || 0),
+    failedFeeds: Number(feedsFailed[1] || 0),
+    skippedMemoryHard: Number(memory[1] || 0),
+    skippedMemorySoft: Number(memory[2] || 0),
+    memoryPenaltiesApplied: Number(memory[3] || 0),
+    queuedCount,
+    configuredLimit,
   };
 }
 
@@ -136,9 +153,18 @@ function runCityPlaceDiscovery(cityId, args) {
 }
 
 function runCityEventDiscovery(cityId, args) {
-  const cmdArgs = [`--city=${cityId}`, `--limit=${args.limit}`, `--max-past-days=${args.eventMaxPastDays}`];
-  if (args.dryRun) cmdArgs.push('--dry-run');
-  return runNodeScript('discover-event-feeds.js', cmdArgs);
+  const shared = [`--city=${cityId}`, `--limit=${args.limit}`, `--max-past-days=${args.eventMaxPastDays}`];
+  if (args.dryRun) shared.push('--dry-run');
+  const agentArgs = [...shared, '--max-queries=6', '--max-pages=16'];
+  // Primary: web search agent. Bonus: configured RSS/Atom/ICS feeds when present.
+  return Promise.all([
+    runNodeScript('discover-events-agent.js', agentArgs),
+    runNodeScript('discover-event-feeds.js', shared),
+  ]).then(([agentRes, feedRes]) => ({
+    exitCode: Number(agentRes.exitCode || 0) !== 0 || Number(feedRes.exitCode || 0) !== 0 ? 1 : 0,
+    stdout: `${agentRes.stdout || ''}\n${feedRes.stdout || ''}`,
+    stderr: `${agentRes.stderr || ''}\n${feedRes.stderr || ''}`,
+  }));
 }
 
 async function resolveCities(db, explicit) {
@@ -181,7 +207,7 @@ async function main() {
       cityId,
       sourceSet: [
         ...(args.sources.includes('places') ? ['osm'] : []),
-        ...(args.sources.includes('events') ? ['event_feeds'] : []),
+        ...(args.sources.includes('events') ? ['event_web_agent', 'event_feeds'] : []),
       ],
       startedAt: new Date(startedAt).toISOString(),
       status: 'running',

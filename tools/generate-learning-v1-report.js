@@ -122,16 +122,16 @@ function extractSignals(docData) {
   return [...new Set(out)];
 }
 
-async function buildCityReport(db, cityId, period, start, end) {
+async function buildCityKindReport(db, cityId, kind, period, start, end) {
   const approvedSnap = await db
     .collection('reviewQueue')
-    .where('kind', '==', 'place')
+    .where('kind', '==', kind)
     .where('cityId', '==', cityId)
     .where('status', '==', 'approved')
     .get();
   const rejectedSnap = await db
     .collection('reviewQueue')
-    .where('kind', '==', 'place')
+    .where('kind', '==', kind)
     .where('cityId', '==', cityId)
     .where('status', '==', 'rejected')
     .get();
@@ -161,6 +161,7 @@ async function buildCityReport(db, cityId, period, start, end) {
 
   return {
     cityId,
+    kind,
     period,
     reviewedCount,
     approvedCount,
@@ -186,18 +187,32 @@ async function main() {
   }
   console.log(`[learning-report] period=${args.period} cities=${cities.join(',')}`);
   for (const cityId of cities) {
-    const report = await buildCityReport(db, cityId, args.period, start, end);
+    const places = await buildCityKindReport(db, cityId, 'place', args.period, start, end);
+    const events = await buildCityKindReport(db, cityId, 'event', args.period, start, end);
     const docId = `${cityId}_${args.period}`;
     await db.collection('learningStats').doc(docId).set(
       {
-        ...report,
+        ...places,
+        kind: 'place',
+        events,
+        updatedAt: FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+    await db.collection('learningStats').doc(`${docId}_events`).set(
+      {
+        ...events,
         updatedAt: FieldValue.serverTimestamp(),
         createdAt: FieldValue.serverTimestamp(),
       },
       { merge: true }
     );
     console.log(
-      `[learning-report] city=${cityId} reviewed=${report.reviewedCount} approved=${report.approvedCount} rejected=${report.rejectedCount} signals=${report.signalStats.length}`
+      `[learning-report] city=${cityId} places reviewed=${places.reviewedCount} approved=${places.approvedCount} rejected=${places.rejectedCount} signals=${places.signalStats.length}`
+    );
+    console.log(
+      `[learning-report] city=${cityId} events reviewed=${events.reviewedCount} approved=${events.approvedCount} rejected=${events.rejectedCount} signals=${events.signalStats.length}`
     );
   }
 }

@@ -1,5 +1,8 @@
 name: Weekly Events Discovery
 
+# Runs the web search event agent (plus any configured RSS/Atom/ICS feeds)
+# into reviewQueue for human approval. Event approve/reject writes eventReviewMemory.
+
 on:
   schedule:
     # 03:00 UTC every Monday.
