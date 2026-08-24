@@ -18,34 +18,50 @@ This document defines the **canonical database schema** and the **human-in-the-l
 
 ## Taxonomy (shared by places and events)
 
+Source of truth for action descriptions and colours: [`CIRCULAR_TAXONOMY.md`](CIRCULAR_TAXONOMY.md).  
+Canonical slugs and aliases are implemented in `frontend/src/app/data/taxonomy.ts`.
+
 ### Circular action tags (controlled list)
 
 Canonical keys (store in DB as lowercase slugs):
 
 - `refuse`
-- `rethink`
-- `reduce`
 - `reuse`
 - `repair`
-- `refurbish`
-- `remanufacture`
 - `repurpose`
 - `recycle`
-- `share`
+- `reduce`
 
 Notes:
 
-- A reviewer may fill missing tags during moderation.
-- UI copy may differ (see `TYPOGRAPHY_AND_TAXONOMY_DECISIONS.md`), but **data keys must stay canonical**.
+- A place/event may have **one or more** action tags (multi-select in admin).
+- A reviewer may fill or correct tags during moderation.
+- Landing UI copy may still show historic spelling **Reporpouse**; the **data key remains `repurpose`**.
+- Legacy / discovery aliases are canonicalized on write and read, for example:
+  - `reporpouse` → `repurpose`
+  - `rethink` → `refuse`
+  - `refurbish` → `repair`
+  - `remanufacture` → `repurpose`
+  - `share` / `rental` → `reuse`
 
-### Sector categories (controlled vocabulary, reviewer-curated)
+Do **not** store the older 10-tag set (`rethink`, `share`, `refurbish`, `remanufacture`, …) as primary keys.
 
-Examples (not exhaustive): `clothing`, `music`, `furniture`, `electronics`, `books`, `home`, `cycling-sport`, `food`.
+### Sector categories (controlled vocabulary)
+
+Canonical keys:
+
+- `apparel`
+- `home-garden`
+- `cycling-sports`
+- `electronics`
+- `books-comics-magazines`
+- `music`
 
 Rules:
 
 - Stored as an array of slugs: `sectorCategories: string[]`
 - Optional at ingestion; reviewer may fill when unclear.
+- Common aliases (e.g. `clothing` → `apparel`, `furniture` → `home-garden`, `books` → `books-comics-magazines`) are normalized via `canonicalizeSectorCategories`.
 
 ---
 
@@ -228,21 +244,25 @@ Suggested sorting:
 
 ## App implementation status (incremental)
 
-- **Review queue UI** at `/admin/review` with **Approve / Reject**: creates a document in `places` or `events` (with `status: approved`) and updates the `reviewQueue` item (`status`, `publishedRef`, `review.reviewedAt`).
-- **Events on the site** (landing featured block + `/events`): `EventsService.events$` merges **approved** Firestore `events` with the built-in static demo events. If Firestore read fails or security rules deny access, only static events are shown.
+- **Review queues** at `/admin/review/places` and `/admin/review/events` with approve / reject / edit, and manual add.
+- **Catalogues** at `/admin/places` and `/admin/events` for city-scoped approved records (edit / delete).
+- **Approve** creates/updates a document in `places` or `events` with `status: approved` and updates the `reviewQueue` item (`status`, `publishedRef`, `review.reviewedAt`).
+- **Atlas** (`/atlas`) loads approved Firestore places for the selected city (Stockholm also merges static GeoJSON fallback). Map dots colour by primary action tag.
+- **Events** (landing featured block + `/events`): approved Firestore `events`, with static demo fallback if the read fails.
+- Action tags and sector categories are canonicalized through `frontend/src/app/data/taxonomy.ts` before save.
 
 ### Firestore security rules
 
-Configure rules in the Firebase Console (or `firestore.rules` if you add them to the repo). You typically need:
+Rules live in `firestore.rules` (deploy with Firebase CLI). Typical posture:
 
-- **Read** access to `events` for the data you want public on the website.
-- **Write** access to `reviewQueue`, `places`, and `events` for trusted admins (custom claims), or use the **emulators** during development.
+- **Public read** of approved `places` / `events` (and city metadata as needed).
+- **Admin-only** write on `reviewQueue`, `places`, `events`, and related moderation collections.
 
-If Approve/Reject fails, the review page shows the error returned by Firestore (often `permission-denied`).
+If Approve/Reject fails, the review page shows the Firestore error (often `permission-denied`).
 
 ---
 
 ## Related: CLI discovery and scripts
 
-For **seed vs OSM discovery**, how to run `discover:osm`, Overpass troubleshooting, **admin review** notes, and a small **dev log**, see [`DISCOVERY_SCRIPTS.md`](DISCOVERY_SCRIPTS.md).
-
+For seed vs OSM discovery, Overpass troubleshooting, review notes, and a **dev log**, see [`DISCOVERY_SCRIPTS.md`](DISCOVERY_SCRIPTS.md).  
+Scheduled discovery and learning: [`SCHEDULED_DISCOVERY_LEARNING_PLAN.md`](SCHEDULED_DISCOVERY_LEARNING_PLAN.md).
