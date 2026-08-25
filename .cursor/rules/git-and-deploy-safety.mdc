@@ -1,0 +1,49 @@
+---
+description: Stricter git, push, deploy, and production-data safety for Circeco
+alwaysApply: true
+---
+
+# Git, push, and production safety
+
+Default: **implement locally and stop**. Do not commit, push, deploy, or write production data unless Piero explicitly asks.
+
+## Permission map
+
+| Piero says | Agent may do |
+|------------|--------------|
+| "implement", "ok lets do it", "fix X" | Edit files locally; run readonly checks, tests, **dry-runs** |
+| "commit" / "commit this" | `git add` + `git commit` locally only — **no push** |
+| "push" / "publish" | Push only after an approved commit (or a commit Piero requested) |
+| "ship it" / "deploy" | Commit + push + deploy only when Piero clearly includes all needed steps |
+
+**Never infer push or deploy from "lets do it" alone.**
+
+## Git safety
+
+- Never `git push --force` to `main`/`master`.
+- Never amend unless Piero asks and safety conditions in user rules are met.
+- Never update git config.
+
+## Production side effects — ask first
+
+Call out and wait before:
+
+- `git push` to `main` (GitHub Actions run from default branch)
+- `firebase deploy` (rules, hosting, functions)
+- Discovery scripts **without** `--dry-run` against production Firestore (`reviewQueue`, etc.)
+- Manually dispatching GitHub Actions workflows
+- Enabling/re-enabling scheduled workflows on GitHub
+
+## After local work
+
+Before commit/push/deploy, summarize:
+
+1. What changed (files + purpose)
+2. Risks (CI, Firestore, noisy queue data, rules)
+3. Exact next step Piero can approve: commit? push? deploy? dry-run only?
+
+## Circeco-specific
+
+- Scheduled discovery: `.github/workflows/monthly-discovery-learning.yml`, `weekly-events-discovery.yml`
+- Production writes: `reviewQueue`, `discoveryRuns`, `learningStats`, `eventReviewMemory*`
+- Prefer `--dry-run` for `discover:events:agent` and `discover:monthly` until Piero approves a live run
