@@ -37,7 +37,7 @@ export class EventsService {
           collection(this.fs, FS_PATHS.events),
           where('status', '==', 'approved'),
           where('cityId', '==', cityId),
-          limit(100)
+          limit(250)
         ),
         { idField: 'id' }
       ).pipe(
