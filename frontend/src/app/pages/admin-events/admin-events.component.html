@@ -46,7 +46,8 @@
         <div class="grid">
           <label class="full"><span>Title</span><input type="text" [(ngModel)]="f.title" /></label>
           <label><span>Date</span><input type="date" [(ngModel)]="f.startDate" (ngModelChange)="f.endDate = f.startDate" /></label>
-          <label><span>Time</span><input type="time" [(ngModel)]="f.timeDisplay" /></label>
+          <label><span>Start</span><input type="time" [(ngModel)]="f.time" /></label>
+          <label><span>End</span><input type="time" [(ngModel)]="f.endTime" /></label>
           <label class="full"><span>Address</span><input type="text" [(ngModel)]="f.address" placeholder="street, number, city (for map)" /></label>
           <label class="full"><span>Website</span><input type="url" [(ngModel)]="f.website" /></label>
           <label class="full"><span>Description</span><textarea rows="2" [(ngModel)]="f.description"></textarea></label>

@@ -35,7 +35,8 @@ interface EventEditForm {
   address: string;
   website: string;
   description: string;
-  timeDisplay: string;
+  time: string;
+  endTime: string;
   sectorCategories: string[];
   actionTags: string[];
 }
@@ -135,7 +136,7 @@ export class AdminEventsComponent {
 
   openEdit(row: EventRow): void {
     const date = row.startDate || '';
-    const time = this.normalizeTime24h(row.timeDisplay || '');
+    const { time, endTime } = this.parseTimeDisplayRange(row.timeDisplay || '');
     this.editingId.set(row.id);
     this.editForm.set({
       title: row.title || '',
@@ -144,7 +145,8 @@ export class AdminEventsComponent {
       address: String(row.address || row.locationText || '').trim(),
       website: row.website || '',
       description: row.description || '',
-      timeDisplay: time,
+      time,
+      endTime,
       sectorCategories: canonicalizeSectorCategories(this.showList(row.sectorCategories)),
       actionTags: canonicalizeActionTags(this.showList(row.actionTags)),
     });
@@ -161,6 +163,7 @@ export class AdminEventsComponent {
     await this.runRowOp(row.id, async () => {
       const date = form.startDate.trim();
       const address = form.address.trim();
+      const timeDisplay = this.formatTimeDisplayRange(form.time, form.endTime);
       const payload: Record<string, unknown> = {
         title: form.title.trim(),
         startDate: date,
@@ -169,7 +172,7 @@ export class AdminEventsComponent {
         address,
         website: form.website.trim(),
         description: form.description.trim(),
-        timeDisplay: this.normalizeTime24h(form.timeDisplay),
+        timeDisplay,
         sectorCategories: canonicalizeSectorCategories(form.sectorCategories),
         actionTags: canonicalizeActionTags(form.actionTags),
         status: 'approved',
@@ -247,7 +250,7 @@ export class AdminEventsComponent {
     const date = String(row.startDate || '').trim();
     if (!date) return '(missing date)';
     const label = formatEventDateLabel(date);
-    const time = this.normalizeTime24h(row.timeDisplay || '');
+    const time = this.formatTimeDisplayRangeFromRaw(row.timeDisplay || '');
     return time ? `${label} · ${time}` : label;
   }
 
@@ -267,11 +270,38 @@ export class AdminEventsComponent {
     return current;
   }
 
+  private parseTimeDisplayRange(raw: string): { time: string; endTime: string } {
+    const s = String(raw || '').trim();
+    const range = s.match(/^(\d{1,2}:\d{2})(?::\d{2})?\s*[–\-—]\s*(\d{1,2}:\d{2})(?::\d{2})?$/);
+    if (range) {
+      return {
+        time: this.normalizeTime24h(range[1]),
+        endTime: this.normalizeTime24h(range[2]),
+      };
+    }
+    return { time: this.normalizeTime24h(s), endTime: '' };
+  }
+
+  private formatTimeDisplayRange(startRaw: string, endRaw: string): string {
+    const start = this.normalizeTime24h(startRaw);
+    const end = this.normalizeTime24h(endRaw);
+    if (start && end) return `${start}–${end}`;
+    return start || end || '';
+  }
+
+  private formatTimeDisplayRangeFromRaw(raw: string): string {
+    const { time, endTime } = this.parseTimeDisplayRange(raw);
+    return this.formatTimeDisplayRange(time, endTime);
+  }
+
   private normalizeTime24h(raw: string): string {
     const s = String(raw || '').trim();
-    if (/^\d{2}:\d{2}$/.test(s)) return s;
-    if (/^\d{2}:\d{2}:\d{2}$/.test(s)) return s.slice(0, 5);
-    return '';
+    const m = s.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+    if (!m) return '';
+    const hh = Number(m[1]);
+    const mm = Number(m[2]);
+    if (!Number.isFinite(hh) || !Number.isFinite(mm) || hh > 23 || mm > 59) return '';
+    return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
   }
 
   private isPermissionDenied(e: unknown): boolean {

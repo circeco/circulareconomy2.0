@@ -22,6 +22,8 @@ export type ReviewMeta = {
   reviewedAt?: string; // ISO timestamp
   reviewedBy?: string; // uid/email (single-reviewer for now)
   notes?: string;
+  /** Optional structured reject reason (e.g. duplicate_existing). */
+  rejectReason?: string;
 };
 
 export type CityDoc = {

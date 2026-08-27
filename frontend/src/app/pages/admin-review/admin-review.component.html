@@ -26,25 +26,37 @@
             <label class="field full"><span class="field-label">Title</span><input type="text" [(ngModel)]="ef.title" name="new-ev-title" /></label>
             <div class="field full occurrence-dates">
               <span class="field-label">Dates</span>
+              <div class="date-schedule-head" aria-hidden="true">
+                <span></span>
+                <span>Date</span>
+                <span>Repeats</span>
+                <span>Until</span>
+                <span>Start</span>
+                <span>End</span>
+                <span></span>
+              </div>
               <div class="date-schedule-row" *ngFor="let row of ef.occurrenceRows; let i = index">
-                <span class="weekday-chip" *ngIf="weekdayLabel(row.date) as wd">{{ wd }}</span>
+                <span class="weekday-chip">{{ weekdayLabel(row.date) || '—' }}</span>
                 <input type="date" [(ngModel)]="row.date" name="new-ev-date-{{ i }}" aria-label="Date" />
                 <select [(ngModel)]="row.recurrenceFrequency" name="new-ev-rec-{{ i }}" aria-label="Repeats">
                   <option *ngFor="let opt of recurrenceOptions" [ngValue]="opt.value">{{ recurrenceOptionLabel(opt.value, row.date) }}</option>
                 </select>
-                <input
-                  *ngIf="row.recurrenceFrequency !== 'none'"
-                  type="date"
-                  [(ngModel)]="row.until"
-                  name="new-ev-until-{{ i }}"
-                  aria-label="Until"
-                  title="Until"
-                />
-                <input type="time" [(ngModel)]="row.time" name="new-ev-time-{{ i }}" aria-label="Time" />
+                <div class="until-slot" [class.is-empty]="row.recurrenceFrequency === 'none'">
+                  <input
+                    type="date"
+                    [(ngModel)]="row.until"
+                    name="new-ev-until-{{ i }}"
+                    aria-label="Until"
+                    title="Until"
+                    [disabled]="row.recurrenceFrequency === 'none'"
+                  />
+                </div>
+                <input type="time" [(ngModel)]="row.time" name="new-ev-time-{{ i }}" aria-label="Start time" />
+                <input type="time" [(ngModel)]="row.endTime" name="new-ev-end-{{ i }}" aria-label="End time" />
                 <button
                   type="button"
                   class="btn btn-edit btn-date-remove"
-                  *ngIf="ef.occurrenceRows.length > 1"
+                  [disabled]="ef.occurrenceRows.length <= 1"
                   (click)="removeOccurrenceRow(ef, i)"
                 >
                   Remove
@@ -127,30 +139,52 @@
             </div>
 
             <div class="row-actions place-actions">
-              <button
-                type="button"
-                class="btn btn-approve"
-                [disabled]="isBusy(group.id) || isBusy(group.id + ':save-event')"
-                (click)="approveEvent(group)"
-              >
-                Approve
-              </button>
-              <button
-                type="button"
-                class="btn btn-reject"
-                [disabled]="isBusy(group.id) || isBusy(group.id + ':save-event')"
-                (click)="rejectEvent(group)"
-              >
-                Reject
-              </button>
-              <button
-                type="button"
-                class="btn btn-edit"
-                [disabled]="isBusy(group.id) || isBusy(group.id + ':save-event')"
-                (click)="toggleEventEdit(group)"
-              >
-                {{ editingEventRowId === group.id ? 'Close editor' : 'Edit details' }}
-              </button>
+              <div class="action-group action-group-primary">
+                <button
+                  type="button"
+                  class="btn btn-approve"
+                  [disabled]="isBusy(group.id) || isBusy(group.id + ':save-event') || isBusy(group.id + ':duplicate') || isBusy(group.id + ':remove')"
+                  (click)="approveEvent(group)"
+                >
+                  Approve
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-reject"
+                  [disabled]="isBusy(group.id) || isBusy(group.id + ':save-event') || isBusy(group.id + ':duplicate') || isBusy(group.id + ':remove')"
+                  (click)="rejectEvent(group)"
+                >
+                  Reject
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-edit"
+                  [disabled]="isBusy(group.id) || isBusy(group.id + ':save-event') || isBusy(group.id + ':duplicate') || isBusy(group.id + ':remove')"
+                  (click)="toggleEventEdit(group)"
+                >
+                  {{ editingEventRowId === group.id ? 'Close editor' : 'Edit details' }}
+                </button>
+              </div>
+              <div class="action-group action-group-secondary">
+                <button
+                  type="button"
+                  class="btn btn-duplicate"
+                  [disabled]="isBusy(group.id) || isBusy(group.id + ':save-event') || isBusy(group.id + ':duplicate') || isBusy(group.id + ':remove')"
+                  (click)="duplicateEvent(group)"
+                  title="Create a copy of this review card"
+                >
+                  Duplicate
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-remove"
+                  [disabled]="isBusy(group.id) || isBusy(group.id + ':save-event') || isBusy(group.id + ':duplicate') || isBusy(group.id + ':remove')"
+                  (click)="removeEvent(group)"
+                  title="Remove from queue without teaching discovery"
+                >
+                  Remove
+                </button>
+              </div>
             </div>
           </div>
 
@@ -159,25 +193,37 @@
               <label class="field full"><span class="field-label">Title</span><input type="text" [(ngModel)]="ef.title" name="ev-title-{{ group.id }}" /></label>
               <div class="field full occurrence-dates">
                 <span class="field-label">Dates</span>
+                <div class="date-schedule-head" aria-hidden="true">
+                  <span></span>
+                  <span>Date</span>
+                  <span>Repeats</span>
+                  <span>Until</span>
+                  <span>Start</span>
+                  <span>End</span>
+                  <span></span>
+                </div>
                 <div class="date-schedule-row" *ngFor="let row of ef.occurrenceRows; let i = index">
-                  <span class="weekday-chip" *ngIf="weekdayLabel(row.date) as wd">{{ wd }}</span>
+                  <span class="weekday-chip">{{ weekdayLabel(row.date) || '—' }}</span>
                   <input type="date" [(ngModel)]="row.date" name="ev-date-{{ group.id }}-{{ i }}" aria-label="Date" />
                   <select [(ngModel)]="row.recurrenceFrequency" name="ev-rec-{{ group.id }}-{{ i }}" aria-label="Repeats">
                     <option *ngFor="let opt of recurrenceOptions" [ngValue]="opt.value">{{ recurrenceOptionLabel(opt.value, row.date) }}</option>
                   </select>
-                  <input
-                    *ngIf="row.recurrenceFrequency !== 'none'"
-                    type="date"
-                    [(ngModel)]="row.until"
-                    name="ev-until-{{ group.id }}-{{ i }}"
-                    aria-label="Until"
-                    title="Until"
-                  />
-                  <input type="time" [(ngModel)]="row.time" name="ev-time-{{ group.id }}-{{ i }}" aria-label="Time" />
+                  <div class="until-slot" [class.is-empty]="row.recurrenceFrequency === 'none'">
+                    <input
+                      type="date"
+                      [(ngModel)]="row.until"
+                      name="ev-until-{{ group.id }}-{{ i }}"
+                      aria-label="Until"
+                      title="Until"
+                      [disabled]="row.recurrenceFrequency === 'none'"
+                    />
+                  </div>
+                  <input type="time" [(ngModel)]="row.time" name="ev-time-{{ group.id }}-{{ i }}" aria-label="Start time" />
+                  <input type="time" [(ngModel)]="row.endTime" name="ev-end-{{ group.id }}-{{ i }}" aria-label="End time" />
                   <button
                     type="button"
                     class="btn btn-edit btn-date-remove"
-                    *ngIf="ef.occurrenceRows.length > 1"
+                    [disabled]="ef.occurrenceRows.length <= 1"
                     (click)="removeOccurrenceRow(ef, i)"
                   >
                     Remove

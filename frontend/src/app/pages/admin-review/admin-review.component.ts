@@ -53,7 +53,8 @@ type DecisionType = 'approved' | 'rejected';
 /** One schedule line in the event editor. */
 export type EventOccurrenceRow = {
   date: string;
-  time: string; // HH:mm 24h
+  time: string; // HH:mm 24h start
+  endTime: string; // HH:mm 24h end (optional)
   recurrenceFrequency: EventRecurrenceFrequency;
   until: string;
 };
@@ -362,7 +363,7 @@ export class AdminReviewComponent {
     const occ = (this.eventEdit.occurrenceRows || [])
       .map((r) => ({
         date: String(r.date || '').trim(),
-        time: this.normalizeTime24h(r.time || ''),
+        timeDisplay: this.formatTimeDisplayRange(r.time || '', r.endTime || ''),
       }))
       .filter((o) => /^\d{4}-\d{2}-\d{2}$/.test(o.date));
     if (!occ.length) {
@@ -385,7 +386,7 @@ export class AdminReviewComponent {
               ...sharedCandidate,
               startDate: occ[i].date,
               endDate: occ[i].date,
-              timeDisplay: occ[i].time || candidate.timeDisplay || '',
+              timeDisplay: occ[i].timeDisplay || candidate.timeDisplay || '',
             },
             updatedAt: serverTimestamp(),
           });
@@ -409,7 +410,7 @@ export class AdminReviewComponent {
             ...sharedCandidate,
             startDate: occ[i].date,
             endDate: occ[i].date,
-            timeDisplay: occ[i].time || candidate.timeDisplay || '',
+            timeDisplay: occ[i].timeDisplay || candidate.timeDisplay || '',
           },
           evidence: Array.isArray(group.evidence) ? group.evidence : [],
           createdAt: serverTimestamp(),
@@ -718,12 +719,72 @@ export class AdminReviewComponent {
         candidate: c,
         decision: 'rejected',
         reviewedAtIso: reviewedAt,
-        // Rejecting a multi-date junk group should block the whole title+location series.
         alsoSeries: group.memberIds.length > 1 || !!(c.recurrence && c.recurrence.frequency !== 'none'),
         sourceUrlHint: this.eventSourceUrlFromEvidence(group.evidence, c.website),
       },
     ]);
     this.closeEditorsForRow(group.id);
+  }
+
+  /**
+   * Clone this review card into a new needs_review item (original stays).
+   * Title gets a "(copy)" suffix so it shows as a separate card instead of merging with the original.
+   */
+  async duplicateEvent(group: EventReviewGroup): Promise<void> {
+    const base = this.mergedEventCandidate(group);
+    const copyTitle = this.nextCopyTitle(base.title || 'Event');
+    const dates = group.dates.length
+      ? group.dates
+      : [String(base.startDate || '').trim()].filter(Boolean);
+    const datesToCopy = dates.length ? dates : [new Date().toISOString().slice(0, 10)];
+
+    await this.runWrite(`${group.id}:duplicate`, async (batch) => {
+      for (const date of datesToCopy) {
+        const newRef = doc(collection(this.fs, FS_PATHS.reviewQueue));
+        batch.set(newRef, {
+          kind: 'event',
+          cityId: group.cityId,
+          status: 'needs_review',
+          confidence: group.confidence,
+          candidate: {
+            ...base,
+            title: copyTitle,
+            startDate: date,
+            endDate: date,
+          },
+          evidence: Array.isArray(group.evidence) ? [...group.evidence] : [],
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        });
+      }
+    });
+  }
+
+  /**
+   * Drop from the review queue without writing review memory / learning signals.
+   * Uses `superseded` (same as editor date removal) so discovery is not taught a reject.
+   */
+  async removeEvent(group: EventReviewGroup): Promise<void> {
+    await this.runWrite(`${group.id}:remove`, async (batch) => {
+      for (const memberId of group.memberIds) {
+        batch.update(doc(this.fs, FS_PATHS.reviewQueue, memberId), {
+          status: 'superseded',
+          updatedAt: serverTimestamp(),
+        });
+      }
+    });
+    this.closeEditorsForRow(group.id);
+  }
+
+  private nextCopyTitle(title: string): string {
+    const t = String(title || '').trim() || 'Event';
+    if (/\(copy(?:\s+\d+)?\)$/i.test(t)) {
+      const m = t.match(/^(.*)\(copy(?:\s+(\d+))?\)$/i);
+      const stem = (m?.[1] || t).trim();
+      const n = Number(m?.[2] || 1) + 1;
+      return `${stem} (copy ${n})`;
+    }
+    return `${t} (copy)`;
   }
 
   isBusy(id: string): boolean {
@@ -750,15 +811,22 @@ export class AdminReviewComponent {
 
   private buildEventForm(c: EventCandidate, groupDates?: string[]): EventEditForm {
     const dates = [...new Set([...(groupDates || []), c.startDate].filter(Boolean) as string[])].sort();
-    const inferred =
-      (c.recurrence?.frequency && c.recurrence.frequency !== 'none'
-        ? c.recurrence.frequency
-        : inferRecurrenceFromDates(dates)) || 'none';
-    const time = this.normalizeTime24h(c.timeDisplay || '');
+    // Respect an explicit "Does not repeat" — do not re-infer weekly from multi-date groups.
+    const storedFreq = c.recurrence?.frequency;
+    let inferred: EventRecurrenceFrequency = 'none';
+    if (storedFreq === 'none') {
+      inferred = 'none';
+    } else if (storedFreq === 'weekly' || storedFreq === 'monthly' || storedFreq === 'monthly_nth') {
+      inferred = storedFreq;
+    } else {
+      inferred = inferRecurrenceFromDates(dates) || 'none';
+    }
+    const { time, endTime } = this.parseTimeDisplayRange(c.timeDisplay || '');
     const until = c.recurrence?.until ?? '';
     const occurrenceRows: EventOccurrenceRow[] = (dates.length ? dates : ['']).map((date, index) => ({
       date,
       time,
+      endTime,
       // Apply inferred/shared recurrence on the first row only; extra dates stay one-off.
       recurrenceFrequency: index === 0 ? inferred : 'none',
       until: index === 0 ? until : '',
@@ -767,6 +835,7 @@ export class AdminReviewComponent {
       occurrenceRows.push({
         date: new Date().toISOString().slice(0, 10),
         time: '',
+        endTime: '',
         recurrenceFrequency: 'none',
         until: '',
       });
@@ -805,7 +874,7 @@ export class AdminReviewComponent {
     const start = String(primary?.date || '').trim();
     // Single UI field: keep address for map geocoding later; mirror into locationText for display.
     const address = this.normalizeAddressDisplay(f.address);
-    const recurringRow = rows.find((r) => r.recurrenceFrequency && r.recurrenceFrequency !== 'none') || primary;
+    const recurringRow = rows.find((r) => r.recurrenceFrequency && r.recurrenceFrequency !== 'none');
     return {
       title: f.title.trim(),
       startDate: start,
@@ -814,7 +883,7 @@ export class AdminReviewComponent {
       address,
       website: f.website.trim(),
       description: f.description.trim(),
-      timeDisplay: this.normalizeTime24h(primary?.time || ''),
+      timeDisplay: this.formatTimeDisplayRange(primary?.time || '', primary?.endTime || ''),
       recurrence: this.firestoreRecurrence(
         recurringRow?.recurrenceFrequency || 'none',
         Number(f.recurrenceWindowMonths) || DEFAULT_RECURRENCE_WINDOW_MONTHS,
@@ -829,14 +898,14 @@ export class AdminReviewComponent {
     const start = String(c.startDate || '').trim();
     if (!start) return '';
     const label = formatEventDateLabel(start);
-    const time = this.normalizeTime24h(c.timeDisplay || '');
+    const time = this.formatTimeDisplayRangeFromRaw(c.timeDisplay || '');
     return time ? `${label} · ${time}` : label;
   }
 
   eventGroupDateDisplay(group: EventReviewGroup): string {
     const dates = group.dates.length ? group.dates : [group.candidate.startDate].filter(Boolean);
     if (!dates.length) return '';
-    const time = this.normalizeTime24h(group.candidate.timeDisplay || '');
+    const time = this.formatTimeDisplayRangeFromRaw(group.candidate.timeDisplay || '');
     const labels = dates.map((d) => formatEventDateLabel(d));
     if (labels.length === 1) return time ? `${labels[0]} · ${time}` : labels[0];
     if (labels.length <= 4) return labels.join(', ');
@@ -869,7 +938,7 @@ export class AdminReviewComponent {
   addOccurrenceRow(form: EventEditForm): void {
     form.occurrenceRows = [
       ...form.occurrenceRows,
-      { date: '', time: '', recurrenceFrequency: 'none', until: '' },
+      { date: '', time: '', endTime: '', recurrenceFrequency: 'none', until: '' },
     ];
   }
 
@@ -904,7 +973,7 @@ export class AdminReviewComponent {
     for (const row of form.occurrenceRows || []) {
       const date = String(row.date || '').trim();
       if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
-      const time = this.normalizeTime24h(row.time || '');
+      const time = this.formatTimeDisplayRange(row.time || '', row.endTime || '');
       const freq = row.recurrenceFrequency || 'none';
       if (freq === 'none') {
         out.push({ date, time });
@@ -926,11 +995,38 @@ export class AdminReviewComponent {
     });
   }
 
+  private parseTimeDisplayRange(raw: string): { time: string; endTime: string } {
+    const s = String(raw || '').trim();
+    const range = s.match(/^(\d{1,2}:\d{2})(?::\d{2})?\s*[–\-—]\s*(\d{1,2}:\d{2})(?::\d{2})?$/);
+    if (range) {
+      return {
+        time: this.normalizeTime24h(range[1]),
+        endTime: this.normalizeTime24h(range[2]),
+      };
+    }
+    return { time: this.normalizeTime24h(s), endTime: '' };
+  }
+
+  private formatTimeDisplayRange(startRaw: string, endRaw: string): string {
+    const start = this.normalizeTime24h(startRaw);
+    const end = this.normalizeTime24h(endRaw);
+    if (start && end) return `${start}–${end}`;
+    return start || end || '';
+  }
+
+  private formatTimeDisplayRangeFromRaw(raw: string): string {
+    const { time, endTime } = this.parseTimeDisplayRange(raw);
+    return this.formatTimeDisplayRange(time, endTime);
+  }
+
   private normalizeTime24h(raw: string): string {
     const s = String(raw || '').trim();
-    if (/^\d{2}:\d{2}$/.test(s)) return s;
-    if (/^\d{2}:\d{2}:\d{2}$/.test(s)) return s.slice(0, 5);
-    return '';
+    const m = s.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+    if (!m) return '';
+    const hh = Number(m[1]);
+    const mm = Number(m[2]);
+    if (!Number.isFinite(hh) || !Number.isFinite(mm) || hh > 23 || mm > 59) return '';
+    return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
   }
 
   /** Firestore rejects `undefined` field values — omit empty until. */
@@ -1017,15 +1113,20 @@ export class AdminReviewComponent {
       const primary = list[0];
       const dates = [...new Set(list.map((r) => String(r.candidate.startDate || '').trim()).filter(Boolean))].sort();
       const inferredFreq = inferRecurrenceFromDates(dates);
+      const storedFreq = primary.candidate.recurrence?.frequency;
+      let recurrence: EventCandidate['recurrence'] = { frequency: 'none' };
+      if (storedFreq === 'none') {
+        recurrence = { frequency: 'none' };
+      } else if (storedFreq === 'weekly' || storedFreq === 'monthly' || storedFreq === 'monthly_nth') {
+        recurrence = primary.candidate.recurrence || { frequency: storedFreq };
+      } else if (inferredFreq !== 'none') {
+        recurrence = { frequency: inferredFreq, windowMonths: DEFAULT_RECURRENCE_WINDOW_MONTHS };
+      }
       const candidate: EventCandidate = {
         ...primary.candidate,
         startDate: dates[0] || primary.candidate.startDate,
         endDate: dates[0] || primary.candidate.endDate || primary.candidate.startDate,
-        recurrence: primary.candidate.recurrence?.frequency && primary.candidate.recurrence.frequency !== 'none'
-          ? primary.candidate.recurrence
-          : inferredFreq !== 'none'
-            ? { frequency: inferredFreq, windowMonths: DEFAULT_RECURRENCE_WINDOW_MONTHS }
-            : { frequency: 'none' },
+        recurrence,
       };
       groups.push({
         id: primary.id,
