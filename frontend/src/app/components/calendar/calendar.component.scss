@@ -79,8 +79,13 @@
   }
 
   &.has-event {
-    background: #c8e6c9;
-    border: 2px solid $brand-deep;
+    background: #FF5252;
+    border: 2px solid #FF5252;
+    color: white;
+
+    &:hover:not(.selected) {
+      color: $brand-deep;
+    }
   }
 
   &.selected {

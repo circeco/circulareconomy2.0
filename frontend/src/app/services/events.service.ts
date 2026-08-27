@@ -7,6 +7,7 @@ import { catchError, map } from 'rxjs/operators';
 import { FS_PATHS } from '../data/firestore-paths';
 import { CityContextService } from './city-context.service';
 import { canonicalizeActionTag, canonicalizeActionTags, canonicalizeSectorCategories } from '../data/taxonomy';
+import { formatEventDateLabel, recurrenceLabel, type EventRecurrence } from '../data/event-recurrence';
 
 export interface EventItem {
   id: string;
@@ -14,12 +15,15 @@ export interface EventItem {
   description: string;
   category: string;
   location: string;
+  website: string;
   time: string;
   image: string;
   date: Date;
   dateStr: string;
   actionTags: string[];
   sectorCategories: string[];
+  recurrence?: EventRecurrence;
+  recurrenceLabel: string;
 }
 
 const DEFAULT_EVENT_IMAGE =
@@ -72,6 +76,10 @@ export class EventsService {
     const tags = canonicalizeActionTags(Array.isArray(d['actionTags']) ? (d['actionTags'] as string[]) : []);
     const sectors = canonicalizeSectorCategories(Array.isArray(d['sectorCategories']) ? (d['sectorCategories'] as string[]) : []);
     const category = this.pickUiCategory(tags, sectors);
+    const time = String(d['timeDisplay'] ?? '').trim();
+    const recurrence = this.parseRecurrence(d['recurrence']);
+    const dateStr = formatEventDateLabel(startDate);
+    const dateTimeLabel = time ? `${dateStr} · ${time}` : dateStr;
 
     return {
       id,
@@ -79,13 +87,31 @@ export class EventsService {
       description: String(d['description'] ?? ''),
       category,
       location: String(d['address'] || d['locationText'] || ''),
-      time: String(d['timeDisplay'] ?? ''),
+      website: String(d['website'] ?? '').trim(),
+      time,
       image: typeof d['imageUrl'] === 'string' && d['imageUrl'] ? String(d['imageUrl']) : DEFAULT_EVENT_IMAGE,
       date,
-      dateStr: date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+      dateStr: dateTimeLabel,
       actionTags: tags,
       sectorCategories: sectors,
+      recurrence,
+      recurrenceLabel: recurrenceLabel(recurrence, startDate),
     };
+  }
+
+  private parseRecurrence(raw: unknown): EventRecurrence | undefined {
+    if (!raw || typeof raw !== 'object') return undefined;
+    const r = raw as Record<string, unknown>;
+    const frequency = String(r['frequency'] || 'none');
+    if (frequency !== 'weekly' && frequency !== 'monthly' && frequency !== 'monthly_nth' && frequency !== 'none') {
+      return undefined;
+    }
+    const out: EventRecurrence = { frequency };
+    const windowMonths = Number(r['windowMonths']);
+    if (Number.isFinite(windowMonths) && windowMonths > 0) out.windowMonths = windowMonths;
+    const until = String(r['until'] || '').trim();
+    if (until) out.until = until;
+    return out;
   }
 
   private pickUiCategory(actionTags: string[], sectorCategories: string[]): string {

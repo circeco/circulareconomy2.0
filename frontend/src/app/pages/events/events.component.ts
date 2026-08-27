@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject, signal, computed } from '@angular/core';
+import { Component, DestroyRef, inject, signal, computed, AfterViewChecked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -9,7 +9,14 @@ import { SearchService } from '../../services/search.service';
 import { AuthService } from '../../services/auth.service';
 import { EventFavoritesService } from '../../services/event-favorites.service';
 import { CalendarComponent } from '../../components/calendar/calendar.component';
-import { ACTION_TAG_COLORS, ACTION_TAG_LABELS, ACTION_TAGS, SECTOR_CATEGORIES, SECTOR_CATEGORY_LABELS } from '../../data/taxonomy';
+import {
+  ACTION_TAG_COLORS,
+  ACTION_TAG_LABELS,
+  ACTION_TAGS,
+  SECTOR_CATEGORIES,
+  SECTOR_CATEGORY_LABELS,
+  canonicalizeSectorCategories,
+} from '../../data/taxonomy';
 
 interface EventCategoryOption {
   id: string;
@@ -25,9 +32,10 @@ interface EventCategoryOption {
   templateUrl: './events.component.html',
   styleUrls: ['./events.component.scss'],
 })
-export class EventsComponent {
+export class EventsComponent implements AfterViewChecked {
   private destroyRef = inject(DestroyRef);
   private readonly actionTagColors: Record<string, string> = ACTION_TAG_COLORS as Record<string, string>;
+  private lastClampMeasureKey = '';
 
   readonly actionTagIds = ACTION_TAGS.slice();
   readonly categories: EventCategoryOption[] = SECTOR_CATEGORIES.map((id) => ({
@@ -40,6 +48,9 @@ export class EventsComponent {
   selectedCategory = signal<string | null>(null);
   selectedDateTimes = signal<Set<number>>(new Set());
   selectedEventId = signal<string | null>(null);
+  expandedDescriptions = signal<Set<string>>(new Set());
+  /** Event ids whose description is actually clamped (overflowing). */
+  clampedDescriptionIds = signal<Set<string>>(new Set());
   initialCalendarSelection: Date[] = [];
   initialCalendarViewDate: Date | null = null;
 
@@ -137,6 +148,90 @@ export class EventsComponent {
     return tag === 'recycle' || tag === 'reduce' ? '#0c343d' : '#ffffff';
   }
 
+  sectorIconsFor(sectors: string[] | undefined): string[] {
+    const ids = canonicalizeSectorCategories(sectors || []);
+    const out: string[] = [];
+    for (const id of ids) {
+      for (const path of this.categoryImageIcons(id)) {
+        if (!out.includes(path)) out.push(path);
+      }
+    }
+    return out;
+  }
+
+  sectorLabelForIcon(iconPath: string): string {
+    for (const id of SECTOR_CATEGORIES) {
+      if (this.categoryImageIcons(id).includes(iconPath)) {
+        return SECTOR_CATEGORY_LABELS[id];
+      }
+    }
+    return '';
+  }
+
+  /** Short label for cards: `www.host.it/` — href stays the full URL. */
+  websiteDisplayLabel(url: string | undefined | null): string {
+    const raw = String(url || '').trim();
+    if (!raw) return '';
+    try {
+      const parsed = new URL(raw.includes('://') ? raw : `https://${raw}`);
+      let host = parsed.hostname.toLowerCase();
+      if (!host.startsWith('www.')) host = `www.${host}`;
+      return `${host}/`;
+    } catch {
+      const host = raw
+        .replace(/^https?:\/\//i, '')
+        .replace(/^\/\//, '')
+        .split('/')[0]
+        .split('?')[0]
+        .split('#')[0]
+        .toLowerCase();
+      if (!host) return raw;
+      return `${host.startsWith('www.') ? host : `www.${host}`}/`;
+    }
+  }
+
+  isDescriptionExpanded(eventId: string): boolean {
+    return this.expandedDescriptions().has(eventId);
+  }
+
+  descriptionNeedsMore(eventId: string, _description: string): boolean {
+    if (this.isDescriptionExpanded(eventId)) return true;
+    return this.clampedDescriptionIds().has(eventId);
+  }
+
+  toggleDescription(eventId: string): void {
+    const next = new Set(this.expandedDescriptions());
+    if (next.has(eventId)) next.delete(eventId);
+    else next.add(eventId);
+    this.expandedDescriptions.set(next);
+    this.lastClampMeasureKey = '';
+  }
+
+  ngAfterViewChecked(): void {
+    const key = `${this.filteredEvents()
+      .map((e) => e.id)
+      .join('|')}#${[...this.expandedDescriptions()].sort().join(',')}`;
+    if (key === this.lastClampMeasureKey) return;
+    this.lastClampMeasureKey = key;
+    queueMicrotask(() => this.measureClampedDescriptions());
+  }
+
+  private measureClampedDescriptions(): void {
+    const nodes = document.querySelectorAll<HTMLElement>(
+      '.event-card .event-description-block:not(.expanded) .event-description'
+    );
+    const next = new Set<string>();
+    nodes.forEach((el) => {
+      const id = el.closest('.event-card')?.getAttribute('data-event-id');
+      if (!id) return;
+      if (el.scrollHeight > el.clientHeight + 1) next.add(id);
+    });
+    const prev = this.clampedDescriptionIds();
+    if (prev.size !== next.size || [...next].some((id) => !prev.has(id))) {
+      this.clampedDescriptionIds.set(next);
+    }
+  }
+
   private defaultCategoryEmoji(id: string): string {
     const map: Record<string, string> = {
       apparel: '👕',
@@ -215,7 +310,10 @@ export class EventsComponent {
         event.title.toLowerCase().includes(query) ||
         event.description.toLowerCase().includes(query) ||
         event.category.toLowerCase().includes(query) ||
-        event.location.toLowerCase().includes(query);
+        event.location.toLowerCase().includes(query) ||
+        event.website.toLowerCase().includes(query) ||
+        event.actionTags.some((t) => t.toLowerCase().includes(query)) ||
+        event.sectorCategories.some((s) => s.toLowerCase().includes(query));
 
       const matchCategory = !category || event.sectorCategories.includes(category);
       const matchActionTag =
@@ -232,6 +330,8 @@ export class EventsComponent {
 
       return matchSearch && matchCategory && matchActionTag && matchDate;
     });
+
+    filtered.sort((a, b) => a.date.getTime() - b.date.getTime());
 
     if (highlightEventId) {
       const idx = filtered.findIndex((e) => e.id === highlightEventId);
