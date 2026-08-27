@@ -264,5 +264,6 @@ If Approve/Reject fails, the review page shows the Firestore error (often `permi
 
 ## Related: CLI discovery and scripts
 
-For seed vs OSM discovery, Overpass troubleshooting, review notes, and a **dev log**, see [`DISCOVERY_SCRIPTS.md`](DISCOVERY_SCRIPTS.md).  
-Scheduled discovery and learning: [`SCHEDULED_DISCOVERY_LEARNING_PLAN.md`](SCHEDULED_DISCOVERY_LEARNING_PLAN.md).
+For seed vs OSM discovery, Overpass troubleshooting, **current learning behaviour**, review notes, and a **dev log**, see [`DISCOVERY_SCRIPTS.md`](DISCOVERY_SCRIPTS.md).  
+Cadence / roadmap / KPIs: [`SCHEDULED_DISCOVERY_LEARNING_PLAN.md`](SCHEDULED_DISCOVERY_LEARNING_PLAN.md).  
+Target learning contracts: [`LEARNING_V1_SPEC.md`](LEARNING_V1_SPEC.md).

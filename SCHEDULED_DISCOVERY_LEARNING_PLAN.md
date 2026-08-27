@@ -1,30 +1,26 @@
 # Scheduled Discovery Job: Plan and Self-Improvement Loop
 
+**Roadmap / ops plan** — cadence, phases, KPIs, and goals.  
+**Live behaviour** (memory collections, hard/soft gates, how to run scripts): [`DISCOVERY_SCRIPTS.md`](DISCOVERY_SCRIPTS.md) → *Learning strategy*.  
+**Target contracts / auto-policy guardrails**: [`LEARNING_V1_SPEC.md`](LEARNING_V1_SPEC.md).
+
 ## Purpose
 
-This document defines how the scheduled place discovery system works, how it feeds the moderation queue, and how it improves over time from human review decisions.
+How scheduled discovery feeds the moderation queue and improves over time from human review — without auto-publishing or heavy ML.
 
-The goal is to:
-- discover new circular places regularly (monthly),
-- discover new circular events regularly (weekly),
+Goals:
+- discover circular places monthly and events weekly,
 - minimize duplicate/low-quality candidates,
 - learn from admin approvals/rejections,
-- keep costs and operations efficient while scaling to many cities.
+- stay cost-efficient as cities scale.
 
 ---
 
 ## Scope
 
-This plan applies to:
-- place discovery ingestion jobs (initially OSM-based),
-- review queue candidate generation,
-- review feedback memory and scoring,
-- periodic policy/rule refinement.
+Applies to place/event ingestion, `reviewQueue`, review-memory scoring, and periodic policy refinement.
 
-Out of scope (initially):
-- automatic publishing without human review,
-- heavy ML model training infrastructure,
-- aggressive paid-source expansion before baseline quality is stable.
+Out of scope (initially): auto-publish, ML training platforms, aggressive paid sources before quality is stable.
 
 ---
 
@@ -50,197 +46,93 @@ flowchart LR
 
 ---
 
-## Monthly Scheduled Discovery: How It Works
+## Scheduled discovery: how it works
 
 ### Implementation status (current)
-- Monthly places+learning workflow is implemented at `.github/workflows/monthly-discovery-learning.yml`.
-- Weekly events workflow is implemented at `.github/workflows/weekly-events-discovery.yml`.
-- Monthly schedule is `0 3 1 * *` (UTC); weekly events schedule is `0 3 * * 1` (UTC).
-- Discovery runner: `npm run discover:monthly` (`tools/scheduled-discovery-job.js`).
-- Event feed runner: `npm run discover:events` (`tools/discover-event-feeds.js`).
-- Event web agent: `npm run discover:events:agent` (`tools/discover-events-agent.js`) — primary weekly path.
-- Learning runner: `npm run learning:report` (`tools/generate-learning-v1-report.js`).
-- Run telemetry writes to `discoveryRuns`; learning outputs write to `learningStats` (places + events).
-- Event approve/reject updates `eventReviewMemory` for next-run dedupe.
-- City aliases include `torino -> turin` and `milano -> milan`.
-- Overpass resilience includes retries/mirror rotation plus adaptive radius fallback.
 
-### 1) Trigger
-Schedulers run on two cadences:
-- monthly for places + learning,
-- weekly for events (upcoming-only by default).
+Details and commands live in [`DISCOVERY_SCRIPTS.md`](DISCOVERY_SCRIPTS.md). Summary:
 
-### 2) Per-city execution
-Discovery runs city-by-city to limit load and isolate failures.
+- Monthly places + learning: `.github/workflows/monthly-discovery-learning.yml` (`0 3 1 * *` UTC)
+- Weekly events: `.github/workflows/weekly-events-discovery.yml` (`0 3 * * 1` UTC)
+- Runners: `discover:monthly`, `discover:events:agent` (primary events), `discover:events` (feeds), `learning:report`
+- Telemetry: `discoveryRuns`; monthly aggregates: `learningStats`
+- City aliases: `torino → turin`, `milano → milan`
+- Overpass: retries, mirrors, adaptive radius fallback
 
-### 3) Source fetch and candidate extraction
-Current sources:
-- places: OpenStreetMap/Overpass,
-- events: RSS/Atom/ICS feeds configured per city.
-Future sources can be added incrementally.
+### Pipeline steps (per city)
 
-### 4) Normalization and feature generation
-Each candidate is normalized into compact comparison features:
-- normalized name and address,
-- city-scoped place key,
-- coarse geo bucket,
-- inferred tags/categories/action labels,
-- source evidence metadata.
-
-### 5) Dedupe and skip gates
-Before queue insertion:
-- skip already-final reviewed queue items,
-- skip matches against approved catalogue entries,
-- apply review memory matching (hard/soft rules),
-- apply confidence penalties for weak matches.
-
-### 6) Queue write
-Remaining candidates are written to `reviewQueue` with `status = needs_review`.
-
-### 7) Human moderation
-Admins approve/reject/edit candidates.
+1. **Trigger** — monthly places (+ learning report); weekly events (upcoming-only by default).
+2. **Fetch** — places: OSM/Overpass; events: web agent (+ optional feeds).
+3. **Normalize** — compact features (name/address, keys, geo bucket, tags, evidence).
+4. **Dedupe / memory gates** — see *Learning strategy* in [`DISCOVERY_SCRIPTS.md`](DISCOVERY_SCRIPTS.md).
+5. **Queue** — remaining candidates → `reviewQueue` (`needs_review`).
+6. **Moderate** — admin approve / reject / edit (human gate).
 
 ---
 
-## Learning and Improvement Loop
+## Learning principles (plan-level)
 
-### Core principle
-Learning starts with rules + memory + metrics, not black-box auto-publish.
-
-### Feedback labels
-From admin review:
-- approved -> positive signal,
-- rejected -> negative signal,
-- optional structured reject reason -> high-value learning signal.
-
-### What gets learned
-- which source/tag patterns are high precision,
-- which patterns create false positives,
-- which chains/keywords need stricter handling,
-- where confidence thresholds should move.
-
-### Monthly policy update
-After each monthly cycle:
-- aggregate approval/rejection rates by rule/source/tag/city,
-- identify top false-positive patterns,
-- tune discovery policy:
-  - hard-skip known low-value patterns,
-  - soft-penalize borderline patterns,
-  - boost high-quality signals.
-
-### Safety rule
-Learning influences ranking/filtering only.
-Human review remains final approval gate in initial phases.
+- **Rules + memory + metrics**, not black-box auto-publish.
+- Online memory biases the **next** discovery run; monthly report informs **manual** rule changes.
+- Learning may rank/filter only; humans remain the publish gate until precision is proven.
+- Structured reject reasons and guarded auto-policy are **planned** — see [`LEARNING_V1_SPEC.md`](LEARNING_V1_SPEC.md). Do not duplicate collection schemas here.
 
 ---
 
-## Data Model Expectations (Conceptual)
+## Quality and performance
 
-### Discovery run logs (recommended)
-Create a `discoveryRuns` log per execution:
-- `runId`, `cityId`, `startedAt`, `finishedAt`, `status`,
-- `fetchedCount`, `queuedCount`,
-- `skippedReviewedQueue`, `skippedApproved`, `skippedMemory`,
-- `errors[]`, `elapsedMs`.
-
-### Review memory (compact)
-Store compact fields only:
-- fingerprint/key fields,
-- approved/rejected counters,
-- last decision and timestamp,
-- optional rejection signals/reasons.
-
-Avoid storing large duplicated payload blobs.
+- City-scoped lookups; compact indexes/rollups; no global scans.
+- Retries/backoff for sources; fail cities independently; bounded write caps.
+- OSM + memory first; add paid sources only when metrics justify cost.
 
 ---
 
-## Quality and Performance Strategy
-
-### Precision-first at scale
-- Keep city-scoped dedupe lookups.
-- Avoid global scans.
-- Use compact indexes/rollups where needed.
-
-### Reliability
-- retries and backoff for external source failures,
-- bounded per-city write caps,
-- fail city-run independently (do not block all cities).
-
-### Cost efficiency
-- start with OSM + rule/memory learning,
-- add paid sources only when metrics justify incremental value.
-
----
-
-## KPI Dashboard (Minimum)
+## KPI dashboard (minimum)
 
 Track monthly per city:
+
 - queue inflow (`queuedCount`),
-- approval rate,
-- rejection rate,
-- duplicate skip rates (by skip type),
-- median review turnaround time,
-- top rejection reasons/patterns.
+- approval / rejection rates,
+- duplicate skip rates (by type),
+- median review turnaround,
+- top rejection patterns (when reasons exist).
 
-Target trend:
-- stable queue volume,
-- rising approval precision,
-- falling avoidable duplicates.
+Target trend: stable queue volume, rising precision, fewer avoidable duplicates.
 
 ---
 
-## Phased Implementation Plan
+## Phased plan
 
-### Phase 1 - Scheduled baseline
-- Monthly city-by-city scheduling.
-- Deterministic queue generation.
-- Run logs and basic monitoring.
+### Phase 1 — Scheduled baseline ✅ in use
+Monthly/weekly jobs, deterministic queue writes, run logs.
 
-### Phase 2 - Learning v1
-- Structured reject reasons in admin workflow.
-- Monthly rule-quality report.
-- Confidence/policy tuning rules.
+### Phase 2 — Learning v1 (partial)
+Online place + event memory ✅; monthly `learningStats` ✅; structured reject reasons and auto policy apply ❌ (spec only).
 
-### Phase 3 - Multi-source expansion
-- Add one additional source at a time.
-- Per-source reliability scoring.
-- Maintain same moderation gate.
+### Phase 3 — Multi-source expansion
+Add sources one at a time; per-source reliability; same moderation gate.
 
-### Phase 4 - Optional ML enhancement
-- Use historical labels for improved scoring.
-- Keep conservative deployment with human-in-loop safeguards.
+### Phase 4 — Optional ML
+Shadow re-ranker vs rule baseline; human gate until reliability is proven.
 
 ---
 
-## Operational Playbook
+## Operational playbook
 
-### Failure handling
-- Retry transient source failures.
-- Mark run status failed with error summary.
-- Continue with other cities when safe.
-
-### Manual controls
-- On-demand rerun per city.
-- Temporary city pause/disable.
-- Threshold/cap overrides for emergency moderation load.
+- Retry transient source failures; mark run failed with summary; continue other cities when safe.
+- Manual: per-city rerun, temporary pause, threshold/cap overrides under review load.
 
 ---
 
-## Risks and Mitigations
+## Risks
 
-- Over-filtering (missing good places): keep soft penalties before hard skips.
-- Under-filtering (queue noise): tighten low-quality patterns via monthly reports.
-- Rule drift across cities: track metrics per city before global policy changes.
-- External API instability: multi-endpoint retries + per-city isolation.
+- Over-filtering → prefer soft penalties before hard skips.
+- Under-filtering → tighten via monthly stats + rule PRs.
+- City drift → per-city metrics before global policy changes.
+- API instability → mirrors/retries + per-city isolation.
 
 ---
 
-## Definition of Success
+## Definition of success
 
-This system is successful when:
-- monthly discovery is reliable and mostly hands-off,
-- queue quality improves month-over-month,
-- duplicate and obvious false positives decrease,
-- reviewer effort shifts from cleanup to meaningful approvals,
-- operational cost stays low relative to coverage growth.
-
+Stable scheduled runs, falling avoidable duplicate reviews, rising approval precision over 2–3 monthly cycles, and a queue volume humans can keep up with — without auto-publish.

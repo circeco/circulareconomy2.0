@@ -1,22 +1,30 @@
 # Learning V1 Spec
 
+**Target contracts and guardrails** for the learning system (explainable, reversible, low-cost).  
+**What is implemented today:** [`DISCOVERY_SCRIPTS.md`](DISCOVERY_SCRIPTS.md) → *Learning strategy*.  
+**Roadmap / KPIs:** [`SCHEDULED_DISCOVERY_LEARNING_PLAN.md`](SCHEDULED_DISCOVERY_LEARNING_PLAN.md).
+
+Do not treat field lists below as a second source of truth for live Firestore shapes — update the ops doc when behaviour ships, and tighten this spec when contracts stabilize.
+
 ## Objective
 
-Define a practical, low-cost learning system that improves discovery quality from human moderation outcomes without requiring a heavy ML platform.
+Improve discovery from human moderation without a heavy ML platform:
 
-Learning V1 should:
 - reduce false positives in `reviewQueue`,
 - preserve recall for good candidates,
-- adapt monthly from approve/reject outcomes,
+- adapt from approve/reject outcomes (monthly aggregation),
 - remain explainable and reversible.
 
-## Current Implementation Mapping
+## Implemented entry points
 
-- Discovery scheduler command: `npm run discover:monthly`
-- Learning report command: `npm run learning:report -- --period=YYYY-MM [--city=<id>]`
-- Discovery run logs are written to `discoveryRuns/{runId}`
-- Learning outputs are written to `learningStats/{cityId}_{period}`
-- Automation workflow: `.github/workflows/monthly-discovery-learning.yml`
+| Concern | Command / location |
+|---------|-------------------|
+| Monthly discovery | `npm run discover:monthly` |
+| Learning report | `npm run learning:report -- --period=YYYY-MM` |
+| Run logs | `discoveryRuns/{runId}` |
+| Period stats | `learningStats/{cityId}_{period}` |
+| CI | `.github/workflows/monthly-discovery-learning.yml` |
+| Online memory gates | see [`DISCOVERY_SCRIPTS.md`](DISCOVERY_SCRIPTS.md) |
 
 ---
 

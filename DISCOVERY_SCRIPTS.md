@@ -1,8 +1,13 @@
 # Discovery scripts and review queue
 
-This file is the **living companion** to the ingestion tooling: what each script does, how to run it, known **limitations**, and a short **dev log** we can update as the pipeline evolves.
+**Living ops doc** for discovery: how to run scripts, limitations, **current learning behaviour**, and a short dev log.
 
-Canonical schema and workflow context: [`DATA_MODEL_AND_PIPELINE.md`](DATA_MODEL_AND_PIPELINE.md).
+| Doc | Role |
+|-----|------|
+| **This file** | How it works today (commands, memory collections, gates) |
+| [`SCHEDULED_DISCOVERY_LEARNING_PLAN.md`](SCHEDULED_DISCOVERY_LEARNING_PLAN.md) | Cadence, phases, KPIs, roadmap |
+| [`LEARNING_V1_SPEC.md`](LEARNING_V1_SPEC.md) | Target contracts / auto-policy guardrails (not all implemented) |
+| [`DATA_MODEL_AND_PIPELINE.md`](DATA_MODEL_AND_PIPELINE.md) | Schema / pipeline overview |
 
 ---
 
@@ -52,6 +57,84 @@ Same pattern as other tools:
 
 ---
 
+## Learning strategy (how discovery improves)
+
+Learning is part of this discovery pipeline: **rules + compact Firestore memory + monthly stats**, not an ML model. Humans remain the publish gate.
+
+```text
+Discovery run  →  reviewQueue (needs_review)
+                      ↓
+            Admin approve / reject / edit
+                      ↓
+            Write compact review memory
+                      ↓
+       Next discovery run reads memory
+       (hard skip / soft penalty / light boost)
+                      ↓
+       Monthly learning:report → learningStats
+       (metrics; rule changes stay mostly manual)
+```
+
+**What “teaching” means:** approve/reject mainly teaches *don’t re-queue this pattern* (and lightly bias confidence). It does **not** train a model of circular language. Monthly `learningStats` help you tune OSM tags, keywords, seeds, and blocklists by hand.
+
+### Places (online memory — mature)
+
+| Collection | Role |
+|------------|------|
+| `reviewMemory` | Fingerprint city+name+address; counters; optional rejection signals |
+| `reviewMemoryNameIndex` / `reviewMemoryNameGeoIndex` | Soft name / name+geo penalties |
+| `reviewMemoryRollups` | City counters |
+
+Discovery (`discover-osm-places.js`): hard-skip on exact memory / approved catalogue match; soft-penalize weaker name hits; drop if confidence &lt; ~0.52. Rejected-only memory can expire (~180 days); approved stays for dedupe. Admin ↔ discovery fingerprints use the same FNV hash.
+
+### Events (online memory — catching up)
+
+| Collection / kind | Role |
+|-------------------|------|
+| `eventReviewMemory` (dated) | city + title + **startDate** + location |
+| `eventReviewMemory` (series) | same title+location with date key `series` (multi-date / recurring / multi-member reject) |
+| `eventReviewMemory` (source) | website/evidence **host** — trust or downrank |
+| `eventReviewMemoryTitleIndex` | title counters; approve stores `approvalSignals` (tags, sectors, keywords) |
+| `eventReviewMemoryRollups` | City counters |
+
+Discovery (`discover-events-agent.js` + `tools/lib/event-discovery-common.js`):
+
+1. Hard skip — dated fingerprint, series fingerprint, title rejected with zero approves, or source rejected ≥2× with reject bias  
+2. Soft penalty — weaker title/source reject → lower confidence  
+3. Soft boost — approved title/source (+ keyword/tag overlap)
+
+Write path: `admin-review` → `persistEventReviewMemoryLearning`. IDs must stay hash-compatible with `event-discovery-common.js` (FNV; fixed 2026-08 — older SHA1 memory docs won’t match until re-reviewed).
+
+Extraction guardrails (adjacent to learning): circular signal preferably in **title**; HTML dates need an explicit **year** near circular context (no inventing day-dates from a whole circular page).
+
+### Offline report
+
+`npm run learning:report -- --period=YYYY-MM` → `learningStats/{cityId}_{period}`. CI runs it after monthly places discovery. Use it to spot noisy signals; auto policy apply from the report is specified in `LEARNING_V1_SPEC.md` but not the main operating mode yet.
+
+### Status snapshot
+
+| Capability | Places | Events |
+|------------|--------|--------|
+| Memory on approve/reject | Yes | Yes |
+| Hard duplicate skip | Yes | Yes (date + series + title + source) |
+| Soft penalty | Yes | Yes |
+| Soft boost from approvals | Minimal | Yes |
+| Source/host learning | No (domain dedupe off for chains) | Yes |
+| Series / recurrence memory | N/A | Yes |
+| Admin ↔ discovery hash aligned | Yes | Yes (2026-08) |
+| Structured reject reasons in UI | No | No |
+| Auto policy from monthly report | No | No |
+
+### Improve along the way
+
+1. Edit title/address/tags before approve; reject junk groups so series + source update.  
+2. Watch `discoveryRuns` counters (`skippedMemoryHard` / `skippedMemorySoft` / …).  
+3. Read `learningStats` → adjust OSM allowlist, event keywords, seeds, block domains.  
+4. Later: structured reject reasons; series re-open after materialization window; guarded auto soft-penalties (`LEARNING_V1_SPEC.md`).  
+5. ML re-ranker only in shadow mode, still behind human review.
+
+---
+
 ## OSM discovery (`tools/discover-osm-places.js`)
 
 ### What it does
@@ -60,47 +143,27 @@ Same pattern as other tools:
 - Builds **two** **Overpass** queries around that point (default **9 km** radius).
 - Maps OSM tags into our **`candidate`** shape (name, address, coords, inferred `actionTags` / `sectorCategories`).
 - Writes **`reviewQueue`** with `status: needs_review`, `kind: place`, stable doc id `osm_{cityId}_{node|way}_{osmId}` (**merge** = safe to re-run).
-- Maintains compact city-scoped decision memory in **`reviewMemory`** (written by admin approve/reject flows).
-- Maintains city-scoped lookup indexes in **`reviewMemoryNameIndex`**, **`reviewMemoryNameGeoIndex`**, and rollup counters in **`reviewMemoryRollups`**.
-- Before enqueueing, checks existing approved places in the same city and applies hard-skip / soft-penalty dedupe decisions.
+- Before enqueueing, applies **place learning / dedupe** (see **Learning strategy** above) plus approved-catalogue checks below.
 
 #### Approved-place dedupe rules (authoritative)
 
 For candidates in the same `cityId`, discovery skips enqueue when one of these is true:
 
 - same OSM queue doc id already has a final reviewed status in `reviewQueue` (`approved|rejected|edited|superseded`)
-- review-memory fingerprint/placeKey exact match (`reviewMemory`) -> hard skip
+- review-memory fingerprint/placeKey exact match (`reviewMemory`) → hard skip
 - computed `placeKey` matches an approved place
 - normalized `name + address` matches an approved place
 - normalized `name` matches and coordinates are very close (~120m)
 
-Soft-penalty (not immediate skip):
+Soft-penalty (not immediate skip) — see **Learning strategy**:
 
-- `reviewMemoryNameGeoIndex` match lowers confidence (`name + geoBucket`)
-- `reviewMemoryNameIndex` match lowers confidence (`name` only)
-- if penalized confidence drops below threshold, candidate is skipped
+- `reviewMemoryNameGeoIndex` / `reviewMemoryNameIndex` lower confidence; drop if below ~0.52
 
 Intentionally **not used** for dedupe:
 
 - website domain + name (disabled, because same-chain branches in one city can share domains)
 
-#### Review memory schema (`reviewMemory`)
-
-Each doc stores compact keys/counters (not full historical payloads):
-
-- `cityId`
-- `fingerprint` (deterministic hash of normalized city+name+address)
-- `placeKey`, `nameNorm`, `addressNorm`, `geoBucket`
-- `lastDecision`, `lastReviewedAt`
-- `approvedCount`, `rejectedCount`
-- `expiresAt` (for rejected-only entries; approved-memory is retained)
-- optional `rejectionSignals` (action/sector tags snapshot)
-
-#### Retention / compaction policy
-
-- Rejected-only memory entries use a TTL horizon (default **180 days**, configurable via `REVIEW_MEMORY_REJECT_TTL_DAYS`).
-- Approved memory remains long-lived to preserve canonical duplicate prevention.
-- Discovery run performs opportunistic compaction by deleting expired rejected-only `reviewMemory` docs.
+Rejected-only `reviewMemory` TTL default **180 days** (`REVIEW_MEMORY_REJECT_TTL_DAYS`); discovery may compact expired reject docs. Approved memory is long-lived.
 
 ### Current selection criteria (tracked)
 
@@ -223,10 +286,10 @@ If it still fails, wait a few minutes and retry, or run with `--radius=6000`.
 - Weekly events: `.github/workflows/weekly-events-discovery.yml`
   - trigger weekly Monday (`cron: 0 3 * * 1`, UTC)
   - runs discovery with `--sources=events` (web search agent + optional feeds) and `event_max_past_days` default `0`
-  - admin approve/reject writes `eventReviewMemory` so later runs skip repeats
+  - learning behaviour: **Learning strategy** above
 - Schedule keepalive: `.github/workflows/schedule-keepalive.yml` (empty commit mid-month) so public-repo crons are not auto-disabled after 60 quiet days
 - Both discovery workflows use Firebase service account secret `FIREBASE_SERVICE_ACCOUNT_CIRCECO_BF511`
-- Discovery telemetry is written to `discoveryRuns`; monthly learning outputs to `learningStats` (places + nested/companion event stats)
+- Telemetry: `discoveryRuns`; monthly report: `learningStats`
 - If Actions shows `disabled_inactivity`, re-enable the workflow in the Actions tab (or `gh workflow enable <file>`) and push to `main`
 
 ### Event web agent (automated search)
@@ -234,13 +297,18 @@ If it still fails, wait a few minutes and retry, or run with `--radius=6000`.
 `npm run discover:events:agent -- --city=<id>`:
 
 1. Runs city search queries (defaults per city, or `cities/{id}.discovery.eventSearchQueries`)
-2. Optionally visits `discovery.eventSeedUrls`
-3. Extracts JSON-LD `Event`, linked ICS feeds, and dated search snippets
-4. Keeps only circular matches (keywords / action tags)
-5. Skips via approved events, reviewed queue ids, and `eventReviewMemory`
-6. Writes `reviewQueue` candidates for admin review
+2. Visits proposed seed pages (`DEFAULT_CITY_SEED_URLS`, or `discovery.eventSeedUrls` override)
+3. Extracts JSON-LD `Event`, dated HTML heuristics; linked ICS/RSS **only from seed pages**
+4. Keeps only candidates with circular signals in **title** (preferred) or strong multi-word keywords in description
+5. Skips blocked domains (defaults include `milanopocket.it`, ticket vendors, social noise)
+6. Skips via approved events, reviewed queue ids, and `eventReviewMemory` (exact date, series fingerprint, hard title rejects, repeatedly rejected sources)
+7. Writes `reviewQueue` candidates for admin review
 
-This is the primary weekly path so the queue can fill without manually pasting events.
+Weekly CI defaults: upcoming-only (`event_max_past_days=0`) and `limit=40`.
+
+Learning gates for this agent are summarized under **Learning strategy** above (series, source host, title signals, year-required HTML dates).
+
+This is the primary weekly path so the queue can fill without manually pasting events. Optional city overrides: `eventKeywords`, `eventBlockDomains`, `eventSeedUrls`, `eventSearchQueries` under `cities/{id}` or `cities/{id}.discovery`.
 
 ### Limitations (important)
 
@@ -288,5 +356,7 @@ This is the primary weekly path so the queue can fill without manually pasting e
 | 2026-04-18 | Event discovery default changed to upcoming-only (`maxPastDays=0`) and now skips missing-location / non-circular events with explicit counters. |
 | 2026-08-24 | Fixed Overpass CI 406s (User-Agent + Accept, kumi mirror, no network-retry on 406); learning step runs after discovery failure; added schedule keepalive for 60-day inactivity disable. |
 | 2026-08-24 | Added automated event web agent (`discover:events:agent`), event review memory on admin decisions, and event learning stats alongside places. |
+| 2026-08-25 | Tightened event agent: require title/strong circular signals (no query auto-pass), domain blocklist, seed-only feed parsing, lower weekly limit. |
+| 2026-08-27 | Event learning: series+source memory, title approvalSignals, confidence boost/penalty; safer HTML date extraction; aligned event memory hashes with admin FNV. Documented under **Learning strategy** in this file. |
 
 _Add a row when you change Overpass tags, add event ingestion, or change queue ID strategy._
