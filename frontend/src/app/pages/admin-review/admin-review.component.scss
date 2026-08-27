@@ -93,10 +93,102 @@
   gap: 0.5rem;
 }
 
-.row-place {
+.row-place,
+.row-event {
   border-radius: 20px;
   padding: 0.8rem 0.9rem;
   border-color: #e6e6e6;
+}
+
+.event-main {
+  .event-datetime {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.55rem 0.85rem;
+    margin-bottom: 0.25rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #202020;
+    line-height: 1.35;
+  }
+
+  .event-time {
+    color: #3b3b3b;
+    font-weight: 500;
+  }
+
+  .event-recurrence {
+    color: #45818e;
+    font-weight: 700;
+    font-size: 0.78rem;
+  }
+
+  .event-description {
+    font-size: 0.8rem;
+    line-height: 1.4;
+    color: #3b3b3b;
+    font-weight: 500;
+    margin: 0.2rem 0 0.45rem;
+    white-space: pre-wrap;
+    word-break: break-word;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+.field-hint {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #5f6770;
+  line-height: 1.35;
+}
+
+.occurrence-dates {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.date-schedule-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+
+  .weekday-chip {
+    flex: 0 0 auto;
+    min-width: 2.4rem;
+    text-align: center;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: #45818e;
+    background: rgba(69, 129, 142, 0.12);
+    border-radius: 0.45rem;
+    padding: 0.32rem 0.4rem;
+  }
+
+  input[type='date'],
+  input[type='time'],
+  select {
+    flex: 1 1 7rem;
+    min-width: 6.5rem;
+  }
+
+  .btn-date-remove {
+    flex: 0 0 auto;
+  }
+}
+
+.btn-date-add,
+.btn-date-remove {
+  justify-self: start;
+  min-width: auto;
+  padding: 0.25rem 0.55rem;
+  font-size: 0.72rem;
 }
 
 .row-main {
@@ -414,7 +506,8 @@
   }
 
   input,
-  textarea {
+  textarea,
+  select {
     font: inherit;
     font-size: 0.85rem;
     padding: 0.35rem 0.5rem;
