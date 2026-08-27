@@ -15,6 +15,7 @@ import {
 
 import { FS_PATHS } from '../../data/firestore-paths';
 import type { EventDoc } from '../../data/models';
+import { formatEventDateLabel } from '../../data/event-recurrence';
 import { CityContextService } from '../../services/city-context.service';
 import {
   ACTION_TAG_LABELS,
@@ -31,7 +32,6 @@ interface EventEditForm {
   title: string;
   startDate: string;
   endDate: string;
-  locationText: string;
   address: string;
   website: string;
   description: string;
@@ -134,18 +134,19 @@ export class AdminEventsComponent {
   }
 
   openEdit(row: EventRow): void {
+    const date = row.startDate || '';
+    const time = this.normalizeTime24h(row.timeDisplay || '');
     this.editingId.set(row.id);
     this.editForm.set({
       title: row.title || '',
-      startDate: row.startDate || '',
-      endDate: row.endDate || row.startDate || '',
-      locationText: row.locationText || '',
-      address: row.address || '',
+      startDate: date,
+      endDate: date,
+      address: String(row.address || row.locationText || '').trim(),
       website: row.website || '',
       description: row.description || '',
-      timeDisplay: row.timeDisplay || '',
-      sectorCategories: canonicalizeSectorCategories((row.sectorCategories || []) as string[]),
-      actionTags: canonicalizeActionTags((row.actionTags || []) as string[]),
+      timeDisplay: time,
+      sectorCategories: canonicalizeSectorCategories(this.showList(row.sectorCategories)),
+      actionTags: canonicalizeActionTags(this.showList(row.actionTags)),
     });
   }
 
@@ -158,15 +159,17 @@ export class AdminEventsComponent {
     const form = this.editForm();
     if (!form || this.editingId() !== row.id) return;
     await this.runRowOp(row.id, async () => {
+      const date = form.startDate.trim();
+      const address = form.address.trim();
       const payload: Record<string, unknown> = {
         title: form.title.trim(),
-        startDate: form.startDate.trim(),
-        endDate: form.endDate.trim() || form.startDate.trim(),
-        locationText: form.locationText.trim(),
-        address: form.address.trim(),
+        startDate: date,
+        endDate: date,
+        locationText: address,
+        address,
         website: form.website.trim(),
         description: form.description.trim(),
-        timeDisplay: form.timeDisplay.trim(),
+        timeDisplay: this.normalizeTime24h(form.timeDisplay),
         sectorCategories: canonicalizeSectorCategories(form.sectorCategories),
         actionTags: canonicalizeActionTags(form.actionTags),
         status: 'approved',
@@ -227,6 +230,31 @@ export class AdminEventsComponent {
     return ACTION_TAG_LABELS[id as keyof typeof ACTION_TAG_LABELS] || id;
   }
 
+  showList(v: unknown): string[] {
+    if (!Array.isArray(v)) return [];
+    return v.map((x) => String(x || '').trim()).filter(Boolean);
+  }
+
+  displaySectorCategories(v: unknown): string[] {
+    return canonicalizeSectorCategories(this.showList(v)).map((s) => SECTOR_CATEGORY_LABELS[s]);
+  }
+
+  displayActionTags(v: unknown): string[] {
+    return canonicalizeActionTags(this.showList(v)).map((t) => ACTION_TAG_LABELS[t]);
+  }
+
+  eventDateLine(row: EventRow): string {
+    const date = String(row.startDate || '').trim();
+    if (!date) return '(missing date)';
+    const label = formatEventDateLabel(date);
+    const time = this.normalizeTime24h(row.timeDisplay || '');
+    return time ? `${label} · ${time}` : label;
+  }
+
+  eventAddressLine(row: EventRow): string {
+    return String(row.address || row.locationText || '').trim() || '(missing address)';
+  }
+
   isSelected(values: string[] | undefined, id: string): boolean {
     return Array.isArray(values) && values.includes(id);
   }
@@ -237,6 +265,13 @@ export class AdminEventsComponent {
     if (checked && idx === -1) current.push(id);
     if (!checked && idx !== -1) current.splice(idx, 1);
     return current;
+  }
+
+  private normalizeTime24h(raw: string): string {
+    const s = String(raw || '').trim();
+    if (/^\d{2}:\d{2}$/.test(s)) return s;
+    if (/^\d{2}:\d{2}:\d{2}$/.test(s)) return s.slice(0, 5);
+    return '';
   }
 
   private isPermissionDenied(e: unknown): boolean {
