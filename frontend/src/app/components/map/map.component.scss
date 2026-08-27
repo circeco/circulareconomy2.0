@@ -95,14 +95,6 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-.map-action-tag-toggle:focus,
-.map-action-tag-toggle:focus-visible,
-.map-action-tag-toggle:active {
-  outline: none;
-  border-color: #FF5252;
-  box-shadow: 0 0 0 1px #FF5252;
-}
-
 .map-action-tag-toggle.active {
   background: var(--tag-color, #45818e);
   color: var(--tag-text-color, #ffffff);
