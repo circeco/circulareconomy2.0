@@ -21,9 +21,13 @@ const {
   eventDedupeKey,
   circularKeywordsFromCity,
   circularSignals,
+  isCircularEventCandidate,
   inferActionTags,
   confidenceForEvent,
   createEventMemoryLookup,
+  blockedDomainsFromCity,
+  isBlockedHost,
+  hostFromUrl,
 } = require('./lib/event-discovery-common');
 
 const PROJECT_ID = process.env.FIREBASE_PROJECT_ID || 'circeco-bf511';
@@ -35,18 +39,23 @@ const DEFAULT_CITY_QUERIES = {
   milan: [
     'repair cafe Milano',
     'mercatino dell usato Milano',
+    'mercatone antiquariato Navigli 2026',
     'swap party Milano',
     'economia circolare evento Milano',
-    'riparazione laboratorio Milano evento',
+    'laboratorio di riparazione Milano evento',
     'zero waste Milano evento',
+    'baratto Milano evento',
+    'vintage market Milano',
   ],
   stockholm: [
     'repair cafe Stockholm',
-    'second hand market Stockholm',
-    'swap event Stockholm',
+    'repair café Stockholm',
+    'loppis Stockholm evenemang',
+    'bakluckeloppis Stockholm',
+    'återbruk evenemang Stockholm',
+    'lappa laga Stockholm',
     'circular economy event Stockholm',
     'fixit clinic Stockholm',
-    'loppis Stockholm event',
   ],
   turin: [
     'repair cafe Torino',
@@ -56,21 +65,43 @@ const DEFAULT_CITY_QUERIES = {
   ],
   uppsala: [
     'repair cafe Uppsala',
-    'second hand market Uppsala',
-    'circular economy event Uppsala',
+    'loppis Uppsala evenemang',
+    'återbruk Uppsala',
     'bytfest Uppsala',
   ],
 };
 
+/**
+ * Proposed high-signal pages (IT/SV calendars + hubs). Override via
+ * cities/{id}.discovery.eventSeedUrls when needed.
+ */
+const DEFAULT_CITY_SEED_URLS = {
+  milan: [
+    'https://labbaronarepaircafe.com/',
+    'https://www.milanofree.it/milano/eventi/mercatone-dellantiquariato-sui-navigli-calendario-2026-orari-e-come-arrivare.html',
+    'https://www.pulcienonsolo.it/',
+    'https://swapinthecitymilano.it/',
+    'https://www.stayhappening.com/s/riparazione-milano',
+  ],
+  stockholm: [
+    'https://somo.social/sv/e/bakluckeloppis-i-vartahamnen-905',
+    'https://www.stayhappening.com/e/l%C3%A5t-oss-lappa-stoppa-och-laga-E2ISYP28AF2',
+    'https://biblioteket.stockholm.se/evenemang/repair-share-cafe-smycka-och-utforska-1',
+    'https://stockholm.naturskyddsforeningen.se/2026/05/13/cafe-repet-lappa-laga-3/',
+  ],
+  turin: ['https://www.repaircafe.org/en/visit/'],
+  uppsala: ['https://www.repaircafe.org/en/visit/'],
+};
+
 const MONTHS = {
-  january: 1, jan: 1, gennaio: 1,
-  february: 2, feb: 2, febbraio: 2,
-  march: 3, mar: 3, marzo: 3,
+  january: 1, jan: 1, gennaio: 1, januari: 1,
+  february: 2, feb: 2, febbraio: 2, februari: 2,
+  march: 3, mar: 3, marzo: 3, mars: 3,
   april: 4, apr: 4, aprile: 4,
-  may: 5, maggio: 5,
+  may: 5, maggio: 5, maj: 5,
   june: 6, jun: 6, juni: 6, giugno: 6,
   july: 7, jul: 7, juli: 7, luglio: 7,
-  august: 8, aug: 8, agosto: 8,
+  august: 8, aug: 8, agosto: 8, augusti: 8,
   september: 9, sep: 9, sept: 9, settembre: 9,
   october: 10, oct: 10, oktober: 10, ottobre: 10,
   november: 11, nov: 11, novembre: 11,
@@ -158,22 +189,27 @@ function parseDateToIsoDay(v) {
   return '';
 }
 
-function extractDateFromText(text, { preferFuture = true } = {}) {
+function collectDatesFromText(text, { requireYear = false } = {}) {
   const raw = String(text || '').toLowerCase();
-  if (!raw) return '';
+  if (!raw) return [];
   const nowYear = new Date().getUTCFullYear();
-  const today = isoDayOffset(0);
   const found = [];
-
   const push = (iso) => {
     if (iso) found.push(iso);
   };
 
   const dayMonthRx =
-    /\b(\d{1,2})\s+(gennaio|febbraio|marzo|aprile|maggio|giugno|luglio|agosto|settembre|ottobre|novembre|dicembre|january|february|march|april|may|june|july|juli|august|september|october|oktober|november|december)\s*(\d{4})?\b/g;
+    /\b(\d{1,2})\s+(gennaio|febbraio|marzo|aprile|maggio|giugno|luglio|agosto|settembre|ottobre|novembre|dicembre|january|february|march|april|may|june|july|juli|august|augusti|september|october|oktober|november|december|januari|februari|mars|maj|juni)\s*(\d{4})?\b/g;
   let m;
   while ((m = dayMonthRx.exec(raw))) {
+    if (requireYear && !m[3]) continue;
     push(dateToIsoDay(Number(m[3] || nowYear), MONTHS[m[2]], Number(m[1])));
+  }
+  const weekdayRx =
+    /\b(?:domenica|luned[iì]|marted[iì]|mercoled[iì]|gioved[iì]|venerd[iì]|sabato|söndag|sondag|måndag|mandag|tisdag|onsdag|torsdag|fredag|lördag|lordag)\s+(\d{1,2})\s+(gennaio|febbraio|marzo|aprile|maggio|giugno|luglio|agosto|settembre|ottobre|novembre|dicembre|january|february|march|april|may|june|july|august|augusti|september|october|oktober|november|december|januari|februari|mars|maj|juni)\s*(\d{4})?\b/gi;
+  while ((m = weekdayRx.exec(raw))) {
+    if (requireYear && !m[3]) continue;
+    push(dateToIsoDay(Number(m[3] || nowYear), MONTHS[String(m[2]).toLowerCase()], Number(m[1])));
   }
   const numericRx = /\b(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})\b/g;
   while ((m = numericRx.exec(raw))) {
@@ -183,20 +219,33 @@ function extractDateFromText(text, { preferFuture = true } = {}) {
   }
   const isoRx = /\b(20\d{2}-\d{2}-\d{2})\b/g;
   while ((m = isoRx.exec(raw))) push(m[1]);
+  return [...new Set(found.filter(Boolean))].sort();
+}
 
-  const unique = [...new Set(found.filter(Boolean))];
+function extractDateFromText(text, { preferFuture = true, requireYear = false } = {}) {
+  const unique = collectDatesFromText(text, { requireYear });
   if (!unique.length) return '';
+  const today = isoDayOffset(0);
   if (preferFuture) {
-    const future = unique.filter((d) => d >= today).sort();
+    const future = unique.filter((d) => d >= today);
     if (future.length) return future[0];
   }
-  return unique.sort().reverse()[0];
+  return unique[unique.length - 1];
+}
+
+function looksLikeJunkEventTitle(title) {
+  const t = String(title || '').trim();
+  if (!t || t.length < 12) return true;
+  // Quotes / celebrity one-liners / pure month labels without event framing.
+  if (/[“”"]/.test(t) && !/(swap|party|mercato|mercatino|repair|evento|event|loppis)/i.test(t)) return true;
+  if (/^(coco chanel|bacheca|news\s*&)/i.test(t)) return true;
+  return false;
 }
 
 function extractLocationFromText(text, cityLabel) {
   const raw = String(text || '').replace(/\s+/g, ' ').trim();
   if (!raw) return '';
-  const viaMatch = raw.match(/\b(via|viale|piazza|piazzale|corso|street|st\.|väg|gatan)\s+[a-z0-9'’ .-]{3,80}\b/i);
+  const viaMatch = raw.match(/\b(via|viale|piazza|piazzale|corso|alzaia|street|st\.|väg|gatan|vägen)\s+[a-z0-9'’ .-]{3,80}\b/i);
   if (viaMatch) return viaMatch[0].trim();
   const label = raw.match(/\b(location|where|dove|plats|address)\s*[:\-]\s*([^.;\n]{4,120})/i);
   if (label && label[2]) return label[2].trim();
@@ -425,14 +474,17 @@ function extractHeuristicEventsFromHtml(html, pageUrl, cityLabel, keywords) {
   const out = [];
   const text = stripHtml(html);
   if (!text || text.length < 40) return out;
-  // Split into rough chunks around headings / sentences with dates.
+  const pageCircular = circularSignals(text.slice(0, 4000), '', keywords);
+  const pageIsCircular = pageCircular.matchedKeywords.length > 0 || pageCircular.matchedActionTags.length > 0;
+
+  // Prefer dated heading/time chunks — do NOT explode every date found on a circular page
+  // (that invented Swap-in-the-City day dates from unrelated page text).
   const chunks = [];
   const headingBlocks = String(html || '').match(/<h[1-4][^>]*>[\s\S]*?<\/h[1-4]>[\s\S]{0,500}/gi) || [];
   for (const block of headingBlocks) chunks.push(stripHtml(block));
   const timeBlocks = String(html || '').match(/<time[^>]*>[\s\S]{0,300}/gi) || [];
   for (const block of timeBlocks) chunks.push(stripHtml(block));
   if (!chunks.length) {
-    // Fallback: scan sliding windows around circular keywords
     const lower = text.toLowerCase();
     for (const kw of keywords.slice(0, 20)) {
       let idx = lower.indexOf(kw);
@@ -449,14 +501,15 @@ function extractHeuristicEventsFromHtml(html, pageUrl, cityLabel, keywords) {
   for (const chunk of chunks) {
     const matched = circularSignals(chunk, '', keywords);
     if (!matched.matchedKeywords.length && !matched.matchedActionTags.length) continue;
-    const startDate = extractDateFromText(chunk);
+    // Require an explicit year in the chunk so month labels / stray day numbers don't invent dates.
+    const startDate = extractDateFromText(chunk, { requireYear: true });
     if (!startDate) continue;
     const titleMatch = chunk.match(/^(.{12,120}?)(?:\.|\n|$)/);
     const title = String(titleMatch ? titleMatch[1] : chunk)
       .replace(/\s+/g, ' ')
       .trim()
       .slice(0, 140);
-    if (!title || title.length < 12) continue;
+    if (looksLikeJunkEventTitle(title)) continue;
     const locationText = extractLocationFromText(chunk, cityLabel) || cityLabel;
     const key = `${normalizeText(title)}|${startDate}`;
     if (seen.has(key)) continue;
@@ -476,7 +529,45 @@ function extractHeuristicEventsFromHtml(html, pageUrl, cityLabel, keywords) {
       evidenceSnippet: `html heuristic on ${pageUrl}; kw=${matched.matchedKeywords.slice(0, 2).join(',')}`,
     });
   }
-  return out.slice(0, 15);
+
+  // Optional: explicit full dates next to circular keywords on otherwise thin pages.
+  if (!out.length && pageIsCircular) {
+    const today = isoDayOffset(0);
+    const lower = text.toLowerCase();
+    for (const kw of pageCircular.matchedKeywords.slice(0, 6)) {
+      let idx = lower.indexOf(kw);
+      let guard = 0;
+      while (idx >= 0 && guard < 2) {
+        const window = text.slice(Math.max(0, idx - 60), Math.min(text.length, idx + 160));
+        const dates = collectDatesFromText(window, { requireYear: true }).filter((d) => d >= today);
+        for (const startDate of dates.slice(0, 2)) {
+          const title = window.replace(/\s+/g, ' ').trim().slice(0, 140);
+          if (looksLikeJunkEventTitle(title)) continue;
+          const key = `${normalizeText(title)}|${startDate}`;
+          if (seen.has(key)) continue;
+          seen.add(key);
+          out.push({
+            sourceType: 'html_keyword_date',
+            sourceUrl: pageUrl,
+            externalId: key,
+            title,
+            startDate,
+            endDate: startDate,
+            locationText: cityLabel,
+            address: cityLabel,
+            website: pageUrl,
+            description: window.slice(0, 2000),
+            timeDisplay: '',
+            evidenceSnippet: `html keyword-date on ${pageUrl}; kw=${kw}`,
+          });
+        }
+        idx = lower.indexOf(kw, idx + kw.length);
+        guard += 1;
+      }
+    }
+  }
+
+  return out.slice(0, 20);
 }
 
 function unfoldIcsLines(text) {
@@ -598,12 +689,18 @@ function resolveQueries(cityId, cityDoc) {
   return [...new Set(fromCity.length ? fromCity : defaults)];
 }
 
-function resolveSeedUrls(cityDoc) {
-  return []
+function resolveSeedUrls(cityId, cityDoc) {
+  const fromCity = []
     .concat(cityDoc?.discovery?.eventSeedUrls || [])
     .concat(cityDoc?.eventSeedUrls || [])
     .map((x) => String(x || '').trim())
     .filter((u) => /^https?:\/\//i.test(u));
+  const defaults = DEFAULT_CITY_SEED_URLS[cityId] || [];
+  return [...new Set(fromCity.length ? fromCity : defaults)];
+}
+
+function resolveBlockedDomains(cityDoc) {
+  return blockedDomainsFromCity(cityDoc);
 }
 
 async function main() {
@@ -614,12 +711,14 @@ async function main() {
   const citySnap = await db.collection('cities').doc(args.city).get();
   const cityDoc = citySnap.exists ? citySnap.data() || {} : {};
   const cityLabel = String(cityDoc.name || args.city);
-  const keywords = circularKeywordsFromCity(cityDoc);
+  const keywords = circularKeywordsFromCity(cityDoc, args.city);
   const queries = resolveQueries(args.city, cityDoc).slice(0, args.maxQueries);
-  const seedUrls = resolveSeedUrls(cityDoc);
+  const seedUrls = resolveSeedUrls(args.city, cityDoc);
+  const blockedDomains = resolveBlockedDomains(cityDoc);
+  const seedUrlSet = new Set(seedUrls);
 
   console.log(
-    `[discover-events-agent] city=${args.city} dryRun=${args.dryRun} limit=${args.limit} maxPastDays=${args.maxPastDays} queries=${queries.length} seeds=${seedUrls.length} keywords=${keywords.length}`
+    `[discover-events-agent] city=${args.city} dryRun=${args.dryRun} limit=${args.limit} maxPastDays=${args.maxPastDays} queries=${queries.length} seeds=${seedUrls.length} keywords=${keywords.length} blockedDomains=${blockedDomains.length}`
   );
 
   const reviewedQueueIds = await loadReviewedQueueEventIds(db, args.city);
@@ -629,11 +728,11 @@ async function main() {
 
   const rawCandidates = [];
   const pageUrls = new Set(seedUrls);
-  const circularPageUrls = new Set();
   let searchHits = 0;
   let pagesFetched = 0;
   let feedsParsed = 0;
   let searchFailures = 0;
+  let skippedBlockedDomain = 0;
 
   for (const query of queries) {
     const { engine, results } = await searchWeb(query);
@@ -641,11 +740,13 @@ async function main() {
     if (!results.length) searchFailures += 1;
     for (const hit of results) {
       searchHits += 1;
+      if (isBlockedHost(hit.url, blockedDomains)) {
+        skippedBlockedDomain += 1;
+        continue;
+      }
       pageUrls.add(hit.url);
-      circularPageUrls.add(hit.url);
       const fromSnippet = candidateFromSnippet(hit, cityLabel);
       if (fromSnippet) {
-        fromSnippet.fromCircularQuery = true;
         fromSnippet.query = query;
         rawCandidates.push(fromSnippet);
       }
@@ -656,35 +757,46 @@ async function main() {
   let pageCount = 0;
   for (const pageUrl of pageUrls) {
     if (pageCount >= args.maxPages) break;
+    if (isBlockedHost(pageUrl, blockedDomains)) {
+      skippedBlockedDomain += 1;
+      continue;
+    }
     pageCount += 1;
+    const isSeedPage = seedUrlSet.has(pageUrl);
     try {
       const { finalUrl, text } = await fetchText(pageUrl);
       pagesFetched += 1;
-      const pageBoost = circularPageUrls.has(pageUrl) || circularPageUrls.has(finalUrl);
-      for (const ev of extractJsonLdEvents(text, finalUrl)) {
-        if (pageBoost) ev.fromCircularQuery = true;
-        rawCandidates.push(ev);
+      if (isBlockedHost(finalUrl, blockedDomains)) {
+        skippedBlockedDomain += 1;
+        continue;
       }
-      for (const ev of extractHeuristicEventsFromHtml(text, finalUrl, cityLabel, keywords)) {
-        if (pageBoost) ev.fromCircularQuery = true;
-        rawCandidates.push(ev);
-      }
-      for (const feedUrl of extractFeedLinks(text, finalUrl)) {
-        try {
-          const feed = await fetchText(feedUrl, 'text/calendar, application/rss+xml, application/xml, text/xml, */*;q=0.5');
-          feedsParsed += 1;
-          let parsed = [];
-          if (/BEGIN:VCALENDAR|BEGIN:VEVENT/i.test(feed.text)) {
-            parsed = parseIcs(feed.text, feedUrl);
-          } else if (/<rss[\s>]|<feed[\s>]/i.test(feed.text)) {
-            parsed = parseRssOrAtom(feed.text, feedUrl);
+      for (const ev of extractJsonLdEvents(text, finalUrl)) rawCandidates.push(ev);
+      for (const ev of extractHeuristicEventsFromHtml(text, finalUrl, cityLabel, keywords)) rawCandidates.push(ev);
+
+      // Prefer seed pages for linked calendars; also allow ICS/RSS from circular-looking hosts.
+      const host = hostFromUrl(finalUrl);
+      const allowFeeds =
+        isSeedPage ||
+        /(repair|ripara|swap|mercat|loppis|återbruk|aterbruk|circular|usato|baratto)/i.test(host + finalUrl);
+      if (allowFeeds) {
+        for (const feedUrl of extractFeedLinks(text, finalUrl)) {
+          if (isBlockedHost(feedUrl, blockedDomains)) {
+            skippedBlockedDomain += 1;
+            continue;
           }
-          for (const ev of parsed) {
-            if (pageBoost) ev.fromCircularQuery = true;
-            rawCandidates.push(ev);
+          try {
+            const feed = await fetchText(feedUrl, 'text/calendar, application/rss+xml, application/xml, text/xml, */*;q=0.5');
+            feedsParsed += 1;
+            let parsed = [];
+            if (/BEGIN:VCALENDAR|BEGIN:VEVENT/i.test(feed.text)) {
+              parsed = parseIcs(feed.text, feedUrl);
+            } else if (/<rss[\s>]|<feed[\s>]/i.test(feed.text)) {
+              parsed = parseRssOrAtom(feed.text, feedUrl);
+            }
+            for (const ev of parsed) rawCandidates.push(ev);
+          } catch (e) {
+            console.warn(`[discover-events-agent] feed fetch failed ${feedUrl}:`, e.message || e);
           }
-        } catch (e) {
-          console.warn(`[discover-events-agent] feed fetch failed ${feedUrl}:`, e.message || e);
         }
       }
     } catch (e) {
@@ -711,27 +823,25 @@ async function main() {
       skippedPast += 1;
       continue;
     }
-    let locationText = String(raw.locationText || raw.address || '').trim();
-    if (!locationText) locationText = extractLocationFromText(`${raw.title}\n${raw.description || ''}`, cityLabel);
-    if (!locationText) {
-      skippedMissingLocation += 1;
+
+    const evidenceUrl = String(raw.website || raw.sourceUrl || '').trim();
+    if (isBlockedHost(evidenceUrl, blockedDomains)) {
+      skippedBlockedDomain += 1;
       continue;
     }
 
-    const matched = circularSignals(
-      raw.title,
-      `${raw.description || ''} ${raw.query || ''} ${raw.fromCircularQuery ? 'repair reuse swap recycle' : ''}`,
-      keywords
-    );
-    const actionTags = inferActionTags(raw.title, `${raw.description || ''} ${raw.query || ''}`, matched.matchedActionTags);
-    const hasCircular =
-      matched.matchedKeywords.length > 0 ||
-      actionTags.length > 0 ||
-      raw.fromCircularQuery === true;
-    if (!hasCircular) {
+    let locationText = String(raw.locationText || raw.address || '').trim();
+    if (!locationText) locationText = extractLocationFromText(`${raw.title}\n${raw.description || ''}`, cityLabel);
+    // Language-local pages often omit structured address; city label is enough for review.
+    if (!locationText) locationText = cityLabel;
+
+    // Strict: title/description only — never inject search-query tokens as fake circular proof.
+    const circular = isCircularEventCandidate(raw.title, raw.description, keywords);
+    if (!circular.ok) {
       skippedNotCircular += 1;
       continue;
     }
+    const actionTags = inferActionTags(raw.title, raw.description, circular.matchedActionTags);
 
     const key = eventDedupeKey(args.city, raw.title, raw.startDate, locationText);
     if (approvedKeys.has(key)) {
@@ -756,12 +866,13 @@ async function main() {
       endDate: raw.endDate || raw.startDate,
       locationText,
       address: String(raw.address || locationText).trim(),
-      website: String(raw.website || raw.sourceUrl || '').trim(),
+      website: evidenceUrl,
       description: String(raw.description || '').slice(0, 2000),
       timeDisplay: String(raw.timeDisplay || '').trim(),
       actionTags,
       sectorCategories: [],
       source: 'web_agent',
+      sourceHost: hostFromUrl(evidenceUrl),
     };
 
     const memorySignal = await memoryLookup.assess(candidate);
@@ -770,7 +881,8 @@ async function main() {
       continue;
     }
 
-    let confidence = confidenceForEvent(candidate, matched.matchedKeywords.length);
+    let confidence = confidenceForEvent(candidate, circular.matchedKeywords.length, memorySignal.boost || 0);
+    if (circular.via === 'title') confidence = Math.min(0.95, confidence + 0.06);
     if (memorySignal.penalty > 0) {
       confidence = Math.max(0.05, confidence - memorySignal.penalty);
       memoryPenalties += 1;
@@ -791,7 +903,7 @@ async function main() {
         evidence: [
           {
             url: candidate.website || raw.sourceUrl,
-            snippet: `${String(raw.evidenceSnippet || '').slice(0, 140)}; circular=${matched.matchedKeywords.slice(0, 3).join(',')}; actions=${actionTags.join(',')}${
+            snippet: `${String(raw.evidenceSnippet || '').slice(0, 140)}; circular=${circular.matchedKeywords.slice(0, 3).join(',')}; via=${circular.via}; actions=${actionTags.join(',')}${
               memorySignal.reasons.length ? `; memory=${memorySignal.reasons.join(',')}` : ''
             }`,
             capturedAt: new Date().toISOString(),
@@ -813,6 +925,7 @@ async function main() {
     `[discover-events-agent] fetched ${rawCandidates.length} raw entries, ${byDocId.size} candidates after filters (` +
       `${skippedPast} past skipped; ${skippedReviewed} reviewed queue skipped; ${skippedApproved} existing approved skipped; ` +
       `${skippedRunDup} run duplicates skipped; ${skippedMissingLocation} missing location skipped; ${skippedNotCircular} non-circular skipped; ` +
+      `${skippedBlockedDomain} blocked-domain skipped; ` +
       `${skippedMemoryHard} hard memory skips; ${skippedMemorySoft} soft-memory confidence skips; ${memoryPenalties} soft-memory penalties; ` +
       `${searchFailures} queries without hits; pages=${pagesFetched}; feedsParsed=${feedsParsed}; searchHits=${searchHits}); writing ${sorted.length} (limit ${args.limit})`
   );
