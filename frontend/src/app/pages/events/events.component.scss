@@ -66,6 +66,25 @@
   color: var(--tag-text-color, #ffffff);
 }
 
+.events-favorites-toggle {
+  border: none;
+  // background: #ffffff;
+  color: #FF5252;
+  // font-size: 18px;
+  line-height: 1;
+  font-weight: 700;
+  padding: 4px 10px;
+  cursor: pointer;
+  width: fit-content;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+
+  &.active {
+    color: #FF5252;
+    border: 2px solid var(--tag-color, #0c343d);
+  }
+}
+
 .category-filters {
   display: flex;
   flex-wrap: wrap;
@@ -170,7 +189,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 24px;
-  padding: 40px 0;
+  padding: 50px 0;
   margin-top: 0;
 }
 

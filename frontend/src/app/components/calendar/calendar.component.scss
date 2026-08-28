@@ -79,6 +79,16 @@
   }
 
   &.has-event {
+    background: #0c343d;
+    border: 2px solid #0c343d;
+    color: white;
+
+    &:hover:not(.selected) {
+      color: $brand-deep;
+    }
+  }
+
+  &.has-favorite-event {
     background: #FF5252;
     border: 2px solid #FF5252;
     color: white;

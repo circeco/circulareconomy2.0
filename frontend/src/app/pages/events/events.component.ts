@@ -48,14 +48,26 @@ export class EventsComponent implements AfterViewChecked {
   selectedCategory = signal<string | null>(null);
   selectedDateTimes = signal<Set<number>>(new Set());
   selectedEventId = signal<string | null>(null);
+  favoritesFilterActive = signal(false);
   expandedDescriptions = signal<Set<string>>(new Set());
   /** Event ids whose description is actually clamped (overflowing). */
   clampedDescriptionIds = signal<Set<string>>(new Set());
   initialCalendarSelection: Date[] = [];
   initialCalendarViewDate: Date | null = null;
 
-  events: EventItem[] = [];
+  events = signal<EventItem[]>([]);
   eventDatesForCalendar: Date[] = [];
+
+  readonly favoriteEventDatesForCalendar = computed(() => {
+    const favoriteIds = this.eventFavorites.favoriteIds();
+    const dates = new Set<string>();
+    for (const e of this.events()) {
+      if (!favoriteIds.has(e.id)) continue;
+      const key = new Date(e.date.getFullYear(), e.date.getMonth(), e.date.getDate()).toISOString();
+      dates.add(key);
+    }
+    return Array.from(dates).map((k) => new Date(k));
+  });
 
   constructor(
     private eventsService: EventsService,
@@ -68,7 +80,7 @@ export class EventsComponent implements AfterViewChecked {
     combineLatest([this.eventsService.events$, this.route.queryParams])
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(([events, params]) => {
-        this.events = events;
+        this.events.set(events);
         const dates = new Set<string>();
         events.forEach((e) => {
           const key = new Date(e.date.getFullYear(), e.date.getMonth(), e.date.getDate()).toISOString();
@@ -90,7 +102,7 @@ export class EventsComponent implements AfterViewChecked {
         if (eventId && typeof eventId === 'string') {
           this.selectedEventId.set(eventId);
           if (!dateToUse) {
-            const ev = this.events.find((e) => e.id === eventId);
+            const ev = this.events().find((e) => e.id === eventId);
             if (ev) {
               dateToUse = ev.date;
               hasExplicitDateFilter = true;
@@ -110,6 +122,25 @@ export class EventsComponent implements AfterViewChecked {
           if (!eventId) this.selectedEventId.set(null);
         }
       });
+
+    this.auth.user$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((user) => {
+        if (!user) this.favoritesFilterActive.set(false);
+      });
+  }
+
+  async toggleFavoritesFilter(): Promise<void> {
+    if (this.favoritesFilterActive()) {
+      this.favoritesFilterActive.set(false);
+      return;
+    }
+    const user = await firstValueFrom(this.auth.user$);
+    if (!user) {
+      this.auth.openModal();
+      return;
+    }
+    this.favoritesFilterActive.set(true);
   }
 
   async toggleFavorite(eventId: string): Promise<void> {
@@ -303,8 +334,10 @@ export class EventsComponent implements AfterViewChecked {
     const activeActionTags = this.selectedActionTags();
     const dateTimes = this.selectedDateTimes();
     const highlightEventId = this.selectedEventId();
+    const favoritesOnly = this.favoritesFilterActive();
+    const favoriteIds = this.eventFavorites.favoriteIds();
 
-    const filtered = this.events.filter((event) => {
+    const filtered = this.events().filter((event) => {
       const matchSearch =
         !query ||
         event.title.toLowerCase().includes(query) ||
@@ -319,6 +352,7 @@ export class EventsComponent implements AfterViewChecked {
       const matchActionTag =
         activeActionTags.size === 0 ||
         event.actionTags.some((tag) => activeActionTags.has(tag));
+      const matchFavorite = !favoritesOnly || favoriteIds.has(event.id);
 
       const eventDayStart = new Date(
         event.date.getFullYear(),
@@ -328,7 +362,7 @@ export class EventsComponent implements AfterViewChecked {
       const matchDate =
         dateTimes.size === 0 || dateTimes.has(eventDayStart);
 
-      return matchSearch && matchCategory && matchActionTag && matchDate;
+      return matchSearch && matchCategory && matchActionTag && matchFavorite && matchDate;
     });
 
     filtered.sort((a, b) => a.date.getTime() - b.date.getTime());
