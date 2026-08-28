@@ -37,8 +37,16 @@
           </div>
         </div>
         <div class="actions">
-          <button type="button" [disabled]="isBusy(row.id)" (click)="openEdit(row)">Edit</button>
-          <button type="button" class="danger" [disabled]="isBusy(row.id)" (click)="remove(row)">Delete</button>
+          <button
+            type="button"
+            class="duplicate"
+            [disabled]="isBusy(row.id) || isBusy(row.id + ':duplicate')"
+            (click)="duplicate(row)"
+          >
+            Duplicate
+          </button>
+          <button type="button" [disabled]="isBusy(row.id) || isBusy(row.id + ':duplicate')" (click)="openEdit(row)">Edit</button>
+          <button type="button" class="danger" [disabled]="isBusy(row.id) || isBusy(row.id + ':duplicate')" (click)="remove(row)">Delete</button>
         </div>
       </div>
 

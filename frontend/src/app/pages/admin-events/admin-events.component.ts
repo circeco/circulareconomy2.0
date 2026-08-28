@@ -9,6 +9,7 @@ import {
   getDocs,
   query,
   serverTimestamp,
+  setDoc,
   updateDoc,
   where,
 } from 'firebase/firestore';
@@ -64,11 +65,12 @@ export class AdminEventsComponent {
 
   readonly filteredRows = computed(() => {
     const q = this.searchText().trim().toLowerCase();
-    return this.rows().filter((r) => {
+    const filtered = this.rows().filter((r) => {
       if (!q) return true;
       const hay = `${r.title || ''} ${r.locationText || ''} ${r.address || ''} ${r.website || ''} ${r.description || ''}`.toLowerCase();
       return hay.includes(q);
     });
+    return filtered.sort((a, b) => this.compareEventRowsByDate(a, b));
   });
 
   constructor() {
@@ -132,6 +134,38 @@ export class AdminEventsComponent {
     } finally {
       this.loading.set(false);
     }
+  }
+
+  async duplicate(row: EventRow): Promise<void> {
+    await this.runRowOp(`${row.id}:duplicate`, async () => {
+      const newRef = doc(collection(this.fs, FS_PATHS.events));
+      const copyTitle = this.nextCopyTitle(row.title || 'Event');
+      const address = String(row.address || row.locationText || '').trim();
+      const payload: EventDoc = {
+        cityId: row.cityId || this.cityId(),
+        title: copyTitle,
+        startDate: row.startDate,
+        endDate: row.endDate || row.startDate,
+        locationText: address,
+        address,
+        website: String(row.website || '').trim(),
+        description: String(row.description || '').trim(),
+        timeDisplay: String(row.timeDisplay || '').trim(),
+        sectorCategories: canonicalizeSectorCategories(this.showList(row.sectorCategories)),
+        actionTags: canonicalizeActionTags(this.showList(row.actionTags)),
+        status: 'approved',
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      };
+      if (row.imageUrl) payload.imageUrl = row.imageUrl;
+      if (row.locationName) payload.locationName = row.locationName;
+      if (row.coords) payload.coords = row.coords;
+      if (row.recurrence) payload.recurrence = row.recurrence;
+      if (Array.isArray(row.sourceRefs) && row.sourceRefs.length) payload.sourceRefs = [...row.sourceRefs];
+
+      await setDoc(newRef, payload as any);
+      this.rows.set([{ id: newRef.id, ...payload }, ...this.rows()]);
+    });
   }
 
   openEdit(row: EventRow): void {
@@ -302,6 +336,28 @@ export class AdminEventsComponent {
     const mm = Number(m[2]);
     if (!Number.isFinite(hh) || !Number.isFinite(mm) || hh > 23 || mm > 59) return '';
     return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+  }
+
+  private nextCopyTitle(title: string): string {
+    const t = String(title || '').trim() || 'Event';
+    if (/\(copy(?:\s+\d+)?\)$/i.test(t)) {
+      const m = t.match(/^(.*)\(copy(?:\s+(\d+))?\)$/i);
+      const stem = (m?.[1] || t).trim();
+      const n = Number(m?.[2] || 1) + 1;
+      return `${stem} (copy ${n})`;
+    }
+    return `${t} (copy)`;
+  }
+
+  private compareEventRowsByDate(a: EventRow, b: EventRow): number {
+    const da = String(a.startDate || '').trim();
+    const db = String(b.startDate || '').trim();
+    if (!da && !db) return (a.title || '').localeCompare(b.title || '');
+    if (!da) return 1;
+    if (!db) return -1;
+    const cmp = da.localeCompare(db);
+    if (cmp !== 0) return cmp;
+    return (a.title || '').localeCompare(b.title || '');
   }
 
   private isPermissionDenied(e: unknown): boolean {
