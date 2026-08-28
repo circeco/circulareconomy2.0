@@ -156,7 +156,6 @@ p {
   .topnav a { font-size: 24px !important }
   .rw-wrapper h2, span { font-size: 30px !important }
   #circular_action h4, p { font-size: 24px !important }
-  #sidebar { width: 98% !important }
   #reuse, #refuse, #reduce, #repair, #reporpouse, #recycle { height: 200px }
 }
 
@@ -167,17 +166,5 @@ p {
     p { top: 5% !important }
   }
   .rw-wrapper { width: 60% !important }
-  #sidebar { width: 100% !important; margin: 30% auto 0 !important }
-
-  .overlay {
-    height: 100%; width: 0; position: fixed; z-index: 2; top: 0; left: 0;
-    overflow-x: hidden; transition: 0.5s;
-  }
-
-  #search_button, #close_button {
-    position: absolute; right: 0; background-repeat: no-repeat; background-size: cover; margin: 10px; padding: 20px; z-index: 1;
-  }
-  #search_button { right: 10px; background-image: url("/assets/img/search_button.jpg"); }
-  #close_button  { background-image: url("/assets/img/close_button.jpg"); }
 }
 

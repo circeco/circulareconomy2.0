@@ -42,7 +42,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   @ViewChildren('heartBtn') heartButtons!: QueryList<ElementRef<HTMLButtonElement>>;
 
   // --- UI state ---
-  listOpen = false;
   favoritesVisible = false;
   favoritesDisabled = true;
 
@@ -72,15 +71,11 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     private auth: AuthService
   ) { }
 
-  // Optional public API if the page wants to control the overlay
-  public openList() { this.toggleList(true); }
-  public closeList() { this.toggleList(false); }
-  public toggleListPublic() { this.toggleList(); }
-
   ngOnInit(): void {
     // initialize categories
     this.categoryIds = this.filter.CATEGORY_IDS.slice();
-    this.enabledCategories = new Set(this.categoryIds);
+    this.enabledCategories = new Set();
+    this.filter.setCategories(this.enabledCategories);
 
     // keep map filter in sync with categories (map-side work is fine outside zone)
     this.filter.enabledCategories$.subscribe(set => this.map.setCategoryFilter(set));
@@ -104,6 +99,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
   ngAfterViewInit(): void {
     this.map.init(this.mapHost.nativeElement);
+    setTimeout(() => this.map.resize(), 0);
 
     // Wait until map & layers are rendered at least once
     this.map.onReady().subscribe(() => {
@@ -180,16 +176,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
   // ---------- Host listeners ----------
   @HostListener('window:resize') onWindowResize() { this.map.resize(); }
-  @HostListener('document:keydown', ['$event'])
-  onKeydown(ev: KeyboardEvent) { if (ev.key === 'Escape' && this.listOpen) this.toggleList(false); }
-
-  // ---------- Overlay ----------
-  toggleList(force?: boolean) {
-    this.listOpen = typeof force === 'boolean' ? force : !this.listOpen;
-    setTimeout(() => this.onWindowResize(), 300);
-  }
-
-  onOverlayBackdrop(_ev: MouseEvent) { this.toggleList(false); }
 
   // ---------- UI handlers ----------
   onFilter(ev: Event) { this.filter.setFilter((ev.target as HTMLInputElement).value); }
