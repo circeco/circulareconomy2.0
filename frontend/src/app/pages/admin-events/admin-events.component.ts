@@ -9,12 +9,14 @@ import {
   getDocs,
   query,
   serverTimestamp,
+  setDoc,
   updateDoc,
   where,
 } from 'firebase/firestore';
 
 import { FS_PATHS } from '../../data/firestore-paths';
 import type { EventDoc } from '../../data/models';
+import { formatEventDateLabel } from '../../data/event-recurrence';
 import { CityContextService } from '../../services/city-context.service';
 import {
   ACTION_TAG_LABELS,
@@ -31,11 +33,11 @@ interface EventEditForm {
   title: string;
   startDate: string;
   endDate: string;
-  locationText: string;
   address: string;
   website: string;
   description: string;
-  timeDisplay: string;
+  time: string;
+  endTime: string;
   sectorCategories: string[];
   actionTags: string[];
 }
@@ -63,11 +65,12 @@ export class AdminEventsComponent {
 
   readonly filteredRows = computed(() => {
     const q = this.searchText().trim().toLowerCase();
-    return this.rows().filter((r) => {
+    const filtered = this.rows().filter((r) => {
       if (!q) return true;
       const hay = `${r.title || ''} ${r.locationText || ''} ${r.address || ''} ${r.website || ''} ${r.description || ''}`.toLowerCase();
       return hay.includes(q);
     });
+    return filtered.sort((a, b) => this.compareEventRowsByDate(a, b));
   });
 
   constructor() {
@@ -133,19 +136,53 @@ export class AdminEventsComponent {
     }
   }
 
+  async duplicate(row: EventRow): Promise<void> {
+    await this.runRowOp(`${row.id}:duplicate`, async () => {
+      const newRef = doc(collection(this.fs, FS_PATHS.events));
+      const copyTitle = this.nextCopyTitle(row.title || 'Event');
+      const address = String(row.address || row.locationText || '').trim();
+      const payload: EventDoc = {
+        cityId: row.cityId || this.cityId(),
+        title: copyTitle,
+        startDate: row.startDate,
+        endDate: row.endDate || row.startDate,
+        locationText: address,
+        address,
+        website: String(row.website || '').trim(),
+        description: String(row.description || '').trim(),
+        timeDisplay: String(row.timeDisplay || '').trim(),
+        sectorCategories: canonicalizeSectorCategories(this.showList(row.sectorCategories)),
+        actionTags: canonicalizeActionTags(this.showList(row.actionTags)),
+        status: 'approved',
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      };
+      if (row.imageUrl) payload.imageUrl = row.imageUrl;
+      if (row.locationName) payload.locationName = row.locationName;
+      if (row.coords) payload.coords = row.coords;
+      if (row.recurrence) payload.recurrence = row.recurrence;
+      if (Array.isArray(row.sourceRefs) && row.sourceRefs.length) payload.sourceRefs = [...row.sourceRefs];
+
+      await setDoc(newRef, payload as any);
+      this.rows.set([{ id: newRef.id, ...payload }, ...this.rows()]);
+    });
+  }
+
   openEdit(row: EventRow): void {
+    const date = row.startDate || '';
+    const { time, endTime } = this.parseTimeDisplayRange(row.timeDisplay || '');
     this.editingId.set(row.id);
     this.editForm.set({
       title: row.title || '',
-      startDate: row.startDate || '',
-      endDate: row.endDate || row.startDate || '',
-      locationText: row.locationText || '',
-      address: row.address || '',
+      startDate: date,
+      endDate: date,
+      address: String(row.address || row.locationText || '').trim(),
       website: row.website || '',
       description: row.description || '',
-      timeDisplay: row.timeDisplay || '',
-      sectorCategories: canonicalizeSectorCategories((row.sectorCategories || []) as string[]),
-      actionTags: canonicalizeActionTags((row.actionTags || []) as string[]),
+      time,
+      endTime,
+      sectorCategories: canonicalizeSectorCategories(this.showList(row.sectorCategories)),
+      actionTags: canonicalizeActionTags(this.showList(row.actionTags)),
     });
   }
 
@@ -158,15 +195,18 @@ export class AdminEventsComponent {
     const form = this.editForm();
     if (!form || this.editingId() !== row.id) return;
     await this.runRowOp(row.id, async () => {
+      const date = form.startDate.trim();
+      const address = form.address.trim();
+      const timeDisplay = this.formatTimeDisplayRange(form.time, form.endTime);
       const payload: Record<string, unknown> = {
         title: form.title.trim(),
-        startDate: form.startDate.trim(),
-        endDate: form.endDate.trim() || form.startDate.trim(),
-        locationText: form.locationText.trim(),
-        address: form.address.trim(),
+        startDate: date,
+        endDate: date,
+        locationText: address,
+        address,
         website: form.website.trim(),
         description: form.description.trim(),
-        timeDisplay: form.timeDisplay.trim(),
+        timeDisplay,
         sectorCategories: canonicalizeSectorCategories(form.sectorCategories),
         actionTags: canonicalizeActionTags(form.actionTags),
         status: 'approved',
@@ -227,6 +267,31 @@ export class AdminEventsComponent {
     return ACTION_TAG_LABELS[id as keyof typeof ACTION_TAG_LABELS] || id;
   }
 
+  showList(v: unknown): string[] {
+    if (!Array.isArray(v)) return [];
+    return v.map((x) => String(x || '').trim()).filter(Boolean);
+  }
+
+  displaySectorCategories(v: unknown): string[] {
+    return canonicalizeSectorCategories(this.showList(v)).map((s) => SECTOR_CATEGORY_LABELS[s]);
+  }
+
+  displayActionTags(v: unknown): string[] {
+    return canonicalizeActionTags(this.showList(v)).map((t) => ACTION_TAG_LABELS[t]);
+  }
+
+  eventDateLine(row: EventRow): string {
+    const date = String(row.startDate || '').trim();
+    if (!date) return '(missing date)';
+    const label = formatEventDateLabel(date);
+    const time = this.formatTimeDisplayRangeFromRaw(row.timeDisplay || '');
+    return time ? `${label} · ${time}` : label;
+  }
+
+  eventAddressLine(row: EventRow): string {
+    return String(row.address || row.locationText || '').trim() || '(missing address)';
+  }
+
   isSelected(values: string[] | undefined, id: string): boolean {
     return Array.isArray(values) && values.includes(id);
   }
@@ -237,6 +302,62 @@ export class AdminEventsComponent {
     if (checked && idx === -1) current.push(id);
     if (!checked && idx !== -1) current.splice(idx, 1);
     return current;
+  }
+
+  private parseTimeDisplayRange(raw: string): { time: string; endTime: string } {
+    const s = String(raw || '').trim();
+    const range = s.match(/^(\d{1,2}:\d{2})(?::\d{2})?\s*[–\-—]\s*(\d{1,2}:\d{2})(?::\d{2})?$/);
+    if (range) {
+      return {
+        time: this.normalizeTime24h(range[1]),
+        endTime: this.normalizeTime24h(range[2]),
+      };
+    }
+    return { time: this.normalizeTime24h(s), endTime: '' };
+  }
+
+  private formatTimeDisplayRange(startRaw: string, endRaw: string): string {
+    const start = this.normalizeTime24h(startRaw);
+    const end = this.normalizeTime24h(endRaw);
+    if (start && end) return `${start}–${end}`;
+    return start || end || '';
+  }
+
+  private formatTimeDisplayRangeFromRaw(raw: string): string {
+    const { time, endTime } = this.parseTimeDisplayRange(raw);
+    return this.formatTimeDisplayRange(time, endTime);
+  }
+
+  private normalizeTime24h(raw: string): string {
+    const s = String(raw || '').trim();
+    const m = s.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+    if (!m) return '';
+    const hh = Number(m[1]);
+    const mm = Number(m[2]);
+    if (!Number.isFinite(hh) || !Number.isFinite(mm) || hh > 23 || mm > 59) return '';
+    return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+  }
+
+  private nextCopyTitle(title: string): string {
+    const t = String(title || '').trim() || 'Event';
+    if (/\(copy(?:\s+\d+)?\)$/i.test(t)) {
+      const m = t.match(/^(.*)\(copy(?:\s+(\d+))?\)$/i);
+      const stem = (m?.[1] || t).trim();
+      const n = Number(m?.[2] || 1) + 1;
+      return `${stem} (copy ${n})`;
+    }
+    return `${t} (copy)`;
+  }
+
+  private compareEventRowsByDate(a: EventRow, b: EventRow): number {
+    const da = String(a.startDate || '').trim();
+    const db = String(b.startDate || '').trim();
+    if (!da && !db) return (a.title || '').localeCompare(b.title || '');
+    if (!da) return 1;
+    if (!db) return -1;
+    const cmp = da.localeCompare(db);
+    if (cmp !== 0) return cmp;
+    return (a.title || '').localeCompare(b.title || '');
   }
 
   private isPermissionDenied(e: unknown): boolean {

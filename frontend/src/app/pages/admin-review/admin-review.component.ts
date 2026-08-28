@@ -27,6 +27,17 @@ import {
   SECTOR_CATEGORIES,
   SECTOR_CATEGORY_LABELS,
 } from '../../data/taxonomy';
+import {
+  DEFAULT_RECURRENCE_WINDOW_MONTHS,
+  expandRecurrenceDates,
+  formatEventDateLabel,
+  inferRecurrenceFromDates,
+  recurrenceLabel,
+  weekdayNameFromIso,
+  weekdayShortFromIso,
+  type EventRecurrence,
+  type EventRecurrenceFrequency,
+} from '../../data/event-recurrence';
 import type {
   EventCandidate,
   LatLng,
@@ -38,6 +49,26 @@ import type {
 type ReviewQueuePlaceRow = ReviewQueuePlaceDoc & { id: string };
 type ReviewQueueEventRow = ReviewQueueEventDoc & { id: string };
 type DecisionType = 'approved' | 'rejected';
+
+/** One schedule line in the event editor. */
+export type EventOccurrenceRow = {
+  date: string;
+  time: string; // HH:mm 24h start
+  endTime: string; // HH:mm 24h end (optional)
+  recurrenceFrequency: EventRecurrenceFrequency;
+  until: string;
+};
+
+/** Grouped review card: same title/source/location, multiple dates. */
+export type EventReviewGroup = {
+  id: string;
+  cityId: string;
+  confidence: number;
+  candidate: EventCandidate;
+  evidence: ReviewQueueEventRow['evidence'];
+  memberIds: string[];
+  dates: string[];
+};
 
 interface NameIndexDelta {
   docId: string;
@@ -78,6 +109,23 @@ interface EventTitleIndexDelta {
   lastDecision: DecisionType;
   lastReviewedAt: string;
   expiresAt: string | null;
+  /** Positive learning signals from approved events (tags + keywords). */
+  approvalSignals?: {
+    actionTags: string[];
+    sectorCategories: string[];
+    keywords: string[];
+  } | null;
+}
+
+interface EventSourceMemoryDelta {
+  docId: string;
+  cityId: string;
+  sourceHost: string;
+  approvedInc: number;
+  rejectedInc: number;
+  lastDecision: DecisionType;
+  lastReviewedAt: string;
+  expiresAt: string | null;
 }
 
 interface PlaceConflict {
@@ -94,13 +142,11 @@ interface PlaceConflict {
 /** Flat form for editing an event candidate in the UI */
 export interface EventEditForm {
   title: string;
-  startDate: string;
-  endDate: string;
-  locationText: string;
   address: string;
   website: string;
   description: string;
-  timeDisplay: string;
+  recurrenceWindowMonths: number;
+  occurrenceRows: EventOccurrenceRow[];
   sectorCategories: string[];
   actionTags: string[];
 }
@@ -133,6 +179,7 @@ export class AdminReviewComponent {
 
   readonly placeQueue$: Observable<ReviewQueuePlaceRow[]>;
   readonly eventQueue$: Observable<ReviewQueueEventRow[]>;
+  readonly eventGroups$: Observable<EventReviewGroup[]>;
   readonly placeRows = signal<ReviewQueuePlaceRow[]>([]);
 
   readonly busyIds = signal<Set<string>>(new Set());
@@ -141,6 +188,13 @@ export class AdminReviewComponent {
   readonly sectorOptions = SECTOR_CATEGORIES.slice();
   readonly actionTagOptions = ACTION_TAGS.slice();
   readonly reviewKind = signal<'places' | 'events' | 'all'>('all');
+  readonly recurrenceOptions: { value: EventRecurrenceFrequency; label: string }[] = [
+    { value: 'none', label: 'Does not repeat' },
+    { value: 'weekly', label: 'Every week' },
+    { value: 'monthly', label: 'Every month (same day)' },
+    { value: 'monthly_nth', label: 'Every month (same weekday)' },
+  ];
+  readonly recurrenceWindowMonths = DEFAULT_RECURRENCE_WINDOW_MONTHS;
 
   /** Row id whose event editor is open (one at a time per kind) */
   editingEventRowId: string | null = null;
@@ -186,6 +240,7 @@ export class AdminReviewComponent {
     );
     this.placeQueue$ = queue$.pipe(map((x) => x.places));
     this.eventQueue$ = queue$.pipe(map((x) => x.events));
+    this.eventGroups$ = this.eventQueue$.pipe(map((rows) => this.groupEventRows(rows)));
     this.placeQueue$.subscribe((rows) => this.placeRows.set(rows));
   }
 
@@ -210,8 +265,8 @@ export class AdminReviewComponent {
     return 'Review Queue';
   }
 
-  toggleEventEdit(row: ReviewQueueEventRow): void {
-    if (this.editingEventRowId === row.id) {
+  toggleEventEdit(group: EventReviewGroup): void {
+    if (this.editingEventRowId === group.id) {
       this.editingEventRowId = null;
       this.eventEdit = null;
       return;
@@ -219,8 +274,12 @@ export class AdminReviewComponent {
     this.closePlaceEditor();
     this.cancelCreateEvent();
     this.cancelCreatePlace();
-    this.editingEventRowId = row.id;
-    this.eventEdit = this.buildEventForm(row.candidate);
+    this.editingEventRowId = group.id;
+    const form = this.buildEventForm(group.candidate, group.dates);
+    if (!form.website) {
+      form.website = this.eventSourceUrlFromEvidence(group.evidence, group.candidate.website);
+    }
+    this.eventEdit = form;
   }
 
   togglePlaceEdit(row: ReviewQueuePlaceRow): void {
@@ -262,6 +321,7 @@ export class AdminReviewComponent {
       imageUrl: '',
       sectorCategories: [],
       actionTags: [],
+      recurrence: { frequency: 'none', windowMonths: DEFAULT_RECURRENCE_WINDOW_MONTHS },
     });
   }
 
@@ -296,15 +356,68 @@ export class AdminReviewComponent {
     if (this.editingPlaceRowId === id) this.closePlaceEditor();
   }
 
-  async saveEventDraft(row: ReviewQueueEventRow): Promise<void> {
-    if (!this.eventEdit || this.editingEventRowId !== row.id) return;
+  async saveEventDraft(group: EventReviewGroup): Promise<void> {
+    if (!this.eventEdit || this.editingEventRowId !== group.id) return;
     const candidate = this.eventFormToCandidate(this.eventEdit);
-    await this.runSingleOp(`${row.id}:save-event`, () =>
-      updateDoc(doc(this.fs, FS_PATHS.reviewQueue, row.id), {
-        candidate: { ...row.candidate, ...candidate },
-        updatedAt: serverTimestamp(),
-      })
-    );
+    // Persist editor rows as-is (do not expand recurrence here — that happens on approve).
+    const occ = (this.eventEdit.occurrenceRows || [])
+      .map((r) => ({
+        date: String(r.date || '').trim(),
+        timeDisplay: this.formatTimeDisplayRange(r.time || '', r.endTime || ''),
+      }))
+      .filter((o) => /^\d{4}-\d{2}-\d{2}$/.test(o.date));
+    if (!occ.length) {
+      this.lastError.set('Add at least one valid date before saving.');
+      return;
+    }
+
+    await this.runWrite(`${group.id}:save-event`, async (batch) => {
+      const members = group.memberIds;
+      const sharedCandidate = {
+        ...group.candidate,
+        ...candidate,
+      };
+
+      for (let i = 0; i < members.length; i++) {
+        const ref = doc(this.fs, FS_PATHS.reviewQueue, members[i]);
+        if (i < occ.length) {
+          batch.update(ref, {
+            candidate: {
+              ...sharedCandidate,
+              startDate: occ[i].date,
+              endDate: occ[i].date,
+              timeDisplay: occ[i].timeDisplay || candidate.timeDisplay || '',
+            },
+            updatedAt: serverTimestamp(),
+          });
+        } else {
+          // Date removed in editor — drop extra queue siblings from needs_review.
+          batch.update(ref, {
+            status: 'superseded',
+            updatedAt: serverTimestamp(),
+          });
+        }
+      }
+
+      for (let i = members.length; i < occ.length; i++) {
+        const newRef = doc(collection(this.fs, FS_PATHS.reviewQueue));
+        batch.set(newRef, {
+          kind: 'event',
+          cityId: group.cityId,
+          status: 'needs_review',
+          confidence: group.confidence,
+          candidate: {
+            ...sharedCandidate,
+            startDate: occ[i].date,
+            endDate: occ[i].date,
+            timeDisplay: occ[i].timeDisplay || candidate.timeDisplay || '',
+          },
+          evidence: Array.isArray(group.evidence) ? group.evidence : [],
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        });
+      }
+    });
     this.closeEventEditor();
   }
 
@@ -324,36 +437,32 @@ export class AdminReviewComponent {
     const form = this.newEventEdit;
     if (!this.creatingEvent || !form) return;
     const c = this.eventFormToCandidate(form);
-    if (!c.title || !c.startDate || !c.locationText) {
-      this.lastError.set('Event requires title, start date, and location.');
+    const occurrences = this.resolveOccurrencesFromForm(form);
+    if (!c.title || !occurrences.length || !c.address) {
+      this.lastError.set('Event requires title, at least one date, and address.');
       return;
     }
     const cityId = this.cityContext.cityId();
     const reviewedAt = new Date().toISOString();
     const eventSectorCategories = this.ensureEventSectorCategories(c);
+    const seriesId =
+      occurrences.length > 1 || (c.recurrence && c.recurrence.frequency !== 'none') ? this.newSeriesId() : '';
     await this.runWrite('manual:add-event', async (batch) => {
-      const newRef = doc(collection(this.fs, FS_PATHS.events));
-      batch.set(newRef, {
-        cityId,
-        title: c.title,
-        startDate: c.startDate,
-        endDate: c.endDate || c.startDate,
-        locationText: c.locationText,
-        address: c.address ?? '',
-        locationName: c.locationName ?? '',
-        ...this.coordsField(c.coords),
-        website: c.website ?? '',
-        description: c.description ?? '',
-        timeDisplay: c.timeDisplay ?? '',
-        imageUrl: c.imageUrl ?? '',
-        sectorCategories: eventSectorCategories,
-        actionTags: (c.actionTags ?? []) as string[],
-        sourceRefs: this.manualSourceRefs(c.website),
-        status: 'approved',
-        review: { reviewedAt },
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      });
+      for (const occ of occurrences) {
+        const newRef = doc(collection(this.fs, FS_PATHS.events));
+        batch.set(
+          newRef,
+          this.buildPublishedEventPayload({
+            cityId,
+            candidate: { ...c, timeDisplay: occ.time || c.timeDisplay },
+            startDate: occ.date,
+            seriesId,
+            eventSectorCategories,
+            sourceRefs: this.manualSourceRefs(c.website),
+            reviewedAt,
+          })
+        );
+      }
     });
     this.cancelCreateEvent();
   }
@@ -533,60 +642,149 @@ export class AdminReviewComponent {
     return core[0] || tokens[0];
   }
 
-  async approveEvent(row: ReviewQueueEventRow): Promise<void> {
-    const c = this.mergedEventCandidate(row);
+  async approveEvent(group: EventReviewGroup): Promise<void> {
+    const form =
+      this.editingEventRowId === group.id && this.eventEdit
+        ? this.eventEdit
+        : this.buildEventForm(group.candidate, group.dates);
+    const c = { ...group.candidate, ...this.eventFormToCandidate(form) };
     const reviewedAt = new Date().toISOString();
     const eventSectorCategories = this.ensureEventSectorCategories(c);
-    await this.runWrite(row.id, async (batch) => {
-      const newRef = doc(collection(this.fs, FS_PATHS.events));
-      batch.set(newRef, {
-        cityId: row.cityId,
-        title: c.title,
-        startDate: c.startDate,
-        endDate: c.endDate || c.startDate,
-        locationText: c.locationText,
-        address: c.address ?? '',
-        locationName: c.locationName ?? '',
-        ...this.coordsField(c.coords),
-        website: c.website ?? '',
-        description: c.description ?? '',
-        timeDisplay: c.timeDisplay ?? '',
-        imageUrl: c.imageUrl ?? '',
-        sectorCategories: eventSectorCategories,
-        actionTags: (c.actionTags ?? []) as string[],
-        sourceRefs: this.evidenceToSourceRefs(row, c.website),
-        status: 'approved',
-        review: { reviewedAt },
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      });
-      batch.update(doc(this.fs, FS_PATHS.reviewQueue, row.id), {
-        status: 'approved',
-        publishedRef: { collection: 'events', id: newRef.id },
-        review: { reviewedAt },
-        updatedAt: serverTimestamp(),
-      });
+    const occurrences = this.resolveOccurrencesFromForm(form);
+    if (!occurrences.length) {
+      this.lastError.set('Event requires at least one date.');
+      return;
+    }
+    const seriesId =
+      occurrences.length > 1 || (c.recurrence && c.recurrence.frequency !== 'none') ? this.newSeriesId() : '';
+    let firstPublishedId = '';
+    await this.runWrite(group.id, async (batch) => {
+      for (const occ of occurrences) {
+        const newRef = doc(collection(this.fs, FS_PATHS.events));
+        if (!firstPublishedId) firstPublishedId = newRef.id;
+        batch.set(
+          newRef,
+          this.buildPublishedEventPayload({
+            cityId: group.cityId,
+            candidate: { ...c, timeDisplay: occ.time || c.timeDisplay },
+            startDate: occ.date,
+            seriesId,
+            eventSectorCategories,
+            sourceRefs: this.evidenceToSourceRefs(
+              { evidence: group.evidence } as ReviewQueueEventRow,
+              c.website
+            ),
+            reviewedAt,
+          })
+        );
+      }
+      for (const memberId of group.memberIds) {
+        batch.update(doc(this.fs, FS_PATHS.reviewQueue, memberId), {
+          status: 'approved',
+          publishedRef: { collection: 'events', id: firstPublishedId || memberId },
+          review: { reviewedAt },
+          updatedAt: serverTimestamp(),
+        });
+      }
     });
     await this.persistEventReviewMemoryLearning([
-      { cityId: row.cityId, candidate: c, decision: 'approved', reviewedAtIso: reviewedAt },
+      {
+        cityId: group.cityId,
+        candidate: { ...c, startDate: occurrences[0]?.date || c.startDate },
+        decision: 'approved',
+        reviewedAtIso: reviewedAt,
+        // Multi-date / recurring approvals also teach the series fingerprint.
+        alsoSeries: occurrences.length > 1 || !!(c.recurrence && c.recurrence.frequency !== 'none'),
+        sourceUrlHint: this.eventSourceUrlFromEvidence(group.evidence, c.website),
+      },
     ]);
-    this.closeEditorsForRow(row.id);
+    this.closeEditorsForRow(group.id);
   }
 
-  async rejectEvent(row: ReviewQueueEventRow): Promise<void> {
+  async rejectEvent(group: EventReviewGroup): Promise<void> {
     const reviewedAt = new Date().toISOString();
-    const c = this.mergedEventCandidate(row);
-    await this.runWrite(row.id, async (batch) => {
-      batch.update(doc(this.fs, FS_PATHS.reviewQueue, row.id), {
-        status: 'rejected',
-        review: { reviewedAt },
-        updatedAt: serverTimestamp(),
-      });
+    const c = this.mergedEventCandidate(group);
+    await this.runWrite(group.id, async (batch) => {
+      for (const memberId of group.memberIds) {
+        batch.update(doc(this.fs, FS_PATHS.reviewQueue, memberId), {
+          status: 'rejected',
+          review: { reviewedAt },
+          updatedAt: serverTimestamp(),
+        });
+      }
     });
     await this.persistEventReviewMemoryLearning([
-      { cityId: row.cityId, candidate: c, decision: 'rejected', reviewedAtIso: reviewedAt },
+      {
+        cityId: group.cityId,
+        candidate: c,
+        decision: 'rejected',
+        reviewedAtIso: reviewedAt,
+        alsoSeries: group.memberIds.length > 1 || !!(c.recurrence && c.recurrence.frequency !== 'none'),
+        sourceUrlHint: this.eventSourceUrlFromEvidence(group.evidence, c.website),
+      },
     ]);
-    this.closeEditorsForRow(row.id);
+    this.closeEditorsForRow(group.id);
+  }
+
+  /**
+   * Clone this review card into a new needs_review item (original stays).
+   * Title gets a "(copy)" suffix so it shows as a separate card instead of merging with the original.
+   */
+  async duplicateEvent(group: EventReviewGroup): Promise<void> {
+    const base = this.mergedEventCandidate(group);
+    const copyTitle = this.nextCopyTitle(base.title || 'Event');
+    const dates = group.dates.length
+      ? group.dates
+      : [String(base.startDate || '').trim()].filter(Boolean);
+    const datesToCopy = dates.length ? dates : [new Date().toISOString().slice(0, 10)];
+
+    await this.runWrite(`${group.id}:duplicate`, async (batch) => {
+      for (const date of datesToCopy) {
+        const newRef = doc(collection(this.fs, FS_PATHS.reviewQueue));
+        batch.set(newRef, {
+          kind: 'event',
+          cityId: group.cityId,
+          status: 'needs_review',
+          confidence: group.confidence,
+          candidate: {
+            ...base,
+            title: copyTitle,
+            startDate: date,
+            endDate: date,
+          },
+          evidence: Array.isArray(group.evidence) ? [...group.evidence] : [],
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        });
+      }
+    });
+  }
+
+  /**
+   * Drop from the review queue without writing review memory / learning signals.
+   * Uses `superseded` (same as editor date removal) so discovery is not taught a reject.
+   */
+  async removeEvent(group: EventReviewGroup): Promise<void> {
+    await this.runWrite(`${group.id}:remove`, async (batch) => {
+      for (const memberId of group.memberIds) {
+        batch.update(doc(this.fs, FS_PATHS.reviewQueue, memberId), {
+          status: 'superseded',
+          updatedAt: serverTimestamp(),
+        });
+      }
+    });
+    this.closeEditorsForRow(group.id);
+  }
+
+  private nextCopyTitle(title: string): string {
+    const t = String(title || '').trim() || 'Event';
+    if (/\(copy(?:\s+\d+)?\)$/i.test(t)) {
+      const m = t.match(/^(.*)\(copy(?:\s+(\d+))?\)$/i);
+      const stem = (m?.[1] || t).trim();
+      const n = Number(m?.[2] || 1) + 1;
+      return `${stem} (copy ${n})`;
+    }
+    return `${t} (copy)`;
   }
 
   isBusy(id: string): boolean {
@@ -597,11 +795,11 @@ export class AdminReviewComponent {
     return this.cityContext.cityId();
   }
 
-  private mergedEventCandidate(row: ReviewQueueEventRow): EventCandidate {
-    if (this.editingEventRowId === row.id && this.eventEdit) {
-      return { ...row.candidate, ...this.eventFormToCandidate(this.eventEdit) };
+  private mergedEventCandidate(group: EventReviewGroup): EventCandidate {
+    if (this.editingEventRowId === group.id && this.eventEdit) {
+      return { ...group.candidate, ...this.eventFormToCandidate(this.eventEdit) };
     }
-    return row.candidate;
+    return group.candidate;
   }
 
   private mergedPlaceCandidate(row: ReviewQueuePlaceRow): PlaceCandidate {
@@ -611,16 +809,44 @@ export class AdminReviewComponent {
     return row.candidate;
   }
 
-  private buildEventForm(c: EventCandidate): EventEditForm {
+  private buildEventForm(c: EventCandidate, groupDates?: string[]): EventEditForm {
+    const dates = [...new Set([...(groupDates || []), c.startDate].filter(Boolean) as string[])].sort();
+    // Respect an explicit "Does not repeat" — do not re-infer weekly from multi-date groups.
+    const storedFreq = c.recurrence?.frequency;
+    let inferred: EventRecurrenceFrequency = 'none';
+    if (storedFreq === 'none') {
+      inferred = 'none';
+    } else if (storedFreq === 'weekly' || storedFreq === 'monthly' || storedFreq === 'monthly_nth') {
+      inferred = storedFreq;
+    } else {
+      inferred = inferRecurrenceFromDates(dates) || 'none';
+    }
+    const { time, endTime } = this.parseTimeDisplayRange(c.timeDisplay || '');
+    const until = c.recurrence?.until ?? '';
+    const occurrenceRows: EventOccurrenceRow[] = (dates.length ? dates : ['']).map((date, index) => ({
+      date,
+      time,
+      endTime,
+      // Apply inferred/shared recurrence on the first row only; extra dates stay one-off.
+      recurrenceFrequency: index === 0 ? inferred : 'none',
+      until: index === 0 ? until : '',
+    }));
+    if (!occurrenceRows.length) {
+      occurrenceRows.push({
+        date: new Date().toISOString().slice(0, 10),
+        time: '',
+        endTime: '',
+        recurrenceFrequency: 'none',
+        until: '',
+      });
+    }
     return {
       title: c.title ?? '',
-      startDate: c.startDate ?? '',
-      endDate: (c.endDate ?? c.startDate) ?? '',
-      locationText: c.locationText ?? '',
-      address: c.address ?? '',
+      address: String(c.address || c.locationText || '').trim(),
       website: c.website ?? '',
       description: c.description ?? '',
-      timeDisplay: c.timeDisplay ?? '',
+      recurrenceWindowMonths: c.recurrence?.windowMonths ?? DEFAULT_RECURRENCE_WINDOW_MONTHS,
+      occurrenceRows,
       sectorCategories: canonicalizeSectorCategories((c.sectorCategories ?? []) as string[]),
       actionTags: canonicalizeActionTags((c.actionTags ?? []) as string[]),
     };
@@ -643,20 +869,289 @@ export class AdminReviewComponent {
   }
 
   private eventFormToCandidate(f: EventEditForm): Partial<EventCandidate> {
-    const start = f.startDate.trim();
-    const end = f.endDate.trim() || start;
+    const rows = (f.occurrenceRows || []).filter((r) => /^\d{4}-\d{2}-\d{2}$/.test(String(r.date || '').trim()));
+    const primary = rows[0] || f.occurrenceRows[0];
+    const start = String(primary?.date || '').trim();
+    // Single UI field: keep address for map geocoding later; mirror into locationText for display.
+    const address = this.normalizeAddressDisplay(f.address);
+    const recurringRow = rows.find((r) => r.recurrenceFrequency && r.recurrenceFrequency !== 'none');
     return {
       title: f.title.trim(),
       startDate: start,
-      endDate: end,
-      locationText: f.locationText.trim(),
-      address: this.normalizeAddressDisplay(f.address),
+      endDate: start,
+      locationText: address,
+      address,
       website: f.website.trim(),
       description: f.description.trim(),
-      timeDisplay: f.timeDisplay.trim(),
+      timeDisplay: this.formatTimeDisplayRange(primary?.time || '', primary?.endTime || ''),
+      recurrence: this.firestoreRecurrence(
+        recurringRow?.recurrenceFrequency || 'none',
+        Number(f.recurrenceWindowMonths) || DEFAULT_RECURRENCE_WINDOW_MONTHS,
+        recurringRow?.until
+      ),
       sectorCategories: canonicalizeSectorCategories(f.sectorCategories),
       actionTags: canonicalizeActionTags(f.actionTags) as EventCandidate['actionTags'],
     };
+  }
+
+  eventDateDisplay(c: EventCandidate): string {
+    const start = String(c.startDate || '').trim();
+    if (!start) return '';
+    const label = formatEventDateLabel(start);
+    const time = this.formatTimeDisplayRangeFromRaw(c.timeDisplay || '');
+    return time ? `${label} · ${time}` : label;
+  }
+
+  eventGroupDateDisplay(group: EventReviewGroup): string {
+    const dates = group.dates.length ? group.dates : [group.candidate.startDate].filter(Boolean);
+    if (!dates.length) return '';
+    const time = this.formatTimeDisplayRangeFromRaw(group.candidate.timeDisplay || '');
+    const labels = dates.map((d) => formatEventDateLabel(d));
+    if (labels.length === 1) return time ? `${labels[0]} · ${time}` : labels[0];
+    if (labels.length <= 4) return labels.join(', ');
+    return `${labels.slice(0, 3).join(', ')} +${labels.length - 3} more`;
+  }
+
+  eventRecurrenceDisplay(group: EventReviewGroup): string {
+    const c =
+      this.editingEventRowId === group.id && this.eventEdit
+        ? this.eventFormToCandidate(this.eventEdit)
+        : group.candidate;
+    return recurrenceLabel(c.recurrence, c.startDate || group.dates[0] || '');
+  }
+
+  previewOccurrenceCount(form: EventEditForm | null): number {
+    if (!form) return 0;
+    return this.resolveOccurrencesFromForm(form).length;
+  }
+
+  eventAddressDisplay(c: EventCandidate): string {
+    return String(c.address || c.locationText || '').trim();
+  }
+
+  eventSourceUrl(row: ReviewQueueEventRow | EventReviewGroup): string {
+    const website = String(('candidate' in row ? row.candidate.website : '') || '').trim();
+    if (website) return website;
+    return this.eventSourceUrlFromEvidence(row.evidence, website);
+  }
+
+  addOccurrenceRow(form: EventEditForm): void {
+    form.occurrenceRows = [
+      ...form.occurrenceRows,
+      { date: '', time: '', endTime: '', recurrenceFrequency: 'none', until: '' },
+    ];
+  }
+
+  removeOccurrenceRow(form: EventEditForm, index: number): void {
+    if (form.occurrenceRows.length <= 1) return;
+    form.occurrenceRows = form.occurrenceRows.filter((_, i) => i !== index);
+  }
+
+  weekdayLabel(iso: string): string {
+    return weekdayShortFromIso(iso);
+  }
+
+  recurrenceOptionLabel(value: EventRecurrenceFrequency, dateIso: string): string {
+    const day = weekdayNameFromIso(dateIso);
+    if (value === 'none') return 'Does not repeat';
+    if (value === 'weekly') return day ? `Every ${day}` : 'Every week';
+    if (value === 'monthly') return 'Every month (same day)';
+    if (value === 'monthly_nth') {
+      if (!day) return 'Every month (same weekday)';
+      const dtMatch = /^\d{4}-\d{2}-\d{2}$/.exec(String(dateIso || '').trim());
+      if (!dtMatch) return `Every ${day} of the month`;
+      // Reuse recurrenceLabel for "last/1st/…" wording.
+      return recurrenceLabel({ frequency: 'monthly_nth' }, dateIso) || `Every ${day} of the month`;
+    }
+    return value;
+  }
+
+  /** Expand editor rows into concrete publishable occurrences. */
+  resolveOccurrencesFromForm(form: EventEditForm): Array<{ date: string; time: string }> {
+    const out: Array<{ date: string; time: string }> = [];
+    const windowMonths = Number(form.recurrenceWindowMonths) || DEFAULT_RECURRENCE_WINDOW_MONTHS;
+    for (const row of form.occurrenceRows || []) {
+      const date = String(row.date || '').trim();
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
+      const time = this.formatTimeDisplayRange(row.time || '', row.endTime || '');
+      const freq = row.recurrenceFrequency || 'none';
+      if (freq === 'none') {
+        out.push({ date, time });
+        continue;
+      }
+      const expanded = expandRecurrenceDates(date, {
+        frequency: freq,
+        windowMonths,
+        until: String(row.until || '').trim() || undefined,
+      });
+      for (const d of expanded) out.push({ date: d, time });
+    }
+    const seen = new Set<string>();
+    return out.filter((o) => {
+      const key = `${o.date}|${o.time}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
+  private parseTimeDisplayRange(raw: string): { time: string; endTime: string } {
+    const s = String(raw || '').trim();
+    const range = s.match(/^(\d{1,2}:\d{2})(?::\d{2})?\s*[–\-—]\s*(\d{1,2}:\d{2})(?::\d{2})?$/);
+    if (range) {
+      return {
+        time: this.normalizeTime24h(range[1]),
+        endTime: this.normalizeTime24h(range[2]),
+      };
+    }
+    return { time: this.normalizeTime24h(s), endTime: '' };
+  }
+
+  private formatTimeDisplayRange(startRaw: string, endRaw: string): string {
+    const start = this.normalizeTime24h(startRaw);
+    const end = this.normalizeTime24h(endRaw);
+    if (start && end) return `${start}–${end}`;
+    return start || end || '';
+  }
+
+  private formatTimeDisplayRangeFromRaw(raw: string): string {
+    const { time, endTime } = this.parseTimeDisplayRange(raw);
+    return this.formatTimeDisplayRange(time, endTime);
+  }
+
+  private normalizeTime24h(raw: string): string {
+    const s = String(raw || '').trim();
+    const m = s.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+    if (!m) return '';
+    const hh = Number(m[1]);
+    const mm = Number(m[2]);
+    if (!Number.isFinite(hh) || !Number.isFinite(mm) || hh > 23 || mm > 59) return '';
+    return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+  }
+
+  /** Firestore rejects `undefined` field values — omit empty until. */
+  private firestoreRecurrence(
+    frequency: EventRecurrenceFrequency | string | undefined,
+    windowMonths?: number,
+    until?: string
+  ): EventRecurrence {
+    const freq = (frequency || 'none') as EventRecurrenceFrequency;
+    const recurrence: EventRecurrence = {
+      frequency: freq,
+      windowMonths: Number(windowMonths) || DEFAULT_RECURRENCE_WINDOW_MONTHS,
+    };
+    const untilDay = String(until || '').trim();
+    if (untilDay) recurrence.until = untilDay;
+    return recurrence;
+  }
+
+  private eventSourceUrlFromEvidence(
+    evidence: ReviewQueueEventRow['evidence'] | undefined,
+    website?: string
+  ): string {
+    const w = String(website || '').trim();
+    if (w) return w;
+    return Array.isArray(evidence) ? String(evidence.find((e) => e?.url)?.url || '').trim() : '';
+  }
+
+  private newSeriesId(): string {
+    return `series_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+  }
+
+  private buildPublishedEventPayload(args: {
+    cityId: string;
+    candidate: Partial<EventCandidate>;
+    startDate: string;
+    seriesId: string;
+    eventSectorCategories: string[];
+    sourceRefs: ReturnType<AdminReviewComponent['manualSourceRefs']>;
+    reviewedAt: string;
+  }): Record<string, unknown> {
+    const c = args.candidate;
+    const recurrence = this.firestoreRecurrence(
+      c.recurrence?.frequency || 'none',
+      c.recurrence?.windowMonths,
+      c.recurrence?.until
+    );
+    const payload: Record<string, unknown> = {
+      cityId: args.cityId,
+      title: c.title,
+      startDate: args.startDate,
+      endDate: args.startDate,
+      locationText: c.locationText,
+      address: c.address ?? '',
+      locationName: c.locationName ?? '',
+      ...this.coordsField(c.coords),
+      website: c.website ?? '',
+      description: c.description ?? '',
+      timeDisplay: c.timeDisplay ?? '',
+      imageUrl: c.imageUrl ?? '',
+      sectorCategories: args.eventSectorCategories,
+      actionTags: (c.actionTags ?? []) as string[],
+      sourceRefs: args.sourceRefs,
+      recurrence,
+      status: 'approved',
+      review: { reviewedAt: args.reviewedAt },
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    };
+    if (args.seriesId) payload['seriesId'] = args.seriesId;
+    return payload;
+  }
+
+  private groupEventRows(rows: ReviewQueueEventRow[]): EventReviewGroup[] {
+    const map = new Map<string, ReviewQueueEventRow[]>();
+    for (const row of rows) {
+      const key = this.eventGroupKey(row);
+      const list = map.get(key) || [];
+      list.push(row);
+      map.set(key, list);
+    }
+    const groups: EventReviewGroup[] = [];
+    for (const list of map.values()) {
+      list.sort((a, b) => String(a.candidate.startDate || '').localeCompare(String(b.candidate.startDate || '')));
+      const primary = list[0];
+      const dates = [...new Set(list.map((r) => String(r.candidate.startDate || '').trim()).filter(Boolean))].sort();
+      const inferredFreq = inferRecurrenceFromDates(dates);
+      const storedFreq = primary.candidate.recurrence?.frequency;
+      let recurrence: EventCandidate['recurrence'] = { frequency: 'none' };
+      if (storedFreq === 'none') {
+        recurrence = { frequency: 'none' };
+      } else if (storedFreq === 'weekly' || storedFreq === 'monthly' || storedFreq === 'monthly_nth') {
+        recurrence = primary.candidate.recurrence || { frequency: storedFreq };
+      } else if (inferredFreq !== 'none') {
+        recurrence = { frequency: inferredFreq, windowMonths: DEFAULT_RECURRENCE_WINDOW_MONTHS };
+      }
+      const candidate: EventCandidate = {
+        ...primary.candidate,
+        startDate: dates[0] || primary.candidate.startDate,
+        endDate: dates[0] || primary.candidate.endDate || primary.candidate.startDate,
+        recurrence,
+      };
+      groups.push({
+        id: primary.id,
+        cityId: primary.cityId,
+        confidence: Math.max(...list.map((r) => Number(r.confidence || 0))),
+        candidate,
+        evidence: primary.evidence,
+        memberIds: list.map((r) => r.id),
+        dates,
+      });
+    }
+    return groups.sort((a, b) => b.confidence - a.confidence);
+  }
+
+  private eventGroupKey(row: ReviewQueueEventRow): string {
+    const title = this.normalizeText(row.candidate.title || '');
+    const loc = this.normalizeText(row.candidate.address || row.candidate.locationText || '');
+    let host = '';
+    try {
+      const url = row.candidate.website || row.evidence?.[0]?.url || '';
+      host = url ? new URL(url).hostname.replace(/^www\./i, '').toLowerCase() : '';
+    } catch {
+      host = '';
+    }
+    return `${row.cityId}|${title}|${loc}|${host}`;
   }
 
   private ensureEventSectorCategories(c: Partial<EventCandidate>): string[] {
@@ -1062,35 +1557,93 @@ export class AdminReviewComponent {
       candidate: Partial<EventCandidate>;
       decision: DecisionType;
       reviewedAtIso: string;
+      alsoSeries?: boolean;
+      sourceUrlHint?: string;
     }>
   ): Promise<void> {
     if (!entries.length) return;
     try {
       const batch = writeBatch(this.fs);
       const titleIndexDeltas = new Map<string, EventTitleIndexDelta>();
+      const sourceDeltas = new Map<string, EventSourceMemoryDelta>();
       const rollupDeltas = new Map<string, RollupDelta>();
       for (const entry of entries) {
-        batch.set(
-          doc(this.fs, FS_PATHS.eventReviewMemory, this.eventReviewMemoryDocId(entry.cityId, entry.candidate)),
-          this.eventReviewMemoryPayload(entry.cityId, entry.candidate, entry.decision, entry.reviewedAtIso),
-          { merge: true }
-        );
+        const forceSeries =
+          !!entry.alsoSeries || !!(entry.candidate.recurrence && entry.candidate.recurrence.frequency !== 'none');
+        const hasDate = !!String(entry.candidate.startDate || '').trim();
+
+        if (hasDate) {
+          batch.set(
+            doc(
+              this.fs,
+              FS_PATHS.eventReviewMemory,
+              this.eventReviewMemoryDocId(entry.cityId, entry.candidate, false)
+            ),
+            this.eventReviewMemoryPayload(
+              entry.cityId,
+              entry.candidate,
+              entry.decision,
+              entry.reviewedAtIso,
+              false,
+              entry.sourceUrlHint
+            ),
+            { merge: true }
+          );
+        }
+        if (forceSeries || !hasDate) {
+          batch.set(
+            doc(
+              this.fs,
+              FS_PATHS.eventReviewMemory,
+              this.eventReviewMemoryDocId(entry.cityId, entry.candidate, true)
+            ),
+            this.eventReviewMemoryPayload(
+              entry.cityId,
+              entry.candidate,
+              entry.decision,
+              entry.reviewedAtIso,
+              true,
+              entry.sourceUrlHint
+            ),
+            { merge: true }
+          );
+        }
         this.collectEventReviewMemoryIndexDeltas(
           entry.cityId,
           entry.candidate,
           entry.decision,
           entry.reviewedAtIso,
           titleIndexDeltas,
-          rollupDeltas
+          sourceDeltas,
+          rollupDeltas,
+          entry.sourceUrlHint
         );
       }
       for (const delta of titleIndexDeltas.values()) {
+        const titlePayload: Record<string, unknown> = {
+          cityId: delta.cityId,
+          titleNorm: delta.titleNorm,
+          keyType: 'title',
+          lastDecision: delta.lastDecision,
+          lastReviewedAt: delta.lastReviewedAt,
+          approvedCount: increment(delta.approvedInc),
+          rejectedCount: increment(delta.rejectedInc),
+          expiresAt: delta.expiresAt ?? deleteField(),
+          updatedAt: serverTimestamp(),
+          createdAt: serverTimestamp(),
+        };
+        if (delta.approvalSignals) {
+          titlePayload['approvalSignals'] = delta.approvalSignals;
+        }
+        batch.set(doc(this.fs, FS_PATHS.eventReviewMemoryTitleIndex, delta.docId), titlePayload, { merge: true });
+      }
+      for (const delta of sourceDeltas.values()) {
         batch.set(
-          doc(this.fs, FS_PATHS.eventReviewMemoryTitleIndex, delta.docId),
+          doc(this.fs, FS_PATHS.eventReviewMemory, delta.docId),
           {
             cityId: delta.cityId,
-            titleNorm: delta.titleNorm,
-            keyType: 'title',
+            kind: 'source',
+            sourceHost: delta.sourceHost,
             lastDecision: delta.lastDecision,
             lastReviewedAt: delta.lastReviewedAt,
             approvedCount: increment(delta.approvedInc),
@@ -1128,7 +1681,9 @@ export class AdminReviewComponent {
     decision: DecisionType,
     reviewedAtIso: string,
     titleIndexDeltas: Map<string, EventTitleIndexDelta>,
-    rollupDeltas: Map<string, RollupDelta>
+    sourceDeltas: Map<string, EventSourceMemoryDelta>,
+    rollupDeltas: Map<string, RollupDelta>,
+    sourceUrlHint = ''
   ): void {
     const titleNorm = this.normalizeText(candidate.title || '');
     if (!titleNorm) return;
@@ -1145,13 +1700,39 @@ export class AdminReviewComponent {
       lastDecision: decision,
       lastReviewedAt: reviewedAtIso,
       expiresAt,
+      approvalSignals: null,
     };
     titleDelta.approvedInc += approvedInc;
     titleDelta.rejectedInc += rejectedInc;
     titleDelta.lastDecision = decision;
     titleDelta.lastReviewedAt = reviewedAtIso;
     titleDelta.expiresAt = decision === 'approved' ? null : expiresAt;
+    if (decision === 'approved') {
+      titleDelta.approvalSignals = this.buildEventApprovalSignals(candidate);
+    }
     titleIndexDeltas.set(titleDocId, titleDelta);
+
+    const host =
+      this.hostFromUrl(candidate.website || '') || this.hostFromUrl(sourceUrlHint || '');
+    if (host) {
+      const sourceDocId = this.eventReviewMemorySourceDocId(cityId, host);
+      const sourceDelta = sourceDeltas.get(sourceDocId) ?? {
+        docId: sourceDocId,
+        cityId,
+        sourceHost: host,
+        approvedInc: 0,
+        rejectedInc: 0,
+        lastDecision: decision,
+        lastReviewedAt: reviewedAtIso,
+        expiresAt,
+      };
+      sourceDelta.approvedInc += approvedInc;
+      sourceDelta.rejectedInc += rejectedInc;
+      sourceDelta.lastDecision = decision;
+      sourceDelta.lastReviewedAt = reviewedAtIso;
+      sourceDelta.expiresAt = decision === 'approved' ? null : expiresAt;
+      sourceDeltas.set(sourceDocId, sourceDelta);
+    }
 
     const rollup = rollupDeltas.get(cityId) ?? {
       cityId,
@@ -1169,19 +1750,25 @@ export class AdminReviewComponent {
     cityId: string,
     candidate: Partial<EventCandidate>,
     decision: DecisionType,
-    reviewedAtIso: string
+    reviewedAtIso: string,
+    asSeries = false,
+    sourceUrlHint = ''
   ): Record<string, unknown> {
     const titleNorm = this.normalizeText(candidate.title || '');
     const locationNorm = this.normalizeText(candidate.locationText || candidate.address || '');
-    const startDate = String(candidate.startDate || '').trim();
+    const startDate = asSeries ? '' : String(candidate.startDate || '').trim();
+    const sourceHost =
+      this.hostFromUrl(candidate.website || '') || this.hostFromUrl(sourceUrlHint || '');
     const payload: Record<string, unknown> = {
       cityId,
       kind: 'event',
-      fingerprint: this.eventFingerprint(cityId, candidate.title || '', startDate, locationNorm),
-      eventKey: `${cityId}|${titleNorm}|${startDate}|${locationNorm}`,
+      fingerprint: this.eventFingerprint(cityId, candidate.title || '', startDate || 'series', locationNorm),
+      eventKey: `${cityId}|${titleNorm}|${startDate || 'series'}|${locationNorm}`,
       titleNorm,
       locationNorm,
-      startDate,
+      startDate: startDate || null,
+      series: asSeries,
+      recurrenceFrequency: candidate.recurrence?.frequency || 'none',
       lastDecision: decision,
       lastReviewedAt: reviewedAtIso,
       approvedCount: increment(decision === 'approved' ? 1 : 0),
@@ -1190,6 +1777,10 @@ export class AdminReviewComponent {
       updatedAt: serverTimestamp(),
       createdAt: serverTimestamp(),
     };
+    if (sourceHost) payload['sourceHost'] = sourceHost;
+    if (decision === 'approved') {
+      payload['approvalSignals'] = this.buildEventApprovalSignals(candidate);
+    }
     if (decision === 'rejected') {
       payload['rejectionSignals'] = {
         actionTags: (candidate.actionTags ?? []) as string[],
@@ -1199,14 +1790,68 @@ export class AdminReviewComponent {
     return payload;
   }
 
-  private eventReviewMemoryDocId(cityId: string, candidate: Partial<EventCandidate>): string {
+  private buildEventApprovalSignals(candidate: Partial<EventCandidate>): {
+    actionTags: string[];
+    sectorCategories: string[];
+    keywords: string[];
+  } {
+    const keywords = this.extractLearningKeywords(
+      `${candidate.title || ''} ${candidate.description || ''}`,
+      8
+    );
+    return {
+      actionTags: (candidate.actionTags ?? []).map(String).slice(0, 6),
+      sectorCategories: (candidate.sectorCategories ?? []).map(String).slice(0, 6),
+      keywords,
+    };
+  }
+
+  private extractLearningKeywords(text: string, limit = 8): string[] {
+    const raw = this.normalizeText(text);
+    if (!raw) return [];
+    const stop = new Set([
+      'the', 'and', 'for', 'with', 'from', 'this', 'that', 'are', 'was', 'were', 'have', 'has',
+      'dell', 'della', 'delle', 'degli', 'una', 'uno', 'per', 'con', 'che', 'non', 'come',
+      'och', 'att', 'som', 'det', 'den', 'ett', 'med', 'pa', 'av',
+    ]);
+    const out: string[] = [];
+    for (const token of raw.split(' ')) {
+      if (token.length < 4 || stop.has(token)) continue;
+      if (!out.includes(token)) out.push(token);
+      if (out.length >= limit) break;
+    }
+    return out;
+  }
+
+  private hostFromUrl(url: string): string {
+    try {
+      return new URL(String(url || '')).hostname.replace(/^www\./i, '').toLowerCase();
+    } catch {
+      return '';
+    }
+  }
+
+  private eventReviewMemoryDocId(
+    cityId: string,
+    candidate: Partial<EventCandidate>,
+    asSeries = false
+  ): string {
     const locationNorm = this.normalizeText(candidate.locationText || candidate.address || '');
-    const fp = this.eventFingerprint(cityId, candidate.title || '', String(candidate.startDate || ''), locationNorm);
+    const startDate = asSeries ? 'series' : String(candidate.startDate || '').trim();
+    const fp = this.eventFingerprint(cityId, candidate.title || '', startDate, locationNorm);
     return `${cityId}_${fp}`;
   }
 
   private eventReviewMemoryTitleIndexDocId(cityId: string, titleNorm: string): string {
     return `${cityId}_${this.hashString(`eventtitle|${titleNorm}`)}`;
+  }
+
+  private eventReviewMemorySourceDocId(cityId: string, host: string): string {
+    const h = String(host || '')
+      .toLowerCase()
+      .replace(/^www\./, '')
+      .trim();
+    return `${cityId}_source_${this.hashString(h)}`;
   }
 
   private eventFingerprint(cityId: string, title: string, startDate: string, locationNorm: string): string {

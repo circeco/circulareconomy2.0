@@ -5,7 +5,7 @@ module.exports = {
   corePlugins: { preflight: false },
   theme: { extend: {} },
   plugins: [
-    require('@tailwindcss/forms'),
+    require('@tailwindcss/forms')({ strategy: 'class' }),
     require('@tailwindcss/typography'),
     // require('@tailwindcss/line-clamp'),
   ],

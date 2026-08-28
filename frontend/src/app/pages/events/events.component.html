@@ -1,6 +1,4 @@
 <section class="events-page">
-  <h1 class="events-page-title">Upcoming Events</h1>
-
   <div class="map-action-tags-row">
     <button
       *ngFor="let tag of actionTagIds"
@@ -13,11 +11,20 @@
     >
       {{ actionTagLabel(tag) }}
     </button>
+    <button
+      type="button"
+      class="events-favorites-toggle"
+      [class.active]="favoritesFilterActive()"
+      [attr.aria-pressed]="favoritesFilterActive()"
+      aria-label="Show favourite events only"
+      (click)="toggleFavoritesFilter()"
+    >
+      ♥
+    </button>
   </div>
 
   <div class="events-layout">
     <aside class="events-sidebar">
-
       <div class="filter-section">
         <div class="search-box">
           <span class="search-icon" aria-hidden="true">🔍</span>
@@ -31,42 +38,37 @@
           />
         </div>
       </div>
-      
-      <div class="filter-section">
-        <h3>Filter by Category</h3>
-        <div class="category-filters">
-          <button
-            *ngFor="let cat of categories"
-            type="button"
-            class="category-pill"
-            [class.active]="selectedCategory() === cat.id"
-            (click)="selectCategory(cat.id)"
-          >
-            <span class="category-pill-label">{{ cat.label }}</span>
-            <span class="category-icon" aria-hidden="true">
-              <ng-container *ngIf="cat.imageIcons.length; else emojiIcon">
-                <span
-                  *ngFor="let iconPath of cat.imageIcons"
-                  class="category-icon-mask"
-                  [style.--icon-url]="'url(' + iconPath + ')'"
-                ></span>
-              </ng-container>
-              <ng-template #emojiIcon>
-                <span class="category-icon-emoji">{{ cat.emojiIcon }}</span>
-              </ng-template>
-            </span>
-          </button>
-        </div>
-      </div>
 
-      <div class="filter-section">
-        <h3>Select Date</h3>
-        <app-calendar
-          [eventDates]="eventDatesForCalendar"
-          [initialSelection]="initialCalendarSelection"
-          [initialViewDate]="initialCalendarViewDate"
-          (selectedDatesChange)="onDatesChange($event)"
-        ></app-calendar>
+      <app-calendar
+        [eventDates]="eventDatesForCalendar"
+        [favoriteEventDates]="favoriteEventDatesForCalendar()"
+        [initialSelection]="initialCalendarSelection"
+        [initialViewDate]="initialCalendarViewDate"
+        (selectedDatesChange)="onDatesChange($event)"
+      ></app-calendar>
+
+      <div class="category-filters">
+        <button
+          *ngFor="let cat of categories"
+          type="button"
+          class="category-pill"
+          [class.active]="selectedCategory() === cat.id"
+          (click)="selectCategory(cat.id)"
+        >
+          <span class="category-pill-label">{{ cat.label }}</span>
+          <span class="category-icon" aria-hidden="true">
+            <ng-container *ngIf="cat.imageIcons.length; else emojiIcon">
+              <span
+                *ngFor="let iconPath of cat.imageIcons"
+                class="category-icon-mask"
+                [style.--icon-url]="'url(' + iconPath + ')'"
+              ></span>
+            </ng-container>
+            <ng-template #emojiIcon>
+              <span class="category-icon-emoji">{{ cat.emojiIcon }}</span>
+            </ng-template>
+          </span>
+        </button>
       </div>
     </aside>
 
@@ -75,11 +77,21 @@
         <article
           *ngFor="let event of filteredEvents()"
           class="event-card"
+          [attr.data-event-id]="event.id"
           [class.selected-event]="selectedEventId() === event.id"
         >
           <div class="event-card-content">
             <div class="event-card-header">
-              <div class="category-tag">{{ event.category | titlecase }}</div>
+              <div class="action-tag-pills">
+                <span
+                  *ngFor="let tag of event.actionTags"
+                  class="action-tag-pill"
+                  [style.--tag-color]="actionTagColor(tag)"
+                  [style.--tag-text-color]="actionTagTextColor(tag)"
+                >
+                  {{ actionTagLabel(tag) }}
+                </span>
+              </div>
               <button
                 type="button"
                 class="fav-btn"
@@ -90,22 +102,58 @@
                 {{ eventFavorites.isFavorite(event.id) ? '♥' : '♡' }}
               </button>
             </div>
+
             <h2 class="event-title">{{ event.title }}</h2>
-            <p class="event-description">{{ event.description }}</p>
-            <p class="event-date">
-              <span class="date-icon" aria-hidden="true">📅</span>
-              {{ event.dateStr }}
-            </p>
-            <p class="event-location">
-              <span class="pin-icon" aria-hidden="true">📍</span>
-              {{ event.location }}
-            </p>
-            <p class="event-time">
-              <span class="clock-icon" aria-hidden="true">🕐</span>
-              {{ event.time }}
-            </p>
+
+            <div class="event-datetime">
+              <span class="event-date">{{ event.dateStr }}</span>
+              <span class="event-recurrence" *ngIf="event.recurrenceLabel">{{ event.recurrenceLabel }}</span>
+            </div>
+
+            <div class="event-address" *ngIf="event.location">{{ event.location }}</div>
+
+            <div
+              class="event-description-block"
+              *ngIf="event.description"
+              [class.expanded]="isDescriptionExpanded(event.id)"
+            >
+              <p class="event-description">{{ event.description }}</p>
+              <button
+                *ngIf="descriptionNeedsMore(event.id, event.description)"
+                type="button"
+                class="desc-more-btn"
+                (click)="toggleDescription(event.id)"
+              >
+                {{ isDescriptionExpanded(event.id) ? 'less' : 'more' }}
+              </button>
+            </div>
+
+            <a
+              *ngIf="event.website"
+              class="event-website"
+              [href]="event.website"
+              [attr.title]="event.website"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {{ websiteDisplayLabel(event.website) }}
+            </a>
+
+            <div class="sector-icons" *ngIf="sectorIconsFor(event.sectorCategories).length">
+              <span
+                *ngFor="let iconPath of sectorIconsFor(event.sectorCategories)"
+                class="sector-icon-mask"
+                [style.--icon-url]="'url(' + iconPath + ')'"
+                [attr.title]="sectorLabelForIcon(iconPath)"
+                aria-hidden="true"
+              ></span>
+            </div>
           </div>
         </article>
+
+        <p class="events-empty" *ngIf="filteredEvents().length === 0">
+          {{ favoritesFilterActive() ? 'No events saved as favourite' : 'No events match the current filters.' }}
+        </p>
       </div>
     </div>
   </div>

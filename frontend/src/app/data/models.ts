@@ -22,6 +22,8 @@ export type ReviewMeta = {
   reviewedAt?: string; // ISO timestamp
   reviewedBy?: string; // uid/email (single-reviewer for now)
   notes?: string;
+  /** Optional structured reject reason (e.g. duplicate_existing). */
+  rejectReason?: string;
 };
 
 export type CityDoc = {
@@ -70,6 +72,14 @@ export type EventDoc = {
   sectorCategories?: string[];
   actionTags?: ActionTag[];
   sourceRefs?: SourceRef[];
+  /** Links occurrences that share one reviewed series. */
+  seriesId?: string;
+  /** Recurrence rule copied onto each materialized occurrence. */
+  recurrence?: {
+    frequency: 'none' | 'weekly' | 'monthly' | 'monthly_nth';
+    windowMonths?: number;
+    until?: string;
+  };
   status?: RecordStatus;
   review?: ReviewMeta;
   createdAt?: unknown;

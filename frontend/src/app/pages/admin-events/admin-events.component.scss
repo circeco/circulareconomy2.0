@@ -1,6 +1,6 @@
 .catalog-shell {
   padding: calc(var(--header-offset, 60px) + 1.2rem) 1.2rem 2rem;
-  max-width: 1100px;
+  max-width: 760px;
   margin: 0 auto;
   font-weight: 600;
 }
@@ -84,15 +84,18 @@
 }
 
 .row {
+  display: block;
+  width: 100%;
   border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: 10px;
-  padding: 0.7rem;
+  padding: 0.55rem 0.6rem;
 }
 
 .row-head {
-  display: flex;
-  justify-content: space-between;
-  gap: 0.8rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.6rem;
+  align-items: start;
 }
 
 .name {
@@ -102,26 +105,101 @@
 .meta {
   font-size: 0.82rem;
   color: #5a5a5a;
-  font-weight: 600;
+  font-weight: 500;
+}
+
+.meta-link {
+  display: inline-block;
+  font-size: 0.8rem;
+  margin-top: 0.15rem;
+  color: #3c7f93;
+  text-decoration: none;
+  word-break: break-word;
+  font-weight: 700;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.35rem;
+  align-items: center;
+}
+
+.chip-label {
+  font-size: 0.72rem;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  font-weight: 700;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 999px;
+  padding: 0.1rem 0.45rem;
+  font-size: 0.72rem;
+  background: #fff;
+  font-weight: 700;
+}
+
+.option-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 2px solid #e5e5e5;
+  border-radius: 1rem;
+  background: #fff;
+  padding: 0.11rem 0.56rem;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: #111;
+  font-weight: 700;
+}
+
+.grid .option-chip {
+  display: inline-flex;
+}
+
+.option-chip input[type='checkbox'] {
+  margin: 0;
+  display: inline-block;
+  width: auto;
+  height: auto;
+  vertical-align: middle;
+  flex: 0 0 auto;
 }
 
 .actions {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
+  display: grid;
+  grid-auto-flow: row;
+  gap: 0.45rem;
+  justify-content: end;
+  align-items: center;
+  justify-items: end;
 
   button {
     font: inherit;
     border: 1px solid rgba(0, 0, 0, 0.2);
     border-radius: 8px;
-    padding: 0.25rem 0.6rem;
+    padding: 0.2rem 0.58rem;
     background: #fff;
     cursor: pointer;
+    min-width: 4.8rem;
   }
 
   .danger {
     border-color: rgba(180, 0, 0, 0.5);
     color: #7f0000;
+  }
+
+  .duplicate {
+    border-color: rgba(120, 90, 40, 0.35);
+    color: #5a4018;
+    background: rgba(120, 90, 40, 0.08);
   }
 }
 
@@ -155,7 +233,8 @@
   }
 
   input,
-  textarea {
+  textarea,
+  select {
     font: inherit;
     border: 1px solid rgba(0, 0, 0, 0.2);
     border-radius: 6px;
@@ -177,24 +256,3 @@
   font-size: 0.9rem;
   padding: 0.25rem 0.1rem;
 }
-
-.chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-  margin-top: 0.35rem;
-  align-items: center;
-}
-
-.chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  border-radius: 999px;
-  padding: 0.1rem 0.45rem;
-  font-size: 0.72rem;
-  background: #fff;
-  font-weight: 700;
-}
-

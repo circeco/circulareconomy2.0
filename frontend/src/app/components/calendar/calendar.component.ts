@@ -11,6 +11,7 @@ import { CommonModule } from '@angular/common';
 export class CalendarComponent {
   selectedDatesChange = output<Date[]>();
   eventDates = input<Date[]>([]);
+  favoriteEventDates = input<Date[]>([]);
   initialSelection = input<Date[]>([]);
   initialViewDate = input<Date | null>(null);
 
@@ -102,6 +103,17 @@ export class CalendarComponent {
   hasEvent(day: number | null): boolean {
     if (day === null) return false;
     const dates = this.eventDates();
+    const d = this._viewDate();
+    const dayStart = new Date(d.getFullYear(), d.getMonth(), day).getTime();
+    return dates.some(
+      (ev) =>
+        new Date(ev.getFullYear(), ev.getMonth(), ev.getDate()).getTime() === dayStart
+    );
+  }
+
+  hasFavoriteEvent(day: number | null): boolean {
+    if (day === null) return false;
+    const dates = this.favoriteEventDates();
     const d = this._viewDate();
     const dayStart = new Date(d.getFullYear(), d.getMonth(), day).getTime();
     return dates.some(

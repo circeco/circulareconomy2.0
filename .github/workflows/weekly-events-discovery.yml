@@ -16,7 +16,7 @@ on:
       limit:
         description: Max queue writes per city
         required: false
-        default: '100'
+        default: '40'
       event_max_past_days:
         description: Include events started up to N days ago (0 = only today/future)
         required: false
@@ -36,7 +36,7 @@ jobs:
     env:
       FIREBASE_PROJECT_ID: circeco-bf511
       DEFAULT_CITIES: milan,stockholm
-      DEFAULT_LIMIT: '100'
+      DEFAULT_LIMIT: '40'
       DEFAULT_EVENT_MAX_PAST_DAYS: '0'
     steps:
       - name: Checkout

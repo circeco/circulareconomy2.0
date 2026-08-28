@@ -52,6 +52,54 @@ html {
   scroll-snap-type: y proximity;
 }
 
+/* Remove browser / Tailwind-forms focus rings app-wide */
+*:focus,
+*:focus-visible,
+*:focus-within {
+  outline: none !important;
+  outline-offset: 0 !important;
+  --tw-ring-inset: var(--tw-empty, /*!*/ /*!*/);
+  --tw-ring-offset-width: 0px !important;
+  --tw-ring-offset-color: transparent !important;
+  --tw-ring-color: transparent !important;
+  --tw-ring-offset-shadow: 0 0 #0000 !important;
+  --tw-ring-shadow: 0 0 #0000 !important;
+}
+
+button:focus,
+button:focus-visible,
+a:focus,
+a:focus-visible,
+input:focus,
+input:focus-visible,
+textarea:focus,
+textarea:focus-visible,
+select:focus,
+select:focus-visible,
+summary:focus,
+summary:focus-visible,
+[tabindex]:focus,
+[tabindex]:focus-visible,
+.mapboxgl-ctrl button:focus,
+.mapboxgl-ctrl button:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+*::-moz-focus-inner {
+  outline: none !important;
+  border: 0 !important;
+}
+
+button::-moz-focus-inner,
+input::-moz-focus-inner {
+  border: 0;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
 body {
   margin: 0 ;
   font-family: $font-khand ;
