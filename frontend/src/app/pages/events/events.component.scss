@@ -19,6 +19,10 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+  position: sticky;
+  top: 72px;
+  max-height: calc(100vh - 80px);
+  overflow-y: auto;
 }
 
 .filter-section {
@@ -36,10 +40,11 @@
 }
 
 .map-action-tags-row {
-  position: absolute;
+  position: fixed;
   top: 72px;
-  left: calc(2% + 280px + 32px);
-  right: 12px;
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
   width: fit-content;
   z-index: 1;
   display: flex;
@@ -419,12 +424,17 @@
     left: auto;
     right: auto;
     top: auto;
-    margin: 0 0 12px;
+    transform: none;
+    margin: 0 auto 12px;
+    justify-content: center;
   }
 
   .events-sidebar {
     flex: none;
     width: 100%;
+    position: static;
+    max-height: none;
+    overflow: visible;
   }
 
   .events-grid {
