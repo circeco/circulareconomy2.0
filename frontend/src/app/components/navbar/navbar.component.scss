@@ -68,6 +68,7 @@
     a:not(:first-child), .dropdown .dropbtn { display: none; }
     a#icon { float: right; display: block; padding: 0 1%; }
     #logo { margin: 4px;}
+    .logo-dropdown a { display: block; }
 
     &.responsive {
       #icon { position: absolute; right: 0; top: 0; }
@@ -89,6 +90,41 @@
   border-radius: .2rem;
   box-shadow: $strong-shadow;
   &:hover { transform: scale(0.9, 0.9); }
+}
+
+.logo-dropdown {
+  position: absolute;
+  top: 60px;
+  left: 10px;
+  display: block;
+  background-color: $bg-light;
+  min-width: 200px;
+  box-shadow: $shadow-md;
+  z-index: 3;
+  border-radius: 8px;
+  overflow: hidden;
+
+  a {
+    float: none;
+    display: block;
+    color: black;
+    text-align: left;
+    padding: 8px 16px;
+    margin: 0;
+    font-size: 22px;
+    font-family: $font-chathura;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+
+    &:hover {
+      background-color: black;
+      color: white;
+      text-decoration: none;
+      border-radius: 0;
+      box-shadow: none;
+    }
+  }
 }
 
 .active {
@@ -158,6 +194,13 @@
   #logo {
     position: absolute;
     left: 0;
+  }
+
+  .logo-dropdown a {
+    float: none;
+    font-family: $font-chathura;
+    padding: 8px 16px;
+    margin: 0;
   }
 
   #nav-title {

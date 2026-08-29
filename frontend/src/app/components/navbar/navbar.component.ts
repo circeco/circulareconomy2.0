@@ -26,6 +26,7 @@ export class NavbarComponent implements AfterViewInit, OnDestroy {
 
   // Mobile hamburger state (adds 'responsive' class)
   menuOpen = signal<boolean>(false);
+  logoMenuOpen = signal<boolean>(false);
 
   // Route-aware: landing vs atlas
   isLanding = signal<boolean>(true);
@@ -73,6 +74,7 @@ export class NavbarComponent implements AfterViewInit, OnDestroy {
     // Treat /atlas* and /events* as non-landing pages, everything else as "landing"
     const landing = !url.startsWith('/atlas') && !url.startsWith('/events');
     this.isLanding.set(landing);
+    this.logoMenuOpen.set(false);
     this.toggleSnapClass(landing);
   }
 
@@ -120,6 +122,38 @@ export class NavbarComponent implements AfterViewInit, OnDestroy {
     this.menuOpen.update(v => !v);
   }
 
+  onLogoClick(ev: Event): void {
+    if (this.isLanding()) {
+      this.goHome();
+      return;
+    }
+    ev.preventDefault();
+    ev.stopPropagation();
+    this.logoMenuOpen.update((open) => !open);
+  }
+
+  goToFromLogo(id: string): void {
+    this.logoMenuOpen.set(false);
+    if (id === 'circular_events') {
+      this.router.navigateByUrl('/events');
+      return;
+    }
+    if (id === 'circular_atlas_demo') {
+      this.router.navigateByUrl('/atlas');
+      return;
+    }
+    this.router.navigateByUrl('/').then(() => {
+      const tryScroll = (attempts = 0) => {
+        if (document.getElementById('circular_action')) {
+          this.scrollToSection('circular_action');
+          return;
+        }
+        if (attempts < 20) setTimeout(() => tryScroll(attempts + 1), 50);
+      };
+      tryScroll();
+    });
+  }
+
   // Smooth scroll to a section id (landing only)
   goTo(id: string): void {
     if (!this.isLanding()) {
@@ -149,12 +183,7 @@ export class NavbarComponent implements AfterViewInit, OnDestroy {
       return;
     }
 
-    const target = document.getElementById(id);
-    if (!target) return;
-
-    const rect = target.getBoundingClientRect();
-    const absoluteY = window.scrollY + rect.top - this.headerOffset;
-    window.scrollTo({ top: Math.max(absoluteY, 0), behavior: 'smooth' });
+    this.scrollToSection(id);
   }
 
   // Logo always goes "home" (landing)
@@ -164,6 +193,14 @@ export class NavbarComponent implements AfterViewInit, OnDestroy {
     } else {
       this.router.navigateByUrl('/');
     }
+  }
+
+  private scrollToSection(id: string): void {
+    const target = document.getElementById(id);
+    if (!target) return;
+    const rect = target.getBoundingClientRect();
+    const absoluteY = window.scrollY + rect.top - this.headerOffset;
+    window.scrollTo({ top: Math.max(absoluteY, 0), behavior: 'smooth' });
   }
 
   private scrollToBottom(): void {
@@ -198,9 +235,17 @@ export class NavbarComponent implements AfterViewInit, OnDestroy {
     window.location.assign('/');
   }
 
+  @HostListener('document:click')
+  onDocumentClick() {
+    if (this.logoMenuOpen()) this.logoMenuOpen.set(false);
+  }
+
   // Keep “Back to top” keyboard accessibility working
   @HostListener('document:keydown', ['$event'])
   onKeydown(ev: KeyboardEvent) {
-    if (ev.key === 'Escape' && this.menuOpen()) this.menuOpen.set(false);
+    if (ev.key === 'Escape') {
+      if (this.menuOpen()) this.menuOpen.set(false);
+      if (this.logoMenuOpen()) this.logoMenuOpen.set(false);
+    }
   }
 }

@@ -1,7 +1,21 @@
 <header>
   <div class="topnav" id="myTopnav" [class.responsive]="menuOpen()" [class.titleOnly]="!isLanding()">
-    <!-- Logo / Home -->
-    <a id="logo" class="active" (click)="goHome()" [attr.aria-label]="isLanding() ? 'Go to top' : 'Go to home'" role="button" tabindex="0"></a>
+    <!-- Logo: home on landing, site menu on events/atlas -->
+    <a
+      id="logo"
+      class="active"
+      (click)="onLogoClick($event)"
+      [attr.aria-label]="isLanding() ? 'Go to top' : 'Open site menu'"
+      [attr.aria-haspopup]="isLanding() ? null : 'menu'"
+      [attr.aria-expanded]="isLanding() ? null : logoMenuOpen()"
+      role="button"
+      tabindex="0"
+    ></a>
+    <div class="logo-dropdown" *ngIf="!isLanding() && logoMenuOpen()" role="menu" (click)="$event.stopPropagation()">
+      <a role="menuitem" (click)="goToFromLogo('circular_action')">Circular Action</a>
+      <a role="menuitem" (click)="goToFromLogo('circular_atlas_demo')">Circular Atlas</a>
+      <a role="menuitem" (click)="goToFromLogo('circular_events')">Circular Events</a>
+    </div>
 
     <!-- Landing-only: section anchors with scroll + active underline -->
     <ng-container *ngIf="isLanding(); else atlasTitleOnly">
