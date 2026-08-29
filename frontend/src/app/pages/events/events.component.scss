@@ -160,9 +160,18 @@
   gap: 8px;
 
   .search-icon {
-    font-size: 14px;
-    opacity: 0.6;
+    width: 16px;
+    height: 16px;
     flex-shrink: 0;
+    background-color: $brand-deep;
+    -webkit-mask-image: url('/assets/icons/search.png');
+    mask-image: url('/assets/icons/search.png');
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    -webkit-mask-size: contain;
+    mask-size: contain;
   }
 
   .search-input {

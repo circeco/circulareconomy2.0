@@ -51,9 +51,18 @@
   }
 
   .search-icon {
-    font-size: 18px;
-    opacity: 0.6;
+    width: 18px;
+    height: 18px;
     flex-shrink: 0;
+    background-color: $brand-deep;
+    -webkit-mask-image: url('/assets/icons/search.png');
+    mask-image: url('/assets/icons/search.png');
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    -webkit-mask-size: contain;
+    mask-size: contain;
   }
 
   .hero-search-input {
