@@ -1,14 +1,13 @@
 import { FooterComponent } from '../../components/footer/footer.component';
-import { Component, DestroyRef, inject } from '@angular/core';
-import { AfterViewInit } from '@angular/core';
+import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { AfterViewInit, AfterViewChecked } from '@angular/core';
 import { OnDestroy } from '@angular/core';
 import { NgZone } from '@angular/core';
 import { ElementRef } from '@angular/core';
-import { ViewChild, ViewChildren } from '@angular/core';
-import { QueryList } from '@angular/core';
+import { ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { firstValueFrom, Subscription } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DEMO_VIDEO_URL } from '../../config/media';
 import { EventsService, EventItem } from '../../services/events.service';
@@ -18,6 +17,13 @@ import { EventFavoritesService } from '../../services/event-favorites.service';
 import { FavoritesService } from '../../services/favorites.service';
 import { SearchService } from '../../services/search.service';
 import { CitySwitcherComponent } from '../../components/city-switcher/city-switcher.component';
+import {
+  ACTION_TAG_COLORS,
+  ACTION_TAG_LABELS,
+  SECTOR_CATEGORIES,
+  SECTOR_CATEGORY_LABELS,
+  canonicalizeSectorCategories,
+} from '../../data/taxonomy';
 
 @Component({
   selector: 'landing-page',
@@ -26,10 +32,9 @@ import { CitySwitcherComponent } from '../../components/city-switcher/city-switc
   templateUrl: './landing.component.html',
   styleUrls: ['./landing.component.scss'],
 })
-export class LandingComponent implements AfterViewInit, OnDestroy {
+export class LandingComponent implements AfterViewInit, AfterViewChecked, OnDestroy {
   @ViewChild('titleList', { static: true })
   titleList!: ElementRef<HTMLUListElement>;
-  @ViewChildren('placeHeartBtn') placeHeartButtons!: QueryList<ElementRef<HTMLButtonElement>>;
 
   demoUrl = DEMO_VIDEO_URL;
   events: EventItem[] = [];
@@ -38,11 +43,14 @@ export class LandingComponent implements AfterViewInit, OnDestroy {
   allEvents: EventItem[] = [];
 
   private onScroll?: () => void;
-  private heartChangesSub?: Subscription;
   private ghostItems: HTMLElement[] = [];
   private rafId: number | null = null;
   private pending = false;
   private destroyRef = inject(DestroyRef);
+  private readonly actionTagColors: Record<string, string> = ACTION_TAG_COLORS as Record<string, string>;
+  private lastClampMeasureKey = '';
+  expandedDescriptions = signal<Set<string>>(new Set());
+  clampedDescriptionIds = signal<Set<string>>(new Set());
 
   constructor(
     private zone: NgZone,
@@ -57,11 +65,14 @@ export class LandingComponent implements AfterViewInit, OnDestroy {
     this.eventsService.events$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((all) => {
       this.allEvents = all;
       this.events = [...all]
+        .filter((e) => e?.date instanceof Date && !Number.isNaN(e.date.getTime()))
         .sort((a, b) => a.date.getTime() - b.date.getTime())
         .slice(0, 4);
+      this.lastClampMeasureKey = '';
     });
     this.featuredPlacesService.getFeaturedPlaces().subscribe((places) => {
       this.featuredPlaces = places;
+      this.lastClampMeasureKey = '';
       setTimeout(() => this.mountPlaceHearts(), 0);
     });
     this.featuredPlacesService.getAllPlaces().subscribe((places) => {
@@ -105,34 +116,35 @@ export class LandingComponent implements AfterViewInit, OnDestroy {
     // Ensure correct state on first paint
     scheduleApply();
     setTimeout(() => this.mountPlaceHearts(), 0);
-    this.heartChangesSub = this.placeHeartButtons?.changes?.subscribe(() => setTimeout(() => this.mountPlaceHearts(), 0));
   }
 
   private mountPlaceHearts(): void {
     const api = (window as any).circeco?.favorites?.mountHeartButton;
-    if (!api || !this.placeHeartButtons) return;
-    const searchPlaces = this.searchService.query()
-      ? this.getSearchResults().filter((r): r is { kind: 'place'; item: FeaturedPlace } => r.kind === 'place').map((r) => r.item)
-      : [];
-    const places = [...searchPlaces, ...this.featuredPlaces];
-    this.placeHeartButtons.forEach((ref, i) => {
-      const btn = ref.nativeElement;
-      if ((btn as any).dataset?.heartMounted) return;
-      const place = places[i];
+    if (!api) return;
+    const placesById = new Map<string, FeaturedPlace>();
+    for (const p of this.featuredPlaces) placesById.set(p.id, p);
+    for (const r of this.getSearchResults()) {
+      if (r.kind === 'place') placesById.set(r.item.id, r.item);
+    }
+    const buttons = document.querySelectorAll<HTMLButtonElement>(
+      '#circular_events button.heart-btn'
+    );
+    buttons.forEach((btn) => {
+      if (btn.dataset['heartMounted']) return;
+      const id = btn.getAttribute('data-place-id');
+      const place = id ? placesById.get(id) : undefined;
       if (!place?.coords) return;
-      const p = {
+      api(btn, {
         name: place.name,
         address: place.address,
         coords: place.coords,
         legacyId: place.id,
-      };
-      api(btn, p);
-      (btn as any).dataset.heartMounted = '1';
+      });
+      btn.dataset['heartMounted'] = '1';
     });
   }
 
   ngOnDestroy(): void {
-    this.heartChangesSub?.unsubscribe();
     if (this.onScroll) {
       window.removeEventListener('scroll', this.onScroll as EventListener);
     }
@@ -145,6 +157,8 @@ export class LandingComponent implements AfterViewInit, OnDestroy {
   onSearchInput(ev: Event): void {
     const value = (ev.target as HTMLInputElement)?.value ?? '';
     this.searchService.setQuery(value);
+    this.lastClampMeasureKey = '';
+    setTimeout(() => this.mountPlaceHearts(), 0);
   }
 
   goToMapPage(): void {
@@ -161,14 +175,130 @@ export class LandingComponent implements AfterViewInit, OnDestroy {
 
   goToEventPage(event: EventItem): void {
     const d = event.date;
+    if (!(d instanceof Date) || Number.isNaN(d.getTime())) {
+      this.router.navigate(['/events'], { queryParams: { event: event.id } });
+      return;
+    }
     const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     this.router.navigate(['/events'], { queryParams: { date: dateStr, event: event.id } });
+  }
+
+  actionTagLabel(tag: string): string {
+    return ACTION_TAG_LABELS[tag as keyof typeof ACTION_TAG_LABELS] || tag;
+  }
+
+  actionTagColor(tag: string): string {
+    return this.actionTagColors[tag] || '#45818e';
+  }
+
+  actionTagTextColor(tag: string): string {
+    return tag === 'recycle' || tag === 'reduce' ? '#0c343d' : '#ffffff';
+  }
+
+  sectorIconsFor(sectors: string[] | undefined): string[] {
+    const ids = canonicalizeSectorCategories(sectors || []);
+    const out: string[] = [];
+    for (const id of ids) {
+      for (const path of this.categoryImageIcons(id)) {
+        if (!out.includes(path)) out.push(path);
+      }
+    }
+    return out;
+  }
+
+  sectorLabelForIcon(iconPath: string): string {
+    for (const id of SECTOR_CATEGORIES) {
+      if (this.categoryImageIcons(id).includes(iconPath)) {
+        return SECTOR_CATEGORY_LABELS[id];
+      }
+    }
+    return '';
+  }
+
+  websiteDisplayLabel(url: string | undefined | null): string {
+    const raw = String(url || '').trim();
+    if (!raw) return '';
+    try {
+      const parsed = new URL(raw.includes('://') ? raw : `https://${raw}`);
+      let host = parsed.hostname.toLowerCase();
+      if (!host.startsWith('www.')) host = `www.${host}`;
+      return `${host}/`;
+    } catch {
+      const host = raw
+        .replace(/^https?:\/\//i, '')
+        .replace(/^\/\//, '')
+        .split('/')[0]
+        .split('?')[0]
+        .split('#')[0]
+        .toLowerCase();
+      if (!host) return raw;
+      return `${host.startsWith('www.') ? host : `www.${host}`}/`;
+    }
+  }
+
+  isDescriptionExpanded(id: string): boolean {
+    return this.expandedDescriptions().has(id);
+  }
+
+  descriptionNeedsMore(id: string, _description: string): boolean {
+    if (this.isDescriptionExpanded(id)) return true;
+    return this.clampedDescriptionIds().has(id);
+  }
+
+  toggleDescription(id: string, ev?: Event): void {
+    ev?.stopPropagation();
+    const next = new Set(this.expandedDescriptions());
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    this.expandedDescriptions.set(next);
+    this.lastClampMeasureKey = '';
+  }
+
+  ngAfterViewChecked(): void {
+    const search = this.searchService.query() ? this.getSearchResults() : [];
+    const key = [
+      ...this.events.map((e) => e.id),
+      ...this.featuredPlaces.map((p) => `place-${p.id}`),
+      ...search.map((r) => (r.kind === 'event' ? r.item.id : `place-${r.item.id}`)),
+      [...this.expandedDescriptions()].sort().join(','),
+    ].join('|');
+    if (key === this.lastClampMeasureKey) return;
+    this.lastClampMeasureKey = key;
+    queueMicrotask(() => this.measureClampedDescriptions());
+  }
+
+  private measureClampedDescriptions(): void {
+    const nodes = document.querySelectorAll<HTMLElement>(
+      '#circular_events .event-card .event-description-block:not(.expanded) .event-description'
+    );
+    const next = new Set<string>();
+    nodes.forEach((el) => {
+      const id = el.closest('.event-card')?.getAttribute('data-card-id');
+      if (!id) return;
+      if (el.scrollHeight > el.clientHeight + 1) next.add(id);
+    });
+    const prev = this.clampedDescriptionIds();
+    if (prev.size !== next.size || [...next].some((id) => !prev.has(id))) {
+      this.clampedDescriptionIds.set(next);
+    }
+  }
+
+  private categoryImageIcons(id: string): string[] {
+    if (id === 'apparel') return ['assets/icons/clothing-shirt.png', 'assets/icons/clothing-trainers.png'];
+    if (id === 'electronics') return ['assets/icons/electronics-devices.png', 'assets/icons/electronics-fridge.png'];
+    if (id === 'music') return ['assets/icons/music-hdd.png', 'assets/icons/electronics-headphones.png'];
+    if (id === 'home-garden') return ['assets/icons/furniture-lamp.png', 'assets/icons/furniture-chair.png'];
+    if (id === 'books-comics-magazines') return ['assets/icons/books-open.png', 'assets/icons/books-comics.png'];
+    if (id === 'cycling-sports') {
+      return ['assets/icons/sports-bicycle.png', 'assets/icons/sports-basketball.png', 'assets/icons/sports-barbell.png'];
+    }
+    return [];
   }
 
   getSearchResults(): Array<{ kind: 'place'; item: FeaturedPlace } | { kind: 'event'; item: EventItem }> {
     const q = this.searchService.query().toLowerCase().trim();
     if (!q) return [];
-    const matches = (text: string) => text.toLowerCase().includes(q);
+    const matches = (text: string | undefined | null) => String(text || '').toLowerCase().includes(q);
     const results: Array<{ kind: 'place'; item: FeaturedPlace } | { kind: 'event'; item: EventItem }> = [];
     for (const p of this.allPlaces) {
       if (

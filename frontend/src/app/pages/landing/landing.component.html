@@ -36,54 +36,37 @@
 
 <!-- CIRCULAR EVENTS -->
 <section class="section scroll" id="circular_events">
-  <!-- Search results (shown when user has typed a query) -->
   <div *ngIf="searchService.query()" class="search-results-block">
     <div class="events-header">
       <h2>Search results</h2>
     </div>
     <div class="search-results-container">
-      <p *ngIf="getSearchResults().length === 0" class="no-results">No places or events match your search.</p>
-      <ng-container *ngFor="let result of getSearchResults()">
-        <div *ngIf="result.kind === 'place'" class="place-card" role="button" tabindex="0" (click)="goToMapWithPlace(result.item.id)" (keydown.enter)="goToMapWithPlace(result.item.id)">
-          <div class="place-card-content">
-            <div class="place-card-header">
-              <div class="category-tag">{{ result.item.label || result.item.storeType | titlecase }}</div>
-              <button type="button" class="heart-btn" #placeHeartBtn (click)="$event.stopPropagation()">♥</button>
-            </div>
-            <h3 class="place-title">{{ result.item.name }}</h3>
-            <p class="place-description">{{ result.item.description }}</p>
-            <p class="place-address">
-              <span class="pin-icon" aria-hidden="true">📍</span>
-              {{ result.item.address }}, {{ result.item.storeType }}
-            </p>
-          </div>
-        </div>
-        <div *ngIf="result.kind === 'event'" class="event-card" role="button" tabindex="0" (click)="goToEventPage(result.item)" (keydown.enter)="goToEventPage(result.item)">
-          <div class="event-card-content">
-            <div class="event-card-header">
-              <div class="category-tag">{{ result.item.category | titlecase }}</div>
-              <button
-                type="button"
-                class="fav-btn"
-                [class.favorited]="eventFavorites.isFavorite(result.item.id)"
-                [attr.aria-label]="eventFavorites.isFavorite(result.item.id) ? 'Remove from favorites' : 'Add to favorites'"
-                (click)="toggleFavorite(result.item.id); $event.stopPropagation()"
-              >
-                {{ eventFavorites.isFavorite(result.item.id) ? '♥' : '♡' }}
-              </button>
-            </div>
-            <h3 class="event-title">{{ result.item.title }}</h3>
-            <p class="event-description">{{ result.item.description }}</p>
-            <p class="event-location">
-              <span class="pin-icon" aria-hidden="true">📍</span>
-              {{ result.item.location }}
-            </p>
-            <p class="event-time">
-              <span class="clock-icon" aria-hidden="true">🕐</span>
-              {{ result.item.time }}
-            </p>
-          </div>
-        </div>
+      <ng-container *ngIf="getSearchResults() as results">
+        <p *ngIf="results.length === 0" class="no-results">No places or events match your search.</p>
+        <ng-container *ngFor="let result of results">
+          <article
+            *ngIf="result.kind === 'event'"
+            class="event-card"
+            [attr.data-card-id]="result.item.id"
+            role="button"
+            tabindex="0"
+            (click)="goToEventPage(result.item)"
+            (keydown.enter)="goToEventPage(result.item)"
+          >
+            <ng-container *ngTemplateOutlet="eventCardInner; context: { $implicit: result.item }"></ng-container>
+          </article>
+          <article
+            *ngIf="result.kind === 'place'"
+            class="event-card"
+            [attr.data-card-id]="'place-' + result.item.id"
+            role="button"
+            tabindex="0"
+            (click)="goToMapWithPlace(result.item.id)"
+            (keydown.enter)="goToMapWithPlace(result.item.id)"
+          >
+            <ng-container *ngTemplateOutlet="placeCardInner; context: { $implicit: result.item }"></ng-container>
+          </article>
+        </ng-container>
       </ng-container>
     </div>
   </div>
@@ -93,32 +76,17 @@
     <a (click)="goToEventsPage()" class="view-all-link" role="button" tabindex="0">View all circular events →</a>
   </div>
   <div class="events-container">
-    <div *ngFor="let event of events" class="event-card" role="button" tabindex="0" (click)="goToEventPage(event)" (keydown.enter)="goToEventPage(event)">
-      <div class="event-card-content">
-        <div class="event-card-header">
-          <div class="category-tag">{{ event.category | titlecase }}</div>
-          <button
-            type="button"
-            class="fav-btn"
-            [class.favorited]="eventFavorites.isFavorite(event.id)"
-            [attr.aria-label]="eventFavorites.isFavorite(event.id) ? 'Remove from favorites' : 'Add to favorites'"
-            (click)="toggleFavorite(event.id); $event.stopPropagation()"
-          >
-            {{ eventFavorites.isFavorite(event.id) ? '♥' : '♡' }}
-          </button>
-        </div>
-        <h3 class="event-title">{{ event.title }}</h3>
-        <p class="event-description">{{ event.description }}</p>
-        <p class="event-location">
-          <span class="pin-icon" aria-hidden="true">📍</span>
-          {{ event.location }}
-        </p>
-        <p class="event-time">
-          <span class="clock-icon" aria-hidden="true">🕐</span>
-          {{ event.time }}
-        </p>
-      </div>
-    </div>
+    <article
+      *ngFor="let event of events"
+      class="event-card"
+      [attr.data-card-id]="event.id"
+      role="button"
+      tabindex="0"
+      (click)="goToEventPage(event)"
+      (keydown.enter)="goToEventPage(event)"
+    >
+      <ng-container *ngTemplateOutlet="eventCardInner; context: { $implicit: event }"></ng-container>
+    </article>
   </div>
 
   <div class="events-header">
@@ -126,22 +94,159 @@
     <a (click)="goToMapPage()" class="view-all-link" role="button" tabindex="0">View map →</a>
   </div>
   <div class="places-container">
-    <div *ngFor="let place of featuredPlaces" class="place-card" role="button" tabindex="0" (click)="goToMapWithPlace(place.id)" (keydown.enter)="goToMapWithPlace(place.id)">
-      <div class="place-card-content">
-        <div class="place-card-header">
-          <div class="category-tag">{{ place.label || place.storeType | titlecase }}</div>
-          <button type="button" class="heart-btn" #placeHeartBtn (click)="$event.stopPropagation()">♥</button>
-        </div>
-        <h3 class="place-title">{{ place.name }}</h3>
-        <p class="place-description">{{ place.description }}</p>
-        <p class="place-address">
-          <span class="pin-icon" aria-hidden="true">📍</span>
-          {{ place.address }}, {{ place.storeType }}
-        </p>
-      </div>
-    </div>
+    <article
+      *ngFor="let place of featuredPlaces"
+      class="event-card"
+      [attr.data-card-id]="'place-' + place.id"
+      role="button"
+      tabindex="0"
+      (click)="goToMapWithPlace(place.id)"
+      (keydown.enter)="goToMapWithPlace(place.id)"
+    >
+      <ng-container *ngTemplateOutlet="placeCardInner; context: { $implicit: place }"></ng-container>
+    </article>
   </div>
 </section>
+
+<ng-template #eventCardInner let-event>
+  <div class="event-card-content">
+    <div class="event-card-header">
+      <div class="action-tag-pills">
+        <span
+          *ngFor="let tag of event.actionTags || []"
+          class="action-tag-pill"
+          [style.--tag-color]="actionTagColor(tag)"
+          [style.--tag-text-color]="actionTagTextColor(tag)"
+        >
+          {{ actionTagLabel(tag) }}
+        </span>
+      </div>
+      <button
+        type="button"
+        class="fav-btn"
+        [class.favorited]="eventFavorites.isFavorite(event.id)"
+        [attr.aria-label]="eventFavorites.isFavorite(event.id) ? 'Remove from favorites' : 'Add to favorites'"
+        (click)="toggleFavorite(event.id); $event.stopPropagation()"
+      >
+        {{ eventFavorites.isFavorite(event.id) ? '♥' : '♡' }}
+      </button>
+    </div>
+
+    <h2 class="event-title">{{ event.title }}</h2>
+
+    <div class="event-datetime">
+      <span class="event-date">{{ event.dateStr }}</span>
+      <span class="event-recurrence" *ngIf="event.recurrenceLabel">{{ event.recurrenceLabel }}</span>
+    </div>
+
+    <div class="event-address" *ngIf="event.location">{{ event.location }}</div>
+
+    <div
+      class="event-description-block"
+      *ngIf="event.description"
+      [class.expanded]="isDescriptionExpanded(event.id)"
+      (click)="$event.stopPropagation()"
+    >
+      <p class="event-description">{{ event.description }}</p>
+      <button
+        *ngIf="descriptionNeedsMore(event.id, event.description)"
+        type="button"
+        class="desc-more-btn"
+        (click)="toggleDescription(event.id, $event)"
+      >
+        {{ isDescriptionExpanded(event.id) ? 'less' : 'more' }}
+      </button>
+    </div>
+
+    <a
+      *ngIf="event.website"
+      class="event-website"
+      [href]="event.website"
+      [attr.title]="event.website"
+      target="_blank"
+      rel="noopener noreferrer"
+      (click)="$event.stopPropagation()"
+    >
+      {{ websiteDisplayLabel(event.website) }}
+    </a>
+
+    <div class="sector-icons" *ngIf="sectorIconsFor(event.sectorCategories).length">
+      <span
+        *ngFor="let iconPath of sectorIconsFor(event.sectorCategories)"
+        class="sector-icon-mask"
+        [style.--icon-url]="'url(' + iconPath + ')'"
+        [attr.title]="sectorLabelForIcon(iconPath)"
+        aria-hidden="true"
+      ></span>
+    </div>
+  </div>
+</ng-template>
+
+<ng-template #placeCardInner let-place>
+  <div class="event-card-content">
+    <div class="event-card-header">
+      <div class="action-tag-pills">
+        <span
+          *ngFor="let tag of place.actionTags || []"
+          class="action-tag-pill"
+          [style.--tag-color]="actionTagColor(tag)"
+          [style.--tag-text-color]="actionTagTextColor(tag)"
+        >
+          {{ actionTagLabel(tag) }}
+        </span>
+      </div>
+      <button
+        type="button"
+        class="fav-btn heart-btn"
+        [attr.data-place-id]="place.id"
+        (click)="$event.stopPropagation()"
+      >♡</button>
+    </div>
+
+    <h2 class="event-title">{{ place.name }}</h2>
+
+    <div class="event-address" *ngIf="place.address">{{ place.address }}</div>
+
+    <div
+      class="event-description-block"
+      *ngIf="place.description"
+      [class.expanded]="isDescriptionExpanded('place-' + place.id)"
+      (click)="$event.stopPropagation()"
+    >
+      <p class="event-description">{{ place.description }}</p>
+      <button
+        *ngIf="descriptionNeedsMore('place-' + place.id, place.description)"
+        type="button"
+        class="desc-more-btn"
+        (click)="toggleDescription('place-' + place.id, $event)"
+      >
+        {{ isDescriptionExpanded('place-' + place.id) ? 'less' : 'more' }}
+      </button>
+    </div>
+
+    <a
+      *ngIf="place.web"
+      class="event-website"
+      [href]="place.web"
+      [attr.title]="place.web"
+      target="_blank"
+      rel="noopener noreferrer"
+      (click)="$event.stopPropagation()"
+    >
+      {{ websiteDisplayLabel(place.web) }}
+    </a>
+
+    <div class="sector-icons" *ngIf="sectorIconsFor(place.categories).length">
+      <span
+        *ngFor="let iconPath of sectorIconsFor(place.categories)"
+        class="sector-icon-mask"
+        [style.--icon-url]="'url(' + iconPath + ')'"
+        [attr.title]="sectorLabelForIcon(iconPath)"
+        aria-hidden="true"
+      ></span>
+    </div>
+  </div>
+</ng-template>
 
 <!-- CIRCULAR ACTION -->
 <section class="section scroll" id="circular_action">
