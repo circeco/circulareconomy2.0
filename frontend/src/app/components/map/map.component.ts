@@ -58,6 +58,11 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   // queue hearts until favourites service ready
   private heartMountQueue: Array<{ btn: HTMLButtonElement, place: any }> = [];
   private subs: Subscription[] = [];
+  private allCityFeatures: Feature[] = [];
+  private pendingFocusPlaceId: string | null = null;
+  private lastCityCenter: [number, number] | null = null;
+  private listingScrollPlaceId: string | null = null;
+  private pinnedPlaceCityId: string | null = null;
 
   constructor(
     private map: MapService,
@@ -84,6 +89,22 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     // initialize action tags filter with all tags enabled
     this.filter.setActionTags(this.enabledActionTags);
 
+    const initialPlaceId = this.route.snapshot.queryParamMap.get('place');
+    if (initialPlaceId) {
+      this.pendingFocusPlaceId = initialPlaceId;
+      this.pinnedPlaceCityId = this.cityContext.cityId();
+    }
+    this.subs.push(
+      this.route.queryParams.subscribe((params) => {
+        const placeId = params['place'];
+        if (placeId && typeof placeId === 'string') {
+          this.pendingFocusPlaceId = placeId;
+          this.pinnedPlaceCityId = this.cityContext.cityId();
+          this.tryFocusPendingPlace();
+        }
+      })
+    );
+
     // Drive favorites toggle state from real auth stream to avoid window-event timing races.
     this.subs.push(
       this.auth.user$.subscribe((user) => {
@@ -103,13 +124,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
     // Wait until map & layers are rendered at least once
     this.map.onReady().subscribe(() => {
-      // 0) Focus on place from route query param (e.g. /atlas?place=ID)
-      this.route.queryParams.subscribe((params) => {
-        const placeId = params['place'];
-        if (placeId && typeof placeId === 'string') {
-          this.focusOnPlaceById(placeId);
-        }
-      });
+      this.tryFocusPendingPlace();
 
       // 1) Feed visible features into the store — run INSIDE Angular so UI updates immediately
       this.map.queryRenderedFeatures$().subscribe(fs => {
@@ -136,6 +151,19 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       this.featuredPlaces.getGeoJsonForCurrentCity().subscribe((fc) => {
         this.map.setPlacesData(fc);
         this.filter.buildIndex(fc as any);
+        this.allCityFeatures = (fc?.features || []) as Feature[];
+        if (this.pendingFocusPlaceId) {
+          const focused = this.tryFocusPendingPlace();
+          if (!focused) {
+            setTimeout(() => {
+              if (this.pendingFocusPlaceId && !this.tryFocusPendingPlace() && this.allCityFeatures.length) {
+                this.pendingFocusPlaceId = null;
+                this.pinnedPlaceCityId = null;
+                if (this.lastCityCenter) this.map.flyToCity(this.lastCityCenter, 11);
+              }
+            }, 80);
+          }
+        }
       })
     );
 
@@ -145,7 +173,13 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         const lat = city?.center?.lat;
         const lng = city?.center?.lng;
         if (typeof lat === 'number' && typeof lng === 'number' && isFinite(lat) && isFinite(lng)) {
-          this.map.flyToCity([lng, lat], 11);
+          this.lastCityCenter = [lng, lat];
+          const stayOnPinnedPlace = !!this.pinnedPlaceCityId && this.pinnedPlaceCityId === cityId;
+          if (!stayOnPinnedPlace) {
+            this.pinnedPlaceCityId = null;
+            this.pendingFocusPlaceId = null;
+            this.map.flyToCity([lng, lat], 11);
+          }
         }
       })
     );
@@ -156,6 +190,8 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         this.filteredList = list;
         this.cdr.markForCheck();
         setTimeout(() => this.mountListHearts(), 0);
+        this.tryFocusPendingPlace();
+        this.scrollListingToFocusedPlace();
       });
     });
 
@@ -233,12 +269,53 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
   // ---------- Map interactions ----------
   focusOnPlaceById(placeId: string): void {
-    const feat = this.filteredList.find((f: Feature) => String((f as any)?.id ?? '') === String(placeId));
-    if (!feat || !feat.geometry?.coordinates) return;
+    this.pendingFocusPlaceId = placeId;
+    this.tryFocusPendingPlace();
+  }
+
+  private findFeatureByPlaceId(placeId: string): Feature | undefined {
+    const id = String(placeId);
+    const match = (f: Feature) => {
+      const props: any = f?.properties || {};
+      return (
+        String(f?.id ?? '') === id ||
+        String(props.id ?? '') === id ||
+        String(props.LEGACY_ID ?? '') === id
+      );
+    };
+    return this.allCityFeatures.find(match) || this.filteredList.find(match);
+  }
+
+  private tryFocusPendingPlace(): boolean {
+    const placeId = this.pendingFocusPlaceId;
+    if (!placeId) return false;
+    const feat = this.findFeatureByPlaceId(placeId);
+    if (!feat?.geometry?.coordinates) return false;
     this.zone.run(() => {
       this.focusOn(feat);
+      this.listingScrollPlaceId = placeId;
       this.cdr.markForCheck();
     });
+    this.pendingFocusPlaceId = null;
+    return true;
+  }
+
+  private scrollListingToFocusedPlace(): void {
+    const placeId = this.listingScrollPlaceId;
+    if (!placeId) return;
+    const idx = this.filteredList.findIndex((f) => {
+      const props: any = f?.properties || {};
+      return (
+        String(f?.id ?? '') === placeId ||
+        String(props.id ?? '') === placeId ||
+        String(props.LEGACY_ID ?? '') === placeId
+      );
+    });
+    if (idx < 0) return;
+    this.listingScrollPlaceId = null;
+    setTimeout(() => {
+      document.getElementById('listing-' + idx)?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }, 0);
   }
 
   focusOn(feature: Feature) {

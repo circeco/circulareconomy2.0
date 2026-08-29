@@ -6,12 +6,20 @@ import { toObservable } from '@angular/core/rxjs-interop';
 const LS_KEY = 'circeco.cityId';
 const DEFAULT_CITY_ID = 'stockholm';
 
+function readStoredCityId(): string {
+  try {
+    return String(localStorage.getItem(LS_KEY) || '').trim().toLowerCase();
+  } catch {
+    return '';
+  }
+}
+
 @Injectable({ providedIn: 'root' })
 export class CityContextService {
   private router = inject(Router);
   private initialized = false;
 
-  readonly cityId = signal<string>(DEFAULT_CITY_ID);
+  readonly cityId = signal<string>(readStoredCityId() || DEFAULT_CITY_ID);
   readonly cityId$ = toObservable(this.cityId);
 
   constructor() {
@@ -19,14 +27,14 @@ export class CityContextService {
     this.router.events
       .pipe(filter((e) => e instanceof NavigationEnd))
       .subscribe(() => {
-        this.syncFromUrlOrStorage(!this.initialized);
+        this.syncFromUrlOrStorage();
         this.initialized = true;
       });
 
     // Fallback for cases where Router is already navigated before this service is created.
     queueMicrotask(() => {
       if (!this.initialized && this.router.navigated) {
-        this.syncFromUrlOrStorage(true);
+        this.syncFromUrlOrStorage();
         this.initialized = true;
       }
     });
@@ -39,8 +47,15 @@ export class CityContextService {
    */
   private mergeCityIntoCurrentUrl(cityId: string): void {
     const tree = this.router.parseUrl(this.router.url);
+    if (tree.queryParams['city'] === cityId) return;
     tree.queryParams = { ...tree.queryParams, city: cityId };
     this.router.navigateByUrl(tree, { replaceUrl: true });
+  }
+
+  private persistCityId(id: string): void {
+    try {
+      localStorage.setItem(LS_KEY, id);
+    } catch {}
   }
 
   setCityId(next: string): void {
@@ -48,33 +63,25 @@ export class CityContextService {
     if (id === this.cityId()) return;
 
     this.cityId.set(id);
-    try {
-      localStorage.setItem(LS_KEY, id);
-    } catch {}
-
+    this.persistCityId(id);
     this.mergeCityIntoCurrentUrl(id);
   }
 
-  private syncFromUrlOrStorage(firstRun: boolean): void {
+  private syncFromUrlOrStorage(): void {
     const qp = this.router.parseUrl(this.router.url).queryParams;
     const urlCity = typeof qp['city'] === 'string' ? String(qp['city']) : '';
     const fromUrl = urlCity.trim().toLowerCase();
-
-    // We intentionally default to Stockholm unless the URL explicitly requests a city.
-    // This avoids surprising users on first load if they previously selected another city.
-    const next = fromUrl || DEFAULT_CITY_ID;
+    const stored = readStoredCityId();
+    const next = fromUrl || stored || this.cityId() || DEFAULT_CITY_ID;
 
     if (next !== this.cityId()) {
       this.cityId.set(next);
     }
+    this.persistCityId(next);
 
-    // On first run, if URL is missing, write chosen default into URL.
-    if (firstRun && !fromUrl) {
-      try {
-        localStorage.setItem(LS_KEY, next);
-      } catch {}
+    // Keep city on the URL across in-app navigations that drop query params.
+    if (!fromUrl) {
       this.mergeCityIntoCurrentUrl(next);
     }
   }
 }
-

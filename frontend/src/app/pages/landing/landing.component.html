@@ -21,7 +21,8 @@
             placeholder="Search places and events..."
             [value]="searchService.query()"
             (input)="onSearchInput($event)"
-            (keydown.enter)="goToMapPage()"
+            (keydown.enter)="showSearchResults($event)"
+            (search)="showSearchResults($event)"
             aria-label="Search places and events"
           />
         </div>

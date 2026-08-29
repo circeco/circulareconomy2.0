@@ -161,26 +161,36 @@ export class LandingComponent implements AfterViewInit, AfterViewChecked, OnDest
     setTimeout(() => this.mountPlaceHearts(), 0);
   }
 
+  showSearchResults(ev?: Event): void {
+    ev?.preventDefault();
+    if (!this.searchService.query().trim()) return;
+    const target = document.getElementById('circular_events');
+    if (!target) return;
+    const headerOffset = 60;
+    const top = window.scrollY + target.getBoundingClientRect().top - headerOffset;
+    window.scrollTo({ top: Math.max(top, 0), behavior: 'smooth' });
+  }
+
   goToMapPage(): void {
-    this.router.navigate(['/atlas']);
+    this.router.navigate(['/atlas'], { queryParamsHandling: 'merge' });
   }
 
   goToMapWithPlace(placeId: string): void {
-    this.router.navigate(['/atlas'], { queryParams: { place: placeId } });
+    this.router.navigate(['/atlas'], { queryParams: { place: placeId }, queryParamsHandling: 'merge' });
   }
 
   goToEventsPage(): void {
-    this.router.navigate(['/events']);
+    this.router.navigate(['/events'], { queryParamsHandling: 'merge' });
   }
 
   goToEventPage(event: EventItem): void {
     const d = event.date;
     if (!(d instanceof Date) || Number.isNaN(d.getTime())) {
-      this.router.navigate(['/events'], { queryParams: { event: event.id } });
+      this.router.navigate(['/events'], { queryParams: { event: event.id }, queryParamsHandling: 'merge' });
       return;
     }
     const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    this.router.navigate(['/events'], { queryParams: { date: dateStr, event: event.id } });
+    this.router.navigate(['/events'], { queryParams: { date: dateStr, event: event.id }, queryParamsHandling: 'merge' });
   }
 
   actionTagLabel(tag: string): string {

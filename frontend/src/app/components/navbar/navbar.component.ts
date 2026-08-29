@@ -135,14 +135,14 @@ export class NavbarComponent implements AfterViewInit, OnDestroy {
   goToFromLogo(id: string): void {
     this.logoMenuOpen.set(false);
     if (id === 'circular_events') {
-      this.router.navigateByUrl('/events');
+      this.router.navigate(['/events'], { queryParamsHandling: 'merge' });
       return;
     }
     if (id === 'circular_atlas_demo') {
-      this.router.navigateByUrl('/atlas');
+      this.router.navigate(['/atlas'], { queryParamsHandling: 'merge' });
       return;
     }
-    this.router.navigateByUrl('/').then(() => {
+    this.router.navigate(['/'], { queryParamsHandling: 'merge' }).then(() => {
       const tryScroll = (attempts = 0) => {
         if (document.getElementById('circular_action')) {
           this.scrollToSection('circular_action');
@@ -158,7 +158,7 @@ export class NavbarComponent implements AfterViewInit, OnDestroy {
   goTo(id: string): void {
     if (!this.isLanding()) {
       // If clicked from atlas for any reason, just send home
-      this.router.navigateByUrl('/');
+      this.router.navigate(['/'], { queryParamsHandling: 'merge' });
       return;
     }
 
@@ -167,13 +167,13 @@ export class NavbarComponent implements AfterViewInit, OnDestroy {
 
     // Circular Events / Circular Atlas should route to dedicated pages.
     if (id === 'circular_events') {
-      this.router.navigateByUrl('/events');
+      this.router.navigate(['/events'], { queryParamsHandling: 'merge' });
       return;
     }
 
     // Circular Atlas should route to the atlas page, not scroll on landing
     if (id === 'circular_atlas_demo') {
-      this.router.navigateByUrl('/atlas');
+      this.router.navigate(['/atlas'], { queryParamsHandling: 'merge' });
       return;
     }
 
@@ -191,7 +191,7 @@ export class NavbarComponent implements AfterViewInit, OnDestroy {
     if (this.isLanding()) {
       this.goTo('title_section');
     } else {
-      this.router.navigateByUrl('/');
+      this.router.navigate(['/'], { queryParamsHandling: 'merge' });
     }
   }
 
