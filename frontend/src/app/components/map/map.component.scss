@@ -109,6 +109,108 @@
   line-height: 1.3;
 }
 
+.listing-distance {
+  margin: 2px 0 4px;
+  color: $brand-deep;
+  font-size: 0.85rem;
+  font-family: $font-khand;
+  font-weight: 600;
+}
+
+.locate-status {
+  background: rgba(255, 255, 255, 0.55);
+  border-radius: 8px;
+  padding: 8px 10px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(8px);
+
+  p {
+    margin: 0;
+    font-size: 0.9rem;
+    font-family: $font-khand;
+    color: #0c343d;
+    line-height: 1.3;
+  }
+}
+
+.locate-status-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.locate-status-switch,
+.locate-status-dismiss,
+.locate-consent-allow,
+.locate-consent-deny {
+  border: 1px solid $brand-deep;
+  border-radius: 9999px;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  background: #ffffff;
+  color: $brand-deep;
+}
+
+.locate-status-switch,
+.locate-consent-allow {
+  background: $brand-deep;
+  color: #ffffff;
+}
+
+.locate-consent {
+  position: absolute;
+  right: 12px;
+  bottom: 148px;
+  z-index: 3;
+  width: min(280px, calc(100% - 24px));
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 10px;
+  padding: 12px 14px;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
+  backdrop-filter: blur(8px);
+
+  p {
+    margin: 0 0 10px;
+    font-size: 0.95rem;
+    font-family: $font-khand;
+    color: #0c343d;
+    line-height: 1.35;
+  }
+}
+
+.locate-consent-actions {
+  display: flex;
+  gap: 8px;
+}
+
+:host ::ng-deep .mapboxgl-ctrl-bottom-right {
+  z-index: 2;
+}
+
+:host ::ng-deep .circeco-locate-btn {
+  background-image: none !important;
+  background-color: $brand-deep !important;
+  -webkit-mask-image: url('/assets/icons/locate.png');
+  mask-image: url('/assets/icons/locate.png');
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: 18px 18px;
+  mask-size: 18px 18px;
+}
+
+:host ::ng-deep .circeco-user-marker {
+  width: 36px;
+  height: 36px;
+  display: block;
+  pointer-events: none;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
+}
+
 .category-filters {
   position: absolute;
   bottom: 22px;
@@ -228,5 +330,10 @@
   .category-filters {
     left: 12px;
     right: 12px;
+  }
+
+  .locate-consent {
+    bottom: 156px;
+    right: 10px;
   }
 }

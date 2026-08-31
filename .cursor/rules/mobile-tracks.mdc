@@ -1,0 +1,31 @@
+---
+description: Parked split — atlas user location vs Option A mobile-first/PWA. Do not start either track until Piero asks.
+alwaysApply: true
+---
+
+# Mobile tracks (parked)
+
+Two workstreams. **Do not implement either until Piero names the track.** No routes, Capacitor, or native rewrite.
+
+## Track 1 — User location (feature)
+
+Blue dot + nearby list on the **current** atlas. Browser geolocation only.
+
+- Permission, deny/timeout UX; optional fly-to on first fix; no background tracking
+- Sort/filter **current-city** places by distance; keep search and action tags
+- If GPS is outside the selected city, do not mix catalogues
+- Owns: new geolocation service; `map.service.ts`; `map.component.*`; `places-filter.service.ts`
+- Does not: Directions, PWA, navbar/bottom-tabs, landing/events layout
+
+## Track 2 — Option A plan (shell)
+
+**Plan** mobile-first web, then PWA. Do not build the shell unless asked.
+
+- IA per screen (landing, atlas, events, account); admin = usable, not redesigned
+- Slot for Locate later; do not spec GPS
+- PWA install (manifest, icons, iOS caveats); offline atlas out of v1
+- Does not: GPS, Mapbox Directions, Capacitor, native rewrite
+
+## Handoff
+
+Location ships on today’s atlas chrome. Option A plan says where Locate moves on a phone.

@@ -17,9 +17,10 @@ import { Subscription, combineLatest } from 'rxjs';
 import { MapService } from '../../services/map.service';
 import { PlacesFilter, Feature } from '../../services/places-filter.service';
 import { CityContextService } from '../../services/city-context.service';
-import { CitiesService } from '../../services/cities.service';
+import { CitiesService, CityItem } from '../../services/cities.service';
 import { FeaturedPlacesService } from '../../services/featured-places.service';
 import { AuthService } from '../../services/auth.service';
+import { GeolocationService, GeoFix } from '../../services/geolocation.service';
 import {
   ACTION_TAG_COLORS,
   ACTION_TAGS,
@@ -55,6 +56,12 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   // filtered list snapshot for template
   filteredList: Feature[] = [];
 
+  locateAskOpen = false;
+  locating = false;
+  nearbyActive = false;
+  locateStatusMessage = '';
+  suggestedCity: CityItem | null = null;
+
   // queue hearts until favourites service ready
   private heartMountQueue: Array<{ btn: HTMLButtonElement, place: any }> = [];
   private subs: Subscription[] = [];
@@ -63,6 +70,11 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   private lastCityCenter: [number, number] | null = null;
   private listingScrollPlaceId: string | null = null;
   private pinnedPlaceCityId: string | null = null;
+  private cityList: CityItem[] = [];
+  private selectedCity: CityItem | null = null;
+  private lastFix: GeoFix | null = null;
+  private locateGen = 0;
+  private readonly geoConsentKey = 'circeco.geoConsent';
 
   constructor(
     private map: MapService,
@@ -73,7 +85,8 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     private cityContext: CityContextService,
     private cities: CitiesService,
     private featuredPlaces: FeaturedPlacesService,
-    private auth: AuthService
+    private auth: AuthService,
+    private geo: GeolocationService
   ) { }
 
   ngOnInit(): void {
@@ -112,6 +125,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         this.favoritesDisabled = !authed;
         if (!authed) {
           this.favoritesVisible = false;
+          this.filter.setFavoritesOnly(false);
         }
         this.map.setFavoritesVisibility(authed && this.favoritesVisible);
       })
@@ -121,6 +135,10 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   ngAfterViewInit(): void {
     this.map.init(this.mapHost.nativeElement);
     setTimeout(() => this.map.resize(), 0);
+
+    this.subs.push(
+      this.map.onLocateClick().subscribe(() => this.onLocateControlClick())
+    );
 
     // Wait until map & layers are rendered at least once
     this.map.onReady().subscribe(() => {
@@ -150,7 +168,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.subs.push(
       this.featuredPlaces.getGeoJsonForCurrentCity().subscribe((fc) => {
         this.map.setPlacesData(fc);
-        this.filter.buildIndex(fc as any);
+        this.filter.setCityFeatures(fc as any);
         this.allCityFeatures = (fc?.features || []) as Feature[];
         if (this.pendingFocusPlaceId) {
           const focused = this.tryFocusPendingPlace();
@@ -169,18 +187,23 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
     this.subs.push(
       combineLatest([this.cityContext.cityId$, this.cities.cities$]).subscribe(([cityId, cities]) => {
-        const city = cities.find((c) => c.id === cityId);
+        const prevId = this.selectedCity?.id;
+        this.cityList = cities || [];
+        const city = this.cityList.find((c) => c.id === cityId) || null;
+        this.selectedCity = city;
+        const cityChanged = cityId !== prevId;
         const lat = city?.center?.lat;
         const lng = city?.center?.lng;
         if (typeof lat === 'number' && typeof lng === 'number' && isFinite(lat) && isFinite(lng)) {
           this.lastCityCenter = [lng, lat];
           const stayOnPinnedPlace = !!this.pinnedPlaceCityId && this.pinnedPlaceCityId === cityId;
-          if (!stayOnPinnedPlace) {
+          if (!stayOnPinnedPlace && cityChanged) {
             this.pinnedPlaceCityId = null;
             this.pendingFocusPlaceId = null;
             this.map.flyToCity([lng, lat], 11);
           }
         }
+        this.reapplyLastFixForCity();
       })
     );
 
@@ -207,6 +230,9 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     window.removeEventListener('favorites-ready', this.onFavReady);
     this.subs.forEach((s) => s.unsubscribe());
     this.subs = [];
+    this.locateGen++;
+    this.filter.setSortByDistance(false);
+    this.filter.setUserOrigin(null);
     this.map.destroy();
   }
 
@@ -265,6 +291,143 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     if (this.favoritesDisabled) return (window as any).circeco?.openAuthModal?.();
     this.favoritesVisible = !this.favoritesVisible;
     this.map.setFavoritesVisibility(this.favoritesVisible);
+    this.filter.setFavoritesOnly(this.favoritesVisible);
+    this.syncFavoriteKeysToFilter();
+  }
+
+  onLocateControlClick() {
+    if (this.locating) return;
+    if (this.hasSessionConsent()) {
+      if (this.lastFix) {
+        this.map.showUserLocation(this.lastFix.lng, this.lastFix.lat, this.lastFix.accuracy, true);
+      }
+      this.runLocate();
+      return;
+    }
+    this.locateAskOpen = true;
+    this.locateStatusMessage = '';
+    this.suggestedCity = null;
+    this.cdr.markForCheck();
+  }
+
+  onLocateAllow() {
+    this.setSessionConsent();
+    return this.runLocate();
+  }
+
+  onLocateNotNow() {
+    this.locateAskOpen = false;
+    this.cdr.markForCheck();
+  }
+
+  switchToSuggestedCity() {
+    const id = this.suggestedCity?.id;
+    if (!id) return;
+    this.cityContext.setCityId(id);
+    this.dismissLocateStatus();
+  }
+
+  dismissLocateStatus() {
+    this.locateStatusMessage = '';
+    this.suggestedCity = null;
+    this.cdr.markForCheck();
+  }
+
+  private hasSessionConsent(): boolean {
+    try { return sessionStorage.getItem(this.geoConsentKey) === 'allowed'; }
+    catch { return false; }
+  }
+
+  private setSessionConsent() {
+    try { sessionStorage.setItem(this.geoConsentKey, 'allowed'); }
+    catch {}
+  }
+
+  private async runLocate() {
+    const gen = ++this.locateGen;
+    this.locateAskOpen = false;
+    this.locating = true;
+    this.locateStatusMessage = '';
+    this.suggestedCity = null;
+    this.cdr.markForCheck();
+
+    const result = await this.geo.locate();
+    if (gen !== this.locateGen) return;
+    this.locating = false;
+
+    if (!result.ok) {
+      this.clearNearby();
+      this.locateStatusMessage = this.messageForGeoError(result.code);
+      this.cdr.markForCheck();
+      return;
+    }
+
+    this.lastFix = result.fix;
+    this.applyFix(result.fix, true);
+    this.cdr.markForCheck();
+  }
+
+  private reapplyLastFixForCity() {
+    if (!this.lastFix || !this.hasSessionConsent()) {
+      this.clearNearby();
+      return;
+    }
+    this.applyFix(this.lastFix, false);
+  }
+
+  private applyFix(fix: GeoFix, flyToUser: boolean) {
+    const selected = this.selectedCity;
+    const inSelected = this.geo.pointInCity(fix, selected);
+    this.map.showUserLocation(fix.lng, fix.lat, fix.accuracy, flyToUser);
+
+    if (inSelected) {
+      this.syncFavoriteKeysToFilter();
+      this.filter.setUserOrigin({ lat: fix.lat, lng: fix.lng });
+      this.filter.setSortByDistance(true);
+      this.nearbyActive = true;
+      this.locateStatusMessage = '';
+      this.suggestedCity = null;
+      return;
+    }
+
+    this.filter.setSortByDistance(false);
+    this.filter.setUserOrigin(null);
+    this.nearbyActive = false;
+    const others = this.cityList.filter((c) => c.id !== selected?.id);
+    const other = this.geo.cityContaining(fix, others);
+    const cityName = selected?.name || 'this city';
+    if (other) {
+      this.suggestedCity = other;
+      this.locateStatusMessage = `You're outside ${cityName}.`;
+    } else {
+      this.suggestedCity = null;
+      this.locateStatusMessage = `You're outside ${cityName}. Showing this city's places.`;
+    }
+  }
+
+  private clearNearby() {
+    this.nearbyActive = false;
+    this.filter.setSortByDistance(false);
+    this.filter.setUserOrigin(null);
+    this.map.clearUserLocation();
+  }
+
+  private messageForGeoError(code: string): string {
+    if (code === 'denied') return 'Location is off. The map still shows this city.';
+    if (code === 'timeout') return "Couldn't get your location in time. The map still shows this city.";
+    if (code === 'insecure') return 'Location needs a secure connection (HTTPS). The map still shows this city.';
+    if (code === 'unsupported') return "This browser can't share location. The map still shows this city.";
+    return "Location isn't available. The map still shows this city.";
+  }
+
+  private syncFavoriteKeysToFilter() {
+    try {
+      const getter = (window as any)?.circeco?.favorites?.getFavoriteKeys;
+      if (typeof getter !== 'function') return;
+      const keys = getter();
+      if (!Array.isArray(keys)) return;
+      this.filter.setFavoriteKeys(new Set(keys.map((k: unknown) => String(k))));
+    } catch {}
   }
 
   // ---------- Map interactions ----------
@@ -540,8 +703,12 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   }
 
   // favourites events
-  private onFavUpdate = (_e: Event) => {
+  private onFavUpdate = (ev: any) => {
     this.zone.run(() => {
+      const items = ev?.detail?.items || [];
+      const keys = new Set<string>();
+      items.forEach((i: any) => { if (i?.key) keys.add(String(i.key)); });
+      this.filter.setFavoriteKeys(keys);
       this.mountListHearts();
       this.cdr.markForCheck();
     });

@@ -14,6 +14,23 @@
       </div>
     </div>
 
+    <div class="locate-status" *ngIf="locateStatusMessage" role="status">
+      <p>{{ locateStatusMessage }}</p>
+      <div class="locate-status-actions">
+        <button
+          *ngIf="suggestedCity"
+          type="button"
+          class="locate-status-switch"
+          (click)="switchToSuggestedCity()"
+        >
+          Switch to {{ suggestedCity.name }}
+        </button>
+        <button type="button" class="locate-status-dismiss" (click)="dismissLocateStatus()">
+          Dismiss
+        </button>
+      </div>
+    </div>
+
     <div class="listings-section">
       <div id="listings" class="listings">
         <div
@@ -40,6 +57,9 @@
             *ngIf="propsOf(item).ADDRESS_LINE1 || propsOf(item).ADDRESS"
           >
             {{ propsOf(item).ADDRESS_LINE1 || propsOf(item).ADDRESS }}
+          </p>
+          <p class="listing-distance" *ngIf="propsOf(item).distanceLabel">
+            {{ propsOf(item).distanceLabel }}
           </p>
           <p *ngIf="propsOf(item).DESCRIPTION">{{ propsOf(item).DESCRIPTION }}</p>
         </div>
@@ -98,6 +118,20 @@
         </ng-template>
       </span>
     </button>
+  </div>
+
+  <div
+    class="locate-consent"
+    *ngIf="locateAskOpen"
+    role="dialog"
+    aria-labelledby="locate-consent-title"
+    aria-modal="true"
+  >
+    <p id="locate-consent-title">Allow Circeco to use your location to show nearby places?</p>
+    <div class="locate-consent-actions">
+      <button type="button" class="locate-consent-allow" (click)="onLocateAllow()">Allow</button>
+      <button type="button" class="locate-consent-deny" (click)="onLocateNotNow()">Not now</button>
+    </div>
   </div>
 
   <div id="map" #mapHost></div>

@@ -27,21 +27,27 @@ export class FavoritesServiceStub implements Partial<FavoritesService> {
   computePlaceKey() { return '' as any; }
 }
 
-export class MapServiceStub implements Pick<MapService, 'init' | 'onReady' | 'queryRenderedFeatures$' | 'onFeatureClick' | 'openPopup' | 'flyTo' | 'setFavoritesVisibility' | 'setCategoryFilter' | 'setActionTagFilter' | 'resize' | 'destroy'> {
+export class MapServiceStub implements Pick<MapService, 'init' | 'onReady' | 'queryRenderedFeatures$' | 'onFeatureClick' | 'onLocateClick' | 'openPopup' | 'flyTo' | 'flyToCity' | 'setPlacesData' | 'setFavoritesVisibility' | 'setCategoryFilter' | 'setActionTagFilter' | 'showUserLocation' | 'clearUserLocation' | 'resize' | 'destroy'> {
   private ready$ = new Subject<boolean>();
   private features$ = new Subject<any[]>();
   private click$ = new Subject<{ feature: any; coords: [number, number] }>();
+  private locate$ = new Subject<void>();
 
   init() { this.ready$.next(true); }
   onReady() { return this.ready$.asObservable(); }
   queryRenderedFeatures$() { return this.features$.asObservable(); }
   onFeatureClick() { return this.click$.asObservable(); }
+  onLocateClick() { return this.locate$.asObservable(); }
 
   openPopup() {}
   flyTo() {}
+  flyToCity() {}
+  setPlacesData() {}
   setFavoritesVisibility(_v: boolean) {}
   setCategoryFilter(_set: Set<string>) {}
   setActionTagFilter(_set: Set<string>) {}
+  showUserLocation() {}
+  clearUserLocation() {}
   resize() {}
   destroy() {}
 }
@@ -54,9 +60,14 @@ export class PlacesFilterStub implements Partial<PlacesFilter> {
   filteredFeatures$ = of([]);
 
   setAllFeatures(_features: any) {}
+  setCityFeatures(_fc: any) {}
   setFilter(_query: string) {}
   setCategories(_set: Set<string>) {}
   setActionTags(_set: Set<string>) {}
+  setUserOrigin(_origin: any) {}
+  setSortByDistance(_on: boolean) {}
+  setFavoriteKeys(_keys: Set<string>) {}
+  setFavoritesOnly(_on: boolean) {}
   enrichForUI(_feature: any) { return {} as any; }
   buildIndex(_fc: any) {}
 }
