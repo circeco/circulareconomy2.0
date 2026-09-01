@@ -44,7 +44,10 @@
           <p *ngIf="propsOf(item).DESCRIPTION">{{ propsOf(item).DESCRIPTION }}</p>
         </div>
 
-        <p class="listings-empty" *ngIf="filteredList.length === 0">
+        <p class="listings-empty" *ngIf="!placesReady">
+          Loading places…
+        </p>
+        <p class="listings-empty" *ngIf="placesReady && filteredList.length === 0">
           No places match the current filters.
         </p>
       </div>

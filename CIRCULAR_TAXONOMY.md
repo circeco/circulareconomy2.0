@@ -8,7 +8,7 @@ It is intended to keep titles, order, descriptions, and colors consistent across
 1. Refuse
 2. Reuse
 3. Repair
-4. Reporpouse
+4. Repurpose
 5. Recycle
 6. Reduce
 
@@ -26,7 +26,7 @@ It is intended to keep titles, order, descriptions, and colors consistent across
 - Description: Maintain product functionality for longer through repairing and refurbishing so that the product or material can be used in its original function.
 - Card color: `#45818eff` (`$brand-teal`)
 
-### 4) Reporpouse
+### 4) Repurpose
 - Description: Use a product or its part for a new product with a different function, also upcycling. Use materials from a discarded product for remanufacturing new products that have same function, removing the need of new material.
 - Card color: `#76a5afff`
 
@@ -41,4 +41,4 @@ It is intended to keep titles, order, descriptions, and colors consistent across
 ## Notes
 
 - This taxonomy is the source of truth for landing page circular cards.
-- Keep spelling as listed above (including `Reporpouse`) to match current product copy.
+- Visitor-facing spelling is **Repurpose**. Historic misspellings (`reporpouse`, `repurpouse`) still canonicalize to the `repurpose` data key.

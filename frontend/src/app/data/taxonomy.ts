@@ -57,9 +57,9 @@ export function canonicalizeActionTag(input: string): ActionTag | null {
   const raw = String(input ?? '').trim().toLowerCase();
   if (!raw) return null;
 
-  // accepted aliases / historical values
+  // accepted aliases / historical values (including misspelled UI/data keys)
   const normalized =
-    raw === 'reporpouse' ? 'repurpose'
+    raw === 'reporpouse' || raw === 'repurpouse' ? 'repurpose'
     : raw === 'rethink' ? 'refuse'
     : raw === 'refurbish' ? 'repair'
     : raw === 'remanufacture' ? 'repurpose'

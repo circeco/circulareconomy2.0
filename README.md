@@ -41,7 +41,7 @@ The Circular Atlas is the main task: find an initiative on the map, open its det
 
 Places and events are organised by circular actions. Canonical descriptions and colours: [`CIRCULAR_TAXONOMY.md`](CIRCULAR_TAXONOMY.md)
 
-- refuse, reuse, repair, reporpouse, recycle, reduce
+- refuse, reuse, repair, repurpose, recycle, reduce
 
 ## Data & moderation
 
