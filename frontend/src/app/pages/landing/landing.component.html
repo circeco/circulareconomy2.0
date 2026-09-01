@@ -88,8 +88,8 @@
     >
       <ng-container *ngTemplateOutlet="eventCardInner; context: { $implicit: event }"></ng-container>
     </article>
-    <p class="upcoming-events-empty" *ngIf="eventsReady && events.length === 0">
-      {{ upcomingEventsEmptyMessage() }}
+    <p class="no-results" *ngIf="eventsLoaded && events.length === 0">
+      No upcoming circular events for {{ cityName }}.
     </p>
   </div>
 

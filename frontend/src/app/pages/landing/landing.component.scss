@@ -133,15 +133,15 @@
 }
 
 /* ---------------- Search results ---------------- */
+.no-results {
+  color: #718096;
+  font-size: 16px;
+  margin: 0;
+  padding: 24px 2%;
+}
+
 .search-results-block {
   margin-bottom: 40px;
-
-  .no-results {
-    color: #718096;
-    font-size: 16px;
-    margin: 0;
-    padding: 24px 2%;
-  }
 }
 
 /* ---------------- Circular Events section ---------------- */
@@ -179,15 +179,6 @@
       text-decoration: underline;
     }
   }
-}
-
-.upcoming-events-empty {
-  grid-column: 1 / -1;
-  margin: 0;
-  color: #718096;
-  font-size: 16px;
-  font-family: $font-khand;
-  line-height: 1.4;
 }
 
 .places-container,
