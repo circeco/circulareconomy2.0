@@ -11,6 +11,7 @@
 | `cities` | Public read | Admin only |
 | `reviewQueue` | Admin only | Admin only |
 | `users/{uid}/favourites/{docId}` | Only that signed-in user | Only that user |
+| `users/{uid}/eventFavourites/{docId}` | Only that signed-in user | Only that user |
 | Everything else | Denied | Denied |
 
 **Why the events query uses `where('status','==','approved')` in the app**

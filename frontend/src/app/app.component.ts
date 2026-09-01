@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
 
 import { AuthService } from './services/auth.service';
+import { EventFavoritesService } from './services/event-favorites.service';
 import { FavoritesService } from './services/favorites.service';
 import { LoginComponent } from './components/login/login.component';
 import { NavbarComponent } from './components/navbar/navbar.component';
@@ -25,7 +26,8 @@ declare global {
 export class AppComponent {
   constructor(
     public auth: AuthService,          // ensure auth initializes
-    private _favorites: FavoritesService // ensure favorites initializes
+    private _favorites: FavoritesService, // ensure favorites initializes
+    private _eventFavorites: EventFavoritesService // ensure event favs follow auth
   ) {}
 
   // Angular auth controls

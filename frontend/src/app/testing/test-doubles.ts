@@ -1,6 +1,7 @@
 import { signal } from '@angular/core';
 import { of, Subject } from 'rxjs';
 import { AuthService } from '../services/auth.service';
+import { EventFavoritesService } from '../services/event-favorites.service';
 import { FavoritesService } from '../services/favorites.service';
 import { MapService } from '../services/map.service';
 import { PlacesFilter } from '../services/places-filter.service';
@@ -25,6 +26,12 @@ export class FavoritesServiceStub implements Partial<FavoritesService> {
   mountHeartButton(_btn: HTMLButtonElement, _placeOrFeature: any) { return Promise.resolve(); }
   buildPlaceFromFeature() { return null as any; }
   computePlaceKey() { return '' as any; }
+}
+
+export class EventFavoritesServiceStub implements Partial<EventFavoritesService> {
+  favoriteIds = signal(new Set<string>()).asReadonly();
+  isFavorite(_eventId: string) { return false; }
+  toggle(_eventId: string) { return Promise.resolve(); }
 }
 
 export class MapServiceStub implements Pick<MapService, 'init' | 'onReady' | 'queryRenderedFeatures$' | 'onFeatureClick' | 'openPopup' | 'flyTo' | 'setFavoritesVisibility' | 'setCategoryFilter' | 'setActionTagFilter' | 'resize' | 'destroy'> {

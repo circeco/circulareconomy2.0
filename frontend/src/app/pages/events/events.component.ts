@@ -149,7 +149,7 @@ export class EventsComponent implements AfterViewChecked {
       this.auth.openModal();
       return;
     }
-    this.eventFavorites.toggle(eventId);
+    await this.eventFavorites.toggle(eventId);
   }
 
   selectCategory(id: string): void {

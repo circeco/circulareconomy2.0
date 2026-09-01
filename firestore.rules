@@ -87,6 +87,10 @@ service cloud.firestore {
       allow read, write: if isOwner(uid);
     }
 
+    match /users/{uid}/eventFavourites/{docId} {
+      allow read, write: if isOwner(uid);
+    }
+
     // Default deny (everything not matched above)
     match /{document=**} {
       allow read, write: if false;

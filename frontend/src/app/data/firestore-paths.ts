@@ -17,5 +17,6 @@ export const FS_PATHS = {
 
   // user-scoped collections already used by the app
   userFavourites: (uid: string) => `users/${uid}/favourites`,
+  userEventFavourites: (uid: string) => `users/${uid}/eventFavourites`,
 } as const;
 

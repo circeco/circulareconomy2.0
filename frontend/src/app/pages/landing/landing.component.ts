@@ -340,6 +340,6 @@ export class LandingComponent implements AfterViewInit, AfterViewChecked, OnDest
       this.auth.openModal();
       return;
     }
-    this.eventFavorites.toggle(eventId);
+    await this.eventFavorites.toggle(eventId);
   }
 }
