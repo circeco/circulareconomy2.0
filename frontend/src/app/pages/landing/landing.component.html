@@ -88,6 +88,9 @@
     >
       <ng-container *ngTemplateOutlet="eventCardInner; context: { $implicit: event }"></ng-container>
     </article>
+    <p class="upcoming-events-empty" *ngIf="eventsReady && events.length === 0">
+      {{ upcomingEventsEmptyMessage() }}
+    </p>
   </div>
 
   <div class="events-header">

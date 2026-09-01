@@ -181,6 +181,15 @@
   }
 }
 
+.upcoming-events-empty {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: #718096;
+  font-size: 16px;
+  font-family: $font-khand;
+  line-height: 1.4;
+}
+
 .places-container,
 .events-container,
 .search-results-container {

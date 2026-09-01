@@ -7,7 +7,7 @@ import { ElementRef } from '@angular/core';
 import { ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
+import { combineLatest, firstValueFrom } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DEMO_VIDEO_URL } from '../../config/media';
 import { EventsService, EventItem } from '../../services/events.service';
@@ -16,6 +16,8 @@ import { AuthService } from '../../services/auth.service';
 import { EventFavoritesService } from '../../services/event-favorites.service';
 import { FavoritesService } from '../../services/favorites.service';
 import { SearchService } from '../../services/search.service';
+import { CityContextService } from '../../services/city-context.service';
+import { CitiesService } from '../../services/cities.service';
 import { CitySwitcherComponent } from '../../components/city-switcher/city-switcher.component';
 import {
   ACTION_TAG_COLORS,
@@ -38,6 +40,8 @@ export class LandingComponent implements AfterViewInit, AfterViewChecked, OnDest
 
   demoUrl = DEMO_VIDEO_URL;
   events: EventItem[] = [];
+  eventsReady = false;
+  selectedCityName = '';
   featuredPlaces: FeaturedPlace[] = [];
   allPlaces: FeaturedPlace[] = [];
   allEvents: EventItem[] = [];
@@ -60,16 +64,25 @@ export class LandingComponent implements AfterViewInit, AfterViewChecked, OnDest
     public auth: AuthService,
     public eventFavorites: EventFavoritesService,
     private favoritesService: FavoritesService,
-    public searchService: SearchService
+    public searchService: SearchService,
+    private cityContext: CityContextService,
+    private cities: CitiesService,
   ) {
+    this.selectedCityName = this.displayCityName(this.cityContext.cityId(), []);
     this.eventsService.events$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((all) => {
       this.allEvents = all;
       this.events = [...all]
         .filter((e) => e?.date instanceof Date && !Number.isNaN(e.date.getTime()))
         .sort((a, b) => a.date.getTime() - b.date.getTime())
         .slice(0, 4);
+      this.eventsReady = true;
       this.lastClampMeasureKey = '';
     });
+    combineLatest([this.cityContext.cityId$, this.cities.cities$])
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(([cityId, cities]) => {
+        this.selectedCityName = this.displayCityName(cityId, cities);
+      });
     this.featuredPlacesService.getFeaturedPlaces().subscribe((places) => {
       this.featuredPlaces = places;
       this.lastClampMeasureKey = '';
@@ -181,6 +194,19 @@ export class LandingComponent implements AfterViewInit, AfterViewChecked, OnDest
 
   goToEventsPage(): void {
     this.router.navigate(['/events'], { queryParamsHandling: 'merge' });
+  }
+
+  upcomingEventsEmptyMessage(): string {
+    return `No upcoming circular events for ${this.selectedCityName}.`;
+  }
+
+  private displayCityName(cityId: string, cities: { id?: string; name?: string }[]): string {
+    const match = (cities || []).find((c) => c?.id === cityId);
+    const fromDoc = String(match?.name || '').trim();
+    if (fromDoc) return fromDoc;
+    const raw = String(cityId || '').trim();
+    if (!raw) return 'this city';
+    return raw.replace(/[_-]+/g, ' ').replace(/\b\w/g, (ch) => ch.toUpperCase());
   }
 
   goToEventPage(event: EventItem): void {
