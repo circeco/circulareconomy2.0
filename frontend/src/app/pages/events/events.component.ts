@@ -8,6 +8,8 @@ import { EventItem, EventsService } from '../../services/events.service';
 import { SearchService } from '../../services/search.service';
 import { AuthService } from '../../services/auth.service';
 import { EventFavoritesService } from '../../services/event-favorites.service';
+import { CityContextService } from '../../services/city-context.service';
+import { CitiesService } from '../../services/cities.service';
 import { CalendarComponent } from '../../components/calendar/calendar.component';
 import {
   ACTION_TAG_COLORS,
@@ -57,6 +59,7 @@ export class EventsComponent implements AfterViewChecked {
 
   events = signal<EventItem[]>([]);
   eventDatesForCalendar: Date[] = [];
+  readonly cityName = signal('');
 
   readonly favoriteEventDatesForCalendar = computed(() => {
     const favoriteIds = this.eventFavorites.favoriteIds();
@@ -74,9 +77,17 @@ export class EventsComponent implements AfterViewChecked {
     public searchService: SearchService,
     public auth: AuthService,
     public eventFavorites: EventFavoritesService,
+    private cityContext: CityContextService,
+    private cities: CitiesService,
     private router: Router,
     private route: ActivatedRoute
   ) {
+    combineLatest([this.cityContext.cityId$, this.cities.cities$])
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(([cityId, cities]) => {
+        this.cityName.set(cities.find((c) => c.id === cityId)?.name || '');
+      });
+
     combineLatest([this.eventsService.events$, this.route.queryParams])
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(([events, params]) => {
@@ -376,5 +387,22 @@ export class EventsComponent implements AfterViewChecked {
       }
     }
     return filtered;
+  });
+
+  readonly hasRealFilter = computed(() => {
+    const hasDate = this.selectedDateTimes().size > 0;
+    const selected = this.selectedActionTags();
+    const hasAction = ACTION_TAGS.some((tag) => !selected.has(tag));
+    return hasDate || hasAction;
+  });
+
+  readonly emptyEventsMessage = computed(() => {
+    if (this.favoritesFilterActive()) {
+      return 'No events saved as favourite';
+    }
+    if (this.events().length === 0 && !this.hasRealFilter()) {
+      return `No upcoming circular events in ${this.cityName()}.`;
+    }
+    return 'No events match the current filters.';
   });
 }

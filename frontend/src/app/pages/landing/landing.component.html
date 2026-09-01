@@ -89,7 +89,7 @@
       <ng-container *ngTemplateOutlet="eventCardInner; context: { $implicit: event }"></ng-container>
     </article>
     <p class="no-results" *ngIf="eventsLoaded && events.length === 0">
-      No upcoming circular events for {{ cityName }}.
+      No upcoming circular events in {{ cityName }}.
     </p>
   </div>
 

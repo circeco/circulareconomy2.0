@@ -152,7 +152,7 @@
         </article>
 
         <p class="events-empty" *ngIf="filteredEvents().length === 0">
-          {{ favoritesFilterActive() ? 'No events saved as favourite' : 'No events match the current filters.' }}
+          {{ emptyEventsMessage() }}
         </p>
       </div>
     </div>
