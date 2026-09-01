@@ -54,8 +54,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
   // filtered list snapshot for template
   filteredList: Feature[] = [];
-  // false until city places have loaded and the map layers are ready
-  placesReady = false;
+  listingsReady = false;
   private cityPlacesReceived = false;
   private mapLayersReady = false;
 
@@ -129,7 +128,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     // Wait until map & layers are rendered at least once
     this.map.onReady().subscribe(() => {
       this.mapLayersReady = true;
-      this.tryMarkPlacesReady();
+      this.tryMarkListingsReady();
       this.tryFocusPendingPlace();
 
       // 1) Feed visible features into the store — run INSIDE Angular so UI updates immediately
@@ -154,14 +153,20 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     });
 
     this.subs.push(
+      this.cityContext.cityId$.subscribe(() => {
+        this.listingsReady = false;
+        this.cityPlacesReceived = false;
+        this.cdr.markForCheck();
+      })
+    );
+
+    this.subs.push(
       this.featuredPlaces.getGeoJsonForCurrentCity().subscribe((fc) => {
         this.map.setPlacesData(fc);
         this.filter.buildIndex(fc as any);
         this.allCityFeatures = (fc?.features || []) as Feature[];
-        this.zone.run(() => {
-          this.cityPlacesReceived = true;
-          this.tryMarkPlacesReady();
-        });
+        this.cityPlacesReceived = true;
+        this.tryMarkListingsReady();
         if (this.pendingFocusPlaceId) {
           const focused = this.tryFocusPendingPlace();
           if (!focused) {
@@ -211,17 +216,12 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     window.addEventListener('favorites-ready', this.onFavReady);
   }
 
-  private tryMarkPlacesReady(): void {
-    if (!this.cityPlacesReceived || !this.mapLayersReady || this.placesReady) return;
-    // Defer the flag so the current CD cycle still renders loading copy.
-    // Sync map-ready + GeoJSON in tests would otherwise trip NG0100.
-    setTimeout(() => {
-      if (!this.cityPlacesReceived || !this.mapLayersReady || this.placesReady) return;
-      this.zone.run(() => {
-        this.placesReady = true;
-        this.cdr.markForCheck();
-      });
-    }, 0);
+  private tryMarkListingsReady(): void {
+    if (!this.cityPlacesReceived || !this.mapLayersReady) return;
+    this.zone.run(() => {
+      this.listingsReady = true;
+      this.cdr.markForCheck();
+    });
   }
 
   ngOnDestroy(): void {

@@ -41,4 +41,4 @@ It is intended to keep titles, order, descriptions, and colors consistent across
 ## Notes
 
 - This taxonomy is the source of truth for landing page circular cards.
-- Visitor-facing spelling is **Repurpose**. Historic misspellings (`reporpouse`, `repurpouse`) still canonicalize to the `repurpose` data key.
+- Visitor-facing spelling is **Repurpose**. Historic `reporpouse` still canonicalizes to the `repurpose` data key.

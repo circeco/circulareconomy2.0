@@ -38,7 +38,7 @@ Notes:
 - A reviewer may fill or correct tags during moderation.
 - Landing UI copy uses **Repurpose**; the **data key remains `repurpose`**.
 - Legacy / discovery aliases are canonicalized on write and read, for example:
-  - `reporpouse` / `repurpouse` → `repurpose`
+  - `reporpouse` → `repurpose`
   - `rethink` → `refuse`
   - `refurbish` → `repair`
   - `remanufacture` → `repurpose`

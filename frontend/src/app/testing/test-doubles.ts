@@ -1,5 +1,5 @@
 import { signal } from '@angular/core';
-import { of, ReplaySubject, Subject } from 'rxjs';
+import { of, Subject } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 import { EventFavoritesService } from '../services/event-favorites.service';
 import { FavoritesService } from '../services/favorites.service';
@@ -34,8 +34,8 @@ export class EventFavoritesServiceStub implements Partial<EventFavoritesService>
   toggle(_eventId: string) { return Promise.resolve(); }
 }
 
-export class MapServiceStub implements Pick<MapService, 'init' | 'onReady' | 'queryRenderedFeatures$' | 'onFeatureClick' | 'openPopup' | 'flyTo' | 'flyToCity' | 'setPlacesData' | 'setFavoritesVisibility' | 'setCategoryFilter' | 'setActionTagFilter' | 'resize' | 'destroy'> {
-  private ready$ = new ReplaySubject<boolean>(1);
+export class MapServiceStub implements Pick<MapService, 'init' | 'onReady' | 'queryRenderedFeatures$' | 'onFeatureClick' | 'openPopup' | 'flyTo' | 'setFavoritesVisibility' | 'setCategoryFilter' | 'setActionTagFilter' | 'resize' | 'destroy'> {
+  private ready$ = new Subject<boolean>();
   private features$ = new Subject<any[]>();
   private click$ = new Subject<{ feature: any; coords: [number, number] }>();
 
@@ -46,8 +46,6 @@ export class MapServiceStub implements Pick<MapService, 'init' | 'onReady' | 'qu
 
   openPopup() {}
   flyTo() {}
-  flyToCity() {}
-  setPlacesData(_fc: { type: 'FeatureCollection'; features: any[] }) {}
   setFavoritesVisibility(_v: boolean) {}
   setCategoryFilter(_set: Set<string>) {}
   setActionTagFilter(_set: Set<string>) {}
@@ -60,12 +58,12 @@ export class PlacesFilterStub implements Partial<PlacesFilter> {
   ACTION_TAG_IDS: string[] = [];
   enabledCategories$ = of(new Set<string>());
   enabledActionTagsState$ = of(new Set<string>());
-  filteredFeatures$ = of([] as any[]);
+  filteredFeatures$ = of([]);
 
   setAllFeatures(_features: any) {}
   setFilter(_query: string) {}
   setCategories(_set: Set<string>) {}
   setActionTags(_set: Set<string>) {}
-  enrichForUI(feature: any) { return feature?.properties || {}; }
+  enrichForUI(_feature: any) { return {} as any; }
   buildIndex(_fc: any) {}
 }

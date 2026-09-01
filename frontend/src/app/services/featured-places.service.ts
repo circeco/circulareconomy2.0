@@ -60,7 +60,7 @@ export class FeaturedPlacesService {
     if (text.includes('refuse')) out.add('refuse');
     if (text.includes('reuse') || text.includes('share') || text.includes('rental')) out.add('reuse');
     if (text.includes('repair') || text.includes('refurbish')) out.add('repair');
-    if (text.includes('repurpose') || text.includes('reporpouse') || text.includes('repurpouse') || text.includes('remanufacture')) out.add('repurpose');
+    if (text.includes('repurpose') || text.includes('reporpouse') || text.includes('remanufacture')) out.add('repurpose');
     if (text.includes('recycle')) out.add('recycle');
     if (text.includes('reduce')) out.add('reduce');
     return Array.from(out);
