@@ -4,9 +4,8 @@
     [ngModel]="cityContext.cityId()"
     (ngModelChange)="cityContext.setCityId($event)"
   >
-    <ng-container *ngIf="(cities.cities$ | async) as cs; else loading">
-      <option *ngFor="let c of cs" [value]="c.id">{{ c.name }}</option>
-      <option *ngIf="cs.length === 0" value="stockholm">Stockholm</option>
+    <ng-container *ngIf="cities.list().length; else loading">
+      <option *ngFor="let c of cities.list()" [value]="c.id">{{ c.name }}</option>
     </ng-container>
     <ng-template #loading>
       <option [value]="cityContext.cityId()">Loading cities…</option>

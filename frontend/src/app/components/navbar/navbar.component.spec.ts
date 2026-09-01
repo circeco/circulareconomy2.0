@@ -8,6 +8,7 @@ import { AuthServiceStub } from '../../testing/test-doubles';
 describe('NavbarComponent', () => {
   let component: NavbarComponent;
   let fixture: ComponentFixture<NavbarComponent>;
+  let auth: AuthServiceStub;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -21,10 +22,27 @@ describe('NavbarComponent', () => {
 
     fixture = TestBed.createComponent(NavbarComponent);
     component = fixture.componentInstance;
+    auth = TestBed.inject(AuthService) as unknown as AuthServiceStub;
     fixture.detectChanges();
   });
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('shows Sign in when there is no displayed user', () => {
+    expect(fixture.nativeElement.querySelector('#loginBtn')?.textContent).toContain('Sign in');
+    expect(fixture.nativeElement.querySelector('#avatar')).toBeNull();
+  });
+
+  it('keeps the avatar from displayUser even if user$ is null', () => {
+    auth.displayUser.set({
+      uid: 'u1',
+      email: 'a@b.c',
+      photoURL: 'assets/img/avatar.png',
+    });
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('#loginBtn')).toBeNull();
+    expect(fixture.nativeElement.querySelector('#avatar')).toBeTruthy();
   });
 });

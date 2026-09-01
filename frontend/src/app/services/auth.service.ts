@@ -7,12 +7,26 @@ import { setPersistence, browserLocalPersistence, getIdTokenResult, sendPassword
 import { Observable, from, firstValueFrom, of } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 
+/** Keep the last user across transient `null` emissions; clear only after sign-out. */
+export function holdUserUntilSignOut(
+  displayed: User | null,
+  emitted: User | null,
+  signedOut: boolean,
+): User | null {
+  if (emitted) return emitted;
+  return signedOut ? null : displayed;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private auth = inject(Auth);
+  private signedOutIntentionally = false;
 
   /** Firebase user stream */
   readonly user$: Observable<User | null> = user(this.auth);
+
+  /** Header chrome: last known user, not cleared by a brief `user$` null. */
+  readonly displayUser = signal<User | null>(null);
 
   /** Simple UI state for the modal */
   readonly modalOpen = signal(false);
@@ -27,6 +41,10 @@ export class AuthService {
         window.dispatchEvent(new CustomEvent('favorites:auth', {
           detail: { user: u ? { uid: u.uid, email: u.email ?? null } : null }
         }));
+        if (u) this.signedOutIntentionally = false;
+        this.displayUser.set(
+          holdUserUntilSignOut(this.displayUser(), u, this.signedOutIntentionally)
+        );
     });
 
     const g = window as any;
@@ -46,7 +64,10 @@ export class AuthService {
   signUp(email: string, password: string) {
     return from(createUserWithEmailAndPassword(this.auth, email, password));
   }
-  signOut() { return from(signOut(this.auth)); }
+  signOut() {
+    this.signedOutIntentionally = true;
+    return from(signOut(this.auth));
+  }
   resetPassword(email: string) {
     return from(sendPasswordResetEmail(this.auth, email));
   }

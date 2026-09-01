@@ -49,7 +49,7 @@
 
   <!-- 🔐 Auth controls (top-right) -->
   <div id="authHeader">
-    <ng-container *ngIf="(auth.user$ | async) as user; else loggedOut">
+    <ng-container *ngIf="auth.displayUser() as user; else loggedOut">
       <div id="profileMenu" class="profile">
         <img id="avatar" [src]="user.photoURL || 'assets/img/avatar.png'" alt="profile" />
         <div class="menu">

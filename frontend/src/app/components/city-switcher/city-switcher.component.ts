@@ -1,6 +1,6 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { AsyncPipe, NgIf } from '@angular/common';
+import { NgIf } from '@angular/common';
 import { NavigationEnd, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { filter } from 'rxjs/operators';
@@ -11,7 +11,7 @@ import { CityContextService } from '../../services/city-context.service';
 @Component({
   selector: 'app-city-switcher',
   standalone: true,
-  imports: [CommonModule, NgIf, AsyncPipe, FormsModule],
+  imports: [CommonModule, NgIf, FormsModule],
   templateUrl: './city-switcher.component.html',
   styleUrls: ['./city-switcher.component.scss'],
 })

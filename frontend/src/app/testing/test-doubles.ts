@@ -6,8 +6,9 @@ import { FavoritesService } from '../services/favorites.service';
 import { MapService } from '../services/map.service';
 import { PlacesFilter } from '../services/places-filter.service';
 
-export class AuthServiceStub implements Pick<AuthService, 'user$' | 'modalOpen' | 'openModal' | 'closeModal' | 'signInOnce' | 'signUpOnce' | 'signOutOnce' | 'resetPasswordOnce' | 'isAuthenticated' | 'isAdmin'> {
+export class AuthServiceStub implements Pick<AuthService, 'user$' | 'displayUser' | 'modalOpen' | 'openModal' | 'closeModal' | 'signInOnce' | 'signUpOnce' | 'signOutOnce' | 'resetPasswordOnce' | 'isAuthenticated' | 'isAdmin'> {
   user$ = of(null);
+  displayUser = signal<any>(null);
   modalOpen = signal(false);
 
   openModal = () => this.modalOpen.set(true);

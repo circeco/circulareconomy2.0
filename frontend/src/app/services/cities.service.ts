@@ -1,4 +1,4 @@
-import { inject, Injectable } from '@angular/core';
+import { inject, Injectable, signal } from '@angular/core';
 import { Firestore, collection } from '@angular/fire/firestore';
 import { collectionData } from '@angular/fire/firestore';
 import { Observable, of } from 'rxjs';
@@ -9,9 +9,16 @@ import type { CityDoc } from '../data/models';
 
 export type CityItem = CityDoc & { id: string };
 
+/** Keep the last city list while Firestore reloads; do not flash an empty list. */
+export function holdCitiesWhileReloading(displayed: CityItem[], next: CityItem[]): CityItem[] {
+  return next.length > 0 ? next : displayed;
+}
+
 @Injectable({ providedIn: 'root' })
 export class CitiesService {
   private fs = inject(Firestore);
+  private readonly _list = signal<CityItem[]>([]);
+  readonly list = this._list.asReadonly();
 
   readonly cities$: Observable<CityItem[]> = collectionData(
     collection(this.fs, FS_PATHS.cities),
@@ -26,7 +33,11 @@ export class CitiesService {
       console.warn('[cities] Firestore read failed; using empty list', err);
       return of([] as CityItem[]);
     }),
-    shareReplay(1)
+    shareReplay({ bufferSize: 1, refCount: false })
   );
+
+  private readonly keepListHot = this.cities$.subscribe((rows) => {
+    this._list.set(holdCitiesWhileReloading(this._list(), rows));
+  });
 }
 
