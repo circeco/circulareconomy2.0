@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, combineLatest, map } from 'rxjs';
 import { canonicalizeActionTag } from '../data/taxonomy';
+import { GeolocationService } from './geolocation.service';
 
 export interface PlaceProps {
   STORE_NAME?: string; NAME?: string;
@@ -10,6 +11,8 @@ export interface PlaceProps {
   WEB?: string;
   PLACE_KEY?: string;
   LEGACY_ID?: string | number | null;
+  distanceKm?: number;
+  distanceLabel?: string;
 }
 export interface Feature {
   type: 'Feature';
@@ -26,16 +29,32 @@ export class PlacesFilter {
   readonly ACTION_TAG_IDS = ['refuse', 'reuse', 'repair', 'repurpose', 'recycle', 'reduce'];
 
   private allFeatures$ = new BehaviorSubject<Feature[]>([]);
+  private cityFeatures$ = new BehaviorSubject<Feature[]>([]);
   private filterText$ = new BehaviorSubject<string>('');
   private enabledCats$ = new BehaviorSubject<Set<string>>(new Set(this.CATEGORY_IDS));
   private enabledActionTags$ = new BehaviorSubject<Set<string>>(new Set(this.ACTION_TAG_IDS));
+  private userOrigin$ = new BehaviorSubject<{ lat: number; lng: number } | null>(null);
+  private sortByDistance$ = new BehaviorSubject<boolean>(false);
+  private favoriteKeys$ = new BehaviorSubject<Set<string>>(new Set());
+  private favoritesOnly$ = new BehaviorSubject<boolean>(false);
 
   private placesIndexByNameAddr = new Map<string, Feature>();
   private placesIndexByCoord = new Map<string, Feature>();
   private placesIndexReady = false;
 
+  constructor(private geo: GeolocationService) {}
+
   setAllFeatures(list: Feature[]) { this.allFeatures$.next(list ?? []); }
+  setCityFeatures(fc: FeatureCollection | { features?: Feature[] } | null) {
+    const features = (fc?.features || []) as Feature[];
+    this.cityFeatures$.next(features);
+    this.buildIndex({ type: 'FeatureCollection', features });
+  }
   setFilter(text: string) { this.filterText$.next((text || '').trim().toLowerCase()); }
+  setUserOrigin(origin: { lat: number; lng: number } | null) { this.userOrigin$.next(origin); }
+  setSortByDistance(on: boolean) { this.sortByDistance$.next(!!on); }
+  setFavoriteKeys(keys: Set<string>) { this.favoriteKeys$.next(new Set(keys)); }
+  setFavoritesOnly(on: boolean) { this.favoritesOnly$.next(!!on); }
   toggleCategory(cat: string) {
     const next = new Set(this.enabledCats$.value);
     next.has(cat) ? next.delete(cat) : next.add(cat);
@@ -45,24 +64,40 @@ export class PlacesFilter {
   setActionTags(set: Set<string>) { this.enabledActionTags$.next(new Set(set)); }
 
   buildIndex(fc: FeatureCollection) {
+    this.placesIndexByNameAddr.clear();
+    this.placesIndexByCoord.clear();
     try { (fc.features||[]).forEach(f => this.indexFeature(f)); this.placesIndexReady = true; }
     catch { this.placesIndexReady = false; }
   }
 
   readonly enabledCategories$ = this.enabledCats$.asObservable();
   readonly enabledActionTagsState$ = this.enabledActionTags$.asObservable();
-  readonly filteredFeatures$ = combineLatest([this.allFeatures$, this.filterText$, this.enabledActionTags$]).pipe(
-    map(([all, typed, enabledTags]) => {
-      const list = this.dedupe(all);
-      const withTags = list.filter((f: Feature) => this.matchesActionTags(f, enabledTags));
-      if (!typed) return withTags;
-      return withTags.filter((f: Feature) => {
-        const p = this.enrichProps(f);
-        const descr = (p.DESCRIPTION || '').toLowerCase();
-        const name  = (p.STORE_NAME || p.NAME || '').toLowerCase();
-        const addr  = (p.ADDRESS_LINE1 || p.ADDRESS || '').toLowerCase();
-        return descr.includes(typed) || name.includes(typed) || addr.includes(typed);
-      });
+  readonly filteredFeatures$ = combineLatest([
+    this.allFeatures$,
+    this.filterText$,
+    this.enabledActionTags$,
+    this.userOrigin$,
+    this.sortByDistance$,
+  ]).pipe(
+    map(([visible, typed, enabledTags, origin, sortByDistance]) => {
+      const nearby = !!sortByDistance && !!origin;
+      let list = this.dedupe(visible);
+      list = list.filter((f: Feature) => this.matchesActionTags(f, enabledTags));
+      if (typed) {
+        list = list.filter((f: Feature) => {
+          const p = this.enrichProps(f);
+          const descr = (p.DESCRIPTION || '').toLowerCase();
+          const name  = (p.STORE_NAME || p.NAME || '').toLowerCase();
+          const addr  = (p.ADDRESS_LINE1 || p.ADDRESS || '').toLowerCase();
+          return descr.includes(typed) || name.includes(typed) || addr.includes(typed);
+        });
+      }
+      if (nearby && origin) {
+        list = list
+          .map((f) => this.withDistance(f, origin))
+          .sort((a, b) => (a.properties.distanceKm ?? Infinity) - (b.properties.distanceKm ?? Infinity));
+      }
+      return list;
     })
   );
 
@@ -140,6 +175,19 @@ export class PlacesFilter {
       }
     }
     return Object.values(byKey);
+  }
+
+  private withDistance(feature: Feature, origin: { lat: number; lng: number }): Feature {
+    const coords = feature.geometry?.coordinates || [];
+    const lng = Number(coords[0]);
+    const lat = Number(coords[1]);
+    const props = { ...(this.enrichProps(feature) || {}) };
+    if (isFinite(lng) && isFinite(lat)) {
+      const km = this.geo.haversineKm(origin, { lat, lng });
+      props.distanceKm = km;
+      props.distanceLabel = this.geo.formatDistance(km);
+    }
+    return { ...feature, properties: props };
   }
 
   private matchesActionTags(feature: Feature, enabledTags: Set<string>) {

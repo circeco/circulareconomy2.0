@@ -21,6 +21,9 @@ export class MapService {
 
   private ready$ = new ReplaySubject<boolean>(1); // emits when BOTH are true
   private click$ = new Subject<{ feature: any; coords: [number, number] }>();
+  private locateClick$ = new Subject<void>();
+  private userLocationReady = false;
+  private userMarker: any = null;
 
   private readonly STOCKHOLM: [number, number] = [18.072, 59.325];
   private readonly EMPTY_FC: { type: 'FeatureCollection'; features: any[] } = {
@@ -34,6 +37,7 @@ export class MapService {
 
   onReady(): Observable<boolean> { return this.ready$.asObservable(); }
   onFeatureClick(): Observable<{ feature: any; coords: [number, number] }> { return this.click$.asObservable(); }
+  onLocateClick(): Observable<void> { return this.locateClick$.asObservable(); }
 
   init(container: HTMLElement) {
     if (typeof mapboxgl === 'undefined') {
@@ -54,6 +58,7 @@ export class MapService {
       });
 
       this.map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
+      this.addLocateControl();
       this.map.on('styleimagemissing', (e: any) => { if (!e.id) return; });
 
       (window as any).circeco = (window as any).circeco || {};
@@ -92,6 +97,7 @@ export class MapService {
           paint: { 'circle-radius': 5, 'circle-color': '#FF5252' }
         });
       }
+      this.ensureUserLocationLayers();
       // Apply latest queued places once source exists.
       this.setPlacesData(this.pendingPlacesData);
       if (this.pendingCityCenter) {
@@ -249,6 +255,39 @@ export class MapService {
     });
   }
 
+  showUserLocation(lng: number, lat: number, accuracyMeters?: number, flyToUser = false) {
+    if (!this.map) return;
+    this.ensureUserLocationLayers();
+    if (!this.userMarker) {
+      const el = document.createElement('img');
+      el.className = 'circeco-user-marker';
+      el.src = '/assets/icons/user-location.png';
+      el.alt = 'Your location';
+      el.width = 36;
+      el.height = 36;
+      this.userMarker = new mapboxgl.Marker({ element: el, anchor: 'bottom' })
+        .setLngLat([lng, lat])
+        .addTo(this.map);
+    } else {
+      this.userMarker.setLngLat([lng, lat]);
+    }
+    const radius = typeof accuracyMeters === 'number' && isFinite(accuracyMeters) && accuracyMeters > 0
+      ? accuracyMeters
+      : 0;
+    this.getSource('user-accuracy')?.setData?.(
+      radius ? this.accuracyCircleFc(lng, lat, radius) : this.EMPTY_FC
+    );
+    if (flyToUser) {
+      this.map.flyTo({ center: [lng, lat], zoom: 14 });
+    }
+  }
+
+  clearUserLocation() {
+    this.userMarker?.remove();
+    this.userMarker = null;
+    this.getSource('user-accuracy')?.setData?.(this.EMPTY_FC);
+  }
+
   flyTo(center: [number, number], zoom = 14) {
     if (!this.map?.flyTo) return;
     this.map.flyTo({ center, zoom });
@@ -282,9 +321,86 @@ export class MapService {
   resize() { this.map?.resize(); }
   destroy() {
     window.removeEventListener('favorites:update', this.onFavoritesUpdate);
+    this.userMarker?.remove();
+    this.userMarker = null;
     this.map?.remove(); this.map = null; this.loaded = false; this.placesReady = false;
+    this.userLocationReady = false;
     this.pendingPlacesData = this.EMPTY_FC;
     this.pendingCityCenter = null;
+  }
+
+  private addLocateControl() {
+    const self = this;
+    const control = {
+      onAdd() {
+        const container = document.createElement('div');
+        container.className = 'mapboxgl-ctrl mapboxgl-ctrl-group circeco-locate-ctrl';
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'mapboxgl-ctrl-icon circeco-locate-btn';
+        btn.setAttribute('aria-label', 'Show nearby places');
+        btn.title = 'Show nearby places';
+        btn.addEventListener('click', (ev: Event) => {
+          ev.preventDefault();
+          ev.stopPropagation();
+          self.zone.run(() => self.locateClick$.next());
+        });
+        container.appendChild(btn);
+        (this as any)._container = container;
+        return container;
+      },
+      onRemove() {
+        const el = (this as any)._container as HTMLElement | undefined;
+        el?.parentNode?.removeChild(el);
+      },
+    };
+    this.map.addControl(control, 'bottom-right');
+  }
+
+  private ensureUserLocationLayers() {
+    if (!this.map || this.userLocationReady) return;
+    try {
+      if (!this.getSource('user-accuracy')) {
+        this.map.addSource('user-accuracy', { type: 'geojson', data: this.EMPTY_FC });
+      }
+      if (!this.getLayer('user-accuracy')) {
+        this.map.addLayer({
+          id: 'user-accuracy',
+          type: 'fill',
+          source: 'user-accuracy',
+          paint: {
+            'fill-color': '#45818e',
+            'fill-opacity': 0.18,
+          },
+        });
+      }
+      this.userLocationReady = true;
+    } catch (e) {
+      console.error('[map] failed adding user location layers', e);
+    }
+  }
+
+  private accuracyCircleFc(lng: number, lat: number, radiusMeters: number) {
+    const steps = 64;
+    const coords: [number, number][] = [];
+    const latRad = (lat * Math.PI) / 180;
+    const mPerDegLat = 110540;
+    const mPerDegLng = 111320 * Math.cos(latRad);
+    for (let i = 0; i <= steps; i++) {
+      const a = (i / steps) * 2 * Math.PI;
+      coords.push([
+        lng + (radiusMeters * Math.cos(a)) / mPerDegLng,
+        lat + (radiusMeters * Math.sin(a)) / mPerDegLat,
+      ]);
+    }
+    return {
+      type: 'FeatureCollection' as const,
+      features: [{
+        type: 'Feature',
+        properties: {},
+        geometry: { type: 'Polygon', coordinates: [coords] },
+      }],
+    };
   }
 
   setFavoriteKeys(keys: Set<string>) {
