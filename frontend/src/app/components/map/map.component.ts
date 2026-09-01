@@ -131,8 +131,9 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       // 1) Feed visible features into the store — run INSIDE Angular so UI updates immediately
       this.map.queryRenderedFeatures$().subscribe(fs => {
         this.zone.run(() => {
+          if (!this.cityPlacesReceived) return;
           this.filter.setAllFeatures(fs as any);
-          if (this.cityPlacesReceived) this.listingsReady = true;
+          this.listingsReady = true;
           this.cdr.markForCheck();
         });
       });
@@ -154,6 +155,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       this.cityContext.cityId$.subscribe(() => {
         this.listingsReady = false;
         this.cityPlacesReceived = false;
+        this.filteredList = [];
         this.cdr.markForCheck();
       })
     );
