@@ -56,7 +56,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   filteredList: Feature[] = [];
   listingsReady = false;
   private cityPlacesReceived = false;
-  private mapLayersReady = false;
 
   // queue hearts until favourites service ready
   private heartMountQueue: Array<{ btn: HTMLButtonElement, place: any }> = [];
@@ -127,14 +126,13 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
     // Wait until map & layers are rendered at least once
     this.map.onReady().subscribe(() => {
-      this.mapLayersReady = true;
-      this.tryMarkListingsReady();
       this.tryFocusPendingPlace();
 
       // 1) Feed visible features into the store — run INSIDE Angular so UI updates immediately
       this.map.queryRenderedFeatures$().subscribe(fs => {
         this.zone.run(() => {
           this.filter.setAllFeatures(fs as any);
+          if (this.cityPlacesReceived) this.listingsReady = true;
           this.cdr.markForCheck();
         });
       });
@@ -166,7 +164,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         this.filter.buildIndex(fc as any);
         this.allCityFeatures = (fc?.features || []) as Feature[];
         this.cityPlacesReceived = true;
-        this.tryMarkListingsReady();
         if (this.pendingFocusPlaceId) {
           const focused = this.tryFocusPendingPlace();
           if (!focused) {
@@ -214,14 +211,6 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     window.addEventListener('favorites:update', this.onFavUpdate);
     window.addEventListener('favorites:auth', this.onFavAuth);
     window.addEventListener('favorites-ready', this.onFavReady);
-  }
-
-  private tryMarkListingsReady(): void {
-    if (!this.cityPlacesReceived || !this.mapLayersReady) return;
-    this.zone.run(() => {
-      this.listingsReady = true;
-      this.cdr.markForCheck();
-    });
   }
 
   ngOnDestroy(): void {
