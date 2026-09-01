@@ -30,20 +30,18 @@ describe('PlacesFilter nearby sort', () => {
       feat('Near', 18.08, 59.33),
     ];
     filter.setAllFeatures(visible);
-    filter.setCityFeatures({ type: 'FeatureCollection', features: visible });
     const list = await firstValueFrom(filter.filteredFeatures$);
     expect(list.map((f) => f.properties.STORE_NAME)).toEqual(['Far', 'Near']);
     expect(list[0].properties.distanceLabel).toBeUndefined();
   });
 
-  it('sorts current-city places nearest-first and labels distance', async () => {
+  it('sorts visible places nearest-first and labels distance', async () => {
     const origin = { lat: 59.325, lng: 18.072 };
-    const city = [
+    const visible = [
       feat('Far', 18.25, 59.42, { ACTION_TAGS: ['reuse'] }),
       feat('Near', 18.08, 59.33, { ACTION_TAGS: ['repair'] }),
     ];
-    filter.setAllFeatures([city[0]]);
-    filter.setCityFeatures({ type: 'FeatureCollection', features: city });
+    filter.setAllFeatures(visible);
     filter.setUserOrigin(origin);
     filter.setSortByDistance(true);
     const list = await firstValueFrom(filter.filteredFeatures$);
@@ -52,14 +50,30 @@ describe('PlacesFilter nearby sort', () => {
     expect(list[0].properties.distanceKm!).toBeLessThan(list[1].properties.distanceKm!);
   });
 
+  it('follows the viewport even when sorting by distance', async () => {
+    const origin = { lat: 59.325, lng: 18.072 };
+    const far = feat('Far', 18.25, 59.42);
+    const near = feat('Near', 18.08, 59.33);
+    filter.setCityFeatures({ type: 'FeatureCollection', features: [far, near] });
+    filter.setAllFeatures([far]);
+    filter.setUserOrigin(origin);
+    filter.setSortByDistance(true);
+    const onlyVisible = await firstValueFrom(filter.filteredFeatures$);
+    expect(onlyVisible.map((f) => f.properties.STORE_NAME)).toEqual(['Far']);
+
+    filter.setAllFeatures([far, near]);
+    const both = await firstValueFrom(filter.filteredFeatures$);
+    expect(both.map((f) => f.properties.STORE_NAME)).toEqual(['Near', 'Far']);
+  });
+
   it('keeps action-tag and search filters while sorting', async () => {
     const origin = { lat: 59.325, lng: 18.072 };
-    const city = [
+    const visible = [
       feat('Reuse shop', 18.08, 59.33, { ACTION_TAGS: ['reuse'], DESCRIPTION: 'clothes swap' }),
       feat('Repair cafe', 18.09, 59.331, { ACTION_TAGS: ['repair'], DESCRIPTION: 'fix bikes' }),
       feat('Other reuse', 18.25, 59.42, { ACTION_TAGS: ['reuse'], DESCRIPTION: 'furniture' }),
     ];
-    filter.setCityFeatures({ type: 'FeatureCollection', features: city });
+    filter.setAllFeatures(visible);
     filter.setUserOrigin(origin);
     filter.setSortByDistance(true);
     filter.setActionTags(new Set(['reuse']));
@@ -74,7 +88,6 @@ describe('PlacesFilter nearby sort', () => {
       feat('Near', 18.08, 59.33),
     ];
     filter.setAllFeatures(visible);
-    filter.setCityFeatures({ type: 'FeatureCollection', features: visible });
     filter.setUserOrigin({ lat: 59.325, lng: 18.072 });
     filter.setSortByDistance(false);
     const list = await firstValueFrom(filter.filteredFeatures$);

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, combineLatest, map } from 'rxjs';
-import { canonicalizeActionTag, canonicalizeSectorCategory } from '../data/taxonomy';
+import { canonicalizeActionTag } from '../data/taxonomy';
 import { GeolocationService } from './geolocation.service';
 
 export interface PlaceProps {
@@ -74,26 +74,15 @@ export class PlacesFilter {
   readonly enabledActionTagsState$ = this.enabledActionTags$.asObservable();
   readonly filteredFeatures$ = combineLatest([
     this.allFeatures$,
-    this.cityFeatures$,
     this.filterText$,
     this.enabledActionTags$,
-    this.enabledCats$,
     this.userOrigin$,
     this.sortByDistance$,
-    this.favoriteKeys$,
-    this.favoritesOnly$,
   ]).pipe(
-    map(([visible, city, typed, enabledTags, enabledCats, origin, sortByDistance, favKeys, favOnly]) => {
+    map(([visible, typed, enabledTags, origin, sortByDistance]) => {
       const nearby = !!sortByDistance && !!origin;
-      const source = nearby ? city : visible;
-      let list = this.dedupe(source);
+      let list = this.dedupe(visible);
       list = list.filter((f: Feature) => this.matchesActionTags(f, enabledTags));
-      if (nearby) {
-        list = list.filter((f: Feature) => this.matchesCategories(f, enabledCats));
-        if (favOnly) {
-          list = list.filter((f: Feature) => favKeys.has(this.canonicalKey(f)));
-        }
-      }
       if (typed) {
         list = list.filter((f: Feature) => {
           const p = this.enrichProps(f);
@@ -199,31 +188,6 @@ export class PlacesFilter {
       props.distanceLabel = this.geo.formatDistance(km);
     }
     return { ...feature, properties: props };
-  }
-
-  private matchesCategories(feature: Feature, enabled: Set<string>) {
-    if (!enabled.size || enabled.size === this.CATEGORY_IDS.length) return true;
-    const have = this.featureCategorySet(feature);
-    for (const cat of enabled) {
-      if (have.has(cat)) return true;
-    }
-    return false;
-  }
-
-  private featureCategorySet(feature: Feature): Set<string> {
-    const props = this.enrichProps(feature) as any;
-    const out = new Set<string>();
-    const add = (raw: unknown) => {
-      const canonical = canonicalizeSectorCategory(String(raw || ''));
-      if (canonical) out.add(canonical);
-    };
-    const cats = props?.CATEGORIES ?? props?.categories ?? props?.sectorCategories;
-    if (Array.isArray(cats)) cats.forEach(add);
-    else if (typeof cats === 'string') {
-      cats.split(/[,;|]/).forEach((part: string) => add(part));
-    }
-    add(props?.CATEGORY ?? props?.category ?? props?.sectorCategory);
-    return out;
   }
 
   private matchesActionTags(feature: Feature, enabledTags: Set<string>) {
