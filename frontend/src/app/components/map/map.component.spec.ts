@@ -64,6 +64,11 @@ describe('MapComponent', () => {
     return (fixture.nativeElement.querySelector('.listings')?.textContent || '').replace(/\s+/g, ' ').trim();
   }
 
+  async function flushPlacesReady(fixture: ComponentFixture<MapComponent>): Promise<void> {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    fixture.detectChanges();
+  }
+
   it('should create', async () => {
     const fixture = await createComponent();
     expect(fixture.componentInstance).toBeTruthy();
@@ -77,7 +82,7 @@ describe('MapComponent', () => {
     expect(listingsText(fixture)).not.toContain('No places match the current filters.');
 
     geojson$.next(EMPTY_FC);
-    fixture.detectChanges();
+    await flushPlacesReady(fixture);
 
     expect(listingsText(fixture)).not.toContain('Loading places…');
     expect(listingsText(fixture)).toContain('No places match the current filters.');
@@ -86,6 +91,7 @@ describe('MapComponent', () => {
   it('hides the empty-filters sentence when places are listed', async () => {
     const filteredFeatures$ = new Subject<any[]>();
     const fixture = await createComponent({ filteredFeatures$ });
+    await flushPlacesReady(fixture);
 
     filteredFeatures$.next([{
       type: 'Feature',

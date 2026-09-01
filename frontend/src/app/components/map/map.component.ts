@@ -212,9 +212,16 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   }
 
   private tryMarkPlacesReady(): void {
-    if (!this.cityPlacesReceived || !this.mapLayersReady) return;
-    this.placesReady = true;
-    this.cdr.markForCheck();
+    if (!this.cityPlacesReceived || !this.mapLayersReady || this.placesReady) return;
+    // Defer the flag so the current CD cycle still renders loading copy.
+    // Sync map-ready + GeoJSON in tests would otherwise trip NG0100.
+    setTimeout(() => {
+      if (!this.cityPlacesReceived || !this.mapLayersReady || this.placesReady) return;
+      this.zone.run(() => {
+        this.placesReady = true;
+        this.cdr.markForCheck();
+      });
+    }, 0);
   }
 
   ngOnDestroy(): void {

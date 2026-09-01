@@ -60,7 +60,7 @@ export class PlacesFilterStub implements Partial<PlacesFilter> {
   ACTION_TAG_IDS: string[] = [];
   enabledCategories$ = of(new Set<string>());
   enabledActionTagsState$ = of(new Set<string>());
-  filteredFeatures$ = of([]);
+  filteredFeatures$ = of([] as any[]);
 
   setAllFeatures(_features: any) {}
   setFilter(_query: string) {}
