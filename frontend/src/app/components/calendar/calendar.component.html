@@ -24,7 +24,7 @@
         [class.has-event]="hasEvent(day) && !hasFavoriteEvent(day)"
         [class.has-favorite-event]="hasFavoriteEvent(day)"
         [class.selected]="isSelected(day)"
-        [disabled]="day === null"
+        [disabled]="day === null || !hasEvent(day)"
         (click)="toggleDate(day)"
       >
         {{ day ?? '' }}

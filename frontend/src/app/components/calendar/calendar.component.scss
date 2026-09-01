@@ -64,13 +64,17 @@
   cursor: pointer;
   color: #2d3748;
 
-  &:hover:not(.empty):not(.selected) {
+  &:hover:not(.empty):not(.selected):not(:disabled) {
     background: $bg-light;
   }
 
   &.empty {
     cursor: default;
     visibility: hidden;
+  }
+
+  &:disabled:not(.empty) {
+    cursor: default;
   }
 
   &.today {
@@ -101,6 +105,7 @@
   &.selected {
     background: $brand-deep;
     color: white;
+    border: 2px solid $color-accent;
 
     &:nth-child(7n) {
       background: $color-accent;

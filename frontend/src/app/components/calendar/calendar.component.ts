@@ -73,16 +73,12 @@ export class CalendarComponent {
   }
 
   toggleDate(day: number | null): void {
-    if (day === null) return;
+    if (day === null || !this.hasEvent(day)) return;
     const d = this._viewDate();
     const key = new Date(d.getFullYear(), d.getMonth(), day).getTime();
-    const set = new Set(this._selectedDates());
-    if (set.has(key)) {
-      set.delete(key);
-    } else {
-      set.add(key);
-    }
-    this._selectedDates.set(set);
+    const next = new Set<number>();
+    if (!this._selectedDates().has(key)) next.add(key);
+    this._selectedDates.set(next);
     this.selectedDatesChange.emit(this.getSelectedDates());
   }
 
