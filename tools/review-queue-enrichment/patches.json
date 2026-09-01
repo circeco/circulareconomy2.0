@@ -1,0 +1,736 @@
+[
+  {
+    "id": "osm_milan_node_1080818668",
+    "cityId": "milan",
+    "name": "Eco-Angel's",
+    "proposed": {
+      "description": "Second-hand shop in Cormano (Milan north) selling used goods.",
+      "address": "Via Valassina 6, 20095 Cormano",
+      "actionTags": ["reuse"],
+      "sectorCategories": []
+    },
+    "unchanged": ["website"],
+    "flags": [],
+    "sources": [
+      "https://www.openstreetmap.org/node/1080818668",
+      "https://nominatim.openstreetmap.org/reverse?lat=45.5436681&lon=9.1875196",
+      "https://www.streetdir.com/IT/Lombardia/Milano/Cormano/Spots/Eco-Angel-S/"
+    ],
+    "notes": "OSM shop=second_hand. Nominatim and local directory agree on Via Valassina, Cormano. No official website found."
+  },
+  {
+    "id": "osm_milan_node_13112546401",
+    "cityId": "milan",
+    "name": "Libraccio",
+    "proposed": {
+      "description": "Libraccio Loreto branch: used and new books, textbooks, comics and stationery.",
+      "address": "Viale Monza 9, 20125 Milano",
+      "website": "https://negozi.libraccio.it/negozi/milano/libraccio-loreto",
+      "actionTags": ["reuse"],
+      "sectorCategories": ["books-comics-magazines"]
+    },
+    "unchanged": [],
+    "flags": ["duplicate_chain"],
+    "sources": [
+      "https://www.openstreetmap.org/node/13112546401",
+      "https://negozi.libraccio.it/negozi/milano/libraccio-loreto"
+    ],
+    "notes": "Canonicalized sector books → books-comics-magazines. Replaced generic libraccio.it homepage with the Loreto store page."
+  },
+  {
+    "id": "osm_milan_node_13108707212",
+    "cityId": "milan",
+    "name": "Libraccio",
+    "proposed": {
+      "description": "Historic Libraccio Navigli shop: buy and sell used books, textbooks and comics.",
+      "address": "Via Corsico 9, 20144 Milano",
+      "website": "https://negozi.libraccio.it/negozi/milano/libraccio-corsico",
+      "actionTags": ["reuse"],
+      "sectorCategories": ["books-comics-magazines"]
+    },
+    "unchanged": [],
+    "flags": ["duplicate_chain"],
+    "sources": [
+      "https://www.openstreetmap.org/node/13108707212",
+      "https://negozi.libraccio.it/negozi/milano/libraccio-corsico"
+    ],
+    "notes": "Same Navigli complex as Alzaia Naviglio Grande / Corsico OSM duplicates. Canonicalized books."
+  },
+  {
+    "id": "osm_milan_node_4294302830",
+    "cityId": "milan",
+    "name": "Libraccio",
+    "proposed": {
+      "description": "Libraccio Navigli: used and new books on Alzaia Naviglio Grande.",
+      "website": "https://negozi.libraccio.it/negozi/milano/libraccio-corsico",
+      "actionTags": ["reuse"],
+      "sectorCategories": ["books-comics-magazines"]
+    },
+    "unchanged": ["address"],
+    "flags": ["duplicate_chain"],
+    "sources": [
+      "https://www.openstreetmap.org/node/4294302830",
+      "https://negozi.libraccio.it/negozi/milano/libraccio-corsico"
+    ],
+    "notes": "Street address already present. Duplicate of the Via Corsico Navigli complex."
+  },
+  {
+    "id": "osm_milan_node_12262893108",
+    "cityId": "milan",
+    "name": "Usato da usare",
+    "proposed": {
+      "description": "Large used-goods warehouse (In&Out / Usato da usare) selling second-hand furniture, clothing, appliances and household items.",
+      "address": "Via Castrovillari 25, 20152 Milano",
+      "website": "http://www.inandout.bz/",
+      "actionTags": ["reuse"],
+      "sectorCategories": ["home-garden"]
+    },
+    "unchanged": [],
+    "flags": [],
+    "sources": [
+      "https://www.openstreetmap.org/node/12262893108",
+      "https://www.tuttamilano.it/inandout-usatodausare-milano-31244",
+      "http://www.inandout.bz/contatti/"
+    ],
+    "notes": "OSM shop=charity; listings identify it as In&Out at Via Castrovillari 25. Sector home-garden because furniture/household is the main public offer."
+  },
+  {
+    "id": "osm_milan_node_13686102461",
+    "cityId": "milan",
+    "name": "YogAmica Di Micaela",
+    "proposed": {
+      "address": "Via Don Giovanni Minzoni 43, 20099 Sesto San Giovanni",
+      "actionTags": [],
+      "sectorCategories": []
+    },
+    "unchanged": ["website", "description"],
+    "flags": ["off_concept"],
+    "sources": [
+      "https://www.openstreetmap.org/node/13686102461",
+      "https://www.fresha.com/de/lvp/yogamica-via-don-giovanni-minzoni-sesto-san-giovanni-QkQB2l"
+    ],
+    "notes": "Yoga/wellness and beauty studio, not a circular-economy venue. OSM shop=second_hand is incorrect. Clearing reuse tag."
+  },
+  {
+    "id": "osm_milan_node_13847141401",
+    "cityId": "milan",
+    "name": "Bivio compra vendi scambia",
+    "proposed": {
+      "description": "BIVIO Porta Romana: buy, sell and trade pre-owned clothing and accessories.",
+      "address": "Corso Lodi 18, 20139 Milano",
+      "website": "https://biviomilano.it/",
+      "actionTags": ["reuse"],
+      "sectorCategories": ["apparel"]
+    },
+    "unchanged": [],
+    "flags": [],
+    "sources": [
+      "https://www.openstreetmap.org/node/13847141401",
+      "https://biviomilano.it/punti-vendita/",
+      "https://biviomilano.it/punti-vendita/corso-lodi-18/"
+    ],
+    "notes": "Nominatim places the OSM node on Via Mantova, the seller entrance next to Corso Lodi 18. Official store page used for public address."
+  },
+  {
+    "id": "osm_milan_node_13974227668",
+    "cityId": "milan",
+    "name": "LoveMeTandem",
+    "proposed": {
+      "description": "Tandem, city-bike and cargo-bike rental based at Cascina Nascosta in Parco Sempione.",
+      "address": "Viale Emilio Alemagna 14, 20121 Milano",
+      "actionTags": ["reuse"],
+      "sectorCategories": ["cycling-sports"]
+    },
+    "unchanged": ["website"],
+    "flags": [],
+    "sources": [
+      "https://www.openstreetmap.org/node/13974227668",
+      "https://lovemetandem.com/"
+    ],
+    "notes": "Mapped rental → reuse. Website already present."
+  },
+  {
+    "id": "osm_milan_node_13983802018",
+    "cityId": "milan",
+    "name": "Baddarò",
+    "proposed": {
+      "description": "Solidarity second-hand market (Borgo in Città Onlus) selling donated vintage clothes, books and household objects.",
+      "address": "Piazza San Materno 10, 20131 Milano",
+      "actionTags": ["reuse"],
+      "sectorCategories": []
+    },
+    "unchanged": ["website"],
+    "flags": [],
+    "sources": [
+      "https://www.openstreetmap.org/node/13983802018",
+      "https://ostellobello.com/it/mercatino-baddaro/"
+    ],
+    "notes": "Mixed charity jumble (clothes, books, objects). No official site; skip Facebook/search pages. Sectors left empty."
+  },
+  {
+    "id": "osm_milan_node_543421935",
+    "cityId": "milan",
+    "name": "Recupero Metalli",
+    "proposed": {
+      "address": "Via Giovanni Battista Grassi, 20157 Milano",
+      "actionTags": ["recycle"],
+      "sectorCategories": []
+    },
+    "unchanged": ["website", "description"],
+    "flags": ["off_concept", "uncertain"],
+    "sources": [
+      "https://www.openstreetmap.org/node/543421935",
+      "https://nominatim.openstreetmap.org/reverse?lat=45.5171376&lon=9.1198021"
+    ],
+    "notes": "OSM amenity=recycling named Recupero Metalli. Looks like a generic metal scrap point, not a public circular-economy service. No official website. Do not invent a reuse story."
+  },
+  {
+    "id": "taxonomy_recheck_milan_ZYg6HdAQQY2AhbE0Dlkl",
+    "cityId": "milan",
+    "name": "Calzoleria Sorace",
+    "proposed": {
+      "description": "Traditional shoe repair workshop (calzoleria) restoring footwear and leather goods.",
+      "actionTags": ["repair"],
+      "sectorCategories": ["apparel"]
+    },
+    "unchanged": ["address", "website"],
+    "flags": [],
+    "sources": [
+      "https://www.calzoleriasorace.it/"
+    ],
+    "notes": "Canonicalized repair|refurnish → repair; clothing → apparel. Address and official site already present."
+  },
+  {
+    "id": "taxonomy_recheck_milan_5hn3odh5Prpv6LDTtuHD",
+    "cityId": "milan",
+    "name": "Biblioteca Ostinata",
+    "proposed": {
+      "description": "Independent community library in the Ticinese area offering shared access to books.",
+      "actionTags": ["reuse"],
+      "sectorCategories": ["books-comics-magazines"]
+    },
+    "unchanged": ["address", "website"],
+    "flags": [],
+    "sources": [
+      "https://www.bibliotecaostinata.it"
+    ],
+    "notes": "Canonicalized 'reuse; rental' → reuse (rental alias). books → books-comics-magazines."
+  },
+  {
+    "id": "taxonomy_recheck_milan_ZyFwFEtyct5Dxcrdsrm3",
+    "cityId": "milan",
+    "name": "Sample place (Milan)",
+    "proposed": {
+      "actionTags": [],
+      "sectorCategories": []
+    },
+    "unchanged": ["description", "address", "website"],
+    "flags": ["placeholder", "off_concept"],
+    "sources": [],
+    "notes": "Seed/sample placeholder, not a real venue. Do not invent circular copy."
+  },
+  {
+    "id": "osm_stockholm_node_11107378245",
+    "cityId": "stockholm",
+    "name": "Loop all",
+    "proposed": {
+      "description": "Weekend second-hand shop that renovates and resells furniture, homeware and other reused goods.",
+      "address": "Kungsholms strand 165, 112 48 Stockholm",
+      "website": "https://loopall.se/",
+      "actionTags": ["reuse", "repair"],
+      "sectorCategories": ["home-garden"]
+    },
+    "unchanged": [],
+    "flags": [],
+    "sources": [
+      "https://www.openstreetmap.org/node/11107378245",
+      "https://loopall.se/"
+    ],
+    "notes": "Official site: renovates/repairs before resale. Keep reuse+repair. Website normalized with trailing slash."
+  },
+  {
+    "id": "osm_stockholm_node_11248160786",
+    "cityId": "stockholm",
+    "name": "Humana",
+    "proposed": {
+      "description": "HUMANA Second Hand City: charity shop for second-hand clothes, shoes and accessories.",
+      "address": "Gamla Brogatan 26, 111 20 Stockholm",
+      "website": "https://www.humanasecondhand.se/stores",
+      "actionTags": ["reuse"],
+      "sectorCategories": ["apparel"]
+    },
+    "unchanged": [],
+    "flags": ["duplicate_chain"],
+    "sources": [
+      "https://www.openstreetmap.org/node/11248160786",
+      "https://www.humanasecondhand.se/stores",
+      "https://www.humanasverige.se/butiker"
+    ],
+    "notes": "Canonicalized clothing → apparel. Replaced chain homepage with store-locator page that lists this branch."
+  },
+  {
+    "id": "osm_stockholm_node_1144620900",
+    "cityId": "stockholm",
+    "name": "Humana",
+    "proposed": {
+      "description": "HUMANA Second Hand Mariatorget: second-hand clothing shop.",
+      "address": "Timmermansgatan 23, 118 55 Stockholm",
+      "website": "https://www.humanasecondhand.se/stores",
+      "actionTags": ["reuse"],
+      "sectorCategories": ["apparel"]
+    },
+    "unchanged": [],
+    "flags": ["duplicate_chain"],
+    "sources": [
+      "https://www.openstreetmap.org/node/1144620900",
+      "https://www.humanasverige.se/butiker"
+    ],
+    "notes": "Street already known; completed postcode from official store list. Sector apparel."
+  },
+  {
+    "id": "osm_stockholm_node_1025469701",
+    "cityId": "stockholm",
+    "name": "Stadsmissionen",
+    "proposed": {
+      "description": "Stockholms Stadsmission second-hand shop selling clothes, homeware, books and small furniture.",
+      "address": "Hornsgatan 58, 118 21 Stockholm",
+      "actionTags": ["reuse"],
+      "sectorCategories": []
+    },
+    "unchanged": ["website"],
+    "flags": [],
+    "sources": [
+      "https://www.openstreetmap.org/node/1025469701",
+      "https://www.stadsmissionen.se/butiker/second-hand-sodermalm-mariatorget-hornsgatan"
+    ],
+    "notes": "Mixed charity assortment; sectors left empty. Official store URL already on the candidate."
+  },
+  {
+    "id": "osm_stockholm_node_13369836541",
+    "cityId": "stockholm",
+    "name": "Twist & Tango",
+    "proposed": {
+      "address": "Skånegatan 90, 116 37 Stockholm",
+      "actionTags": [],
+      "sectorCategories": []
+    },
+    "unchanged": ["website", "description"],
+    "flags": ["off_concept"],
+    "sources": [
+      "https://www.openstreetmap.org/node/13369836541",
+      "https://twisttango.com/int/store/219"
+    ],
+    "notes": "Swedish fashion brand store (archive/sample of own collections), not a circular second-hand venue. OSM shop=second_hand is misleading. Clearing reuse tag."
+  },
+  {
+    "id": "osm_stockholm_node_9811112805",
+    "cityId": "stockholm",
+    "name": "Rent a bike",
+    "proposed": {
+      "description": "Bicycle rental shop on Strandvägen for city cycling without buying a bike.",
+      "actionTags": ["reuse"],
+      "sectorCategories": ["cycling-sports"]
+    },
+    "unchanged": ["address", "website"],
+    "flags": [],
+    "sources": [
+      "https://www.openstreetmap.org/node/9811112805",
+      "https://rentabike.se"
+    ],
+    "notes": "Mapped rental → reuse. Address and official site already present."
+  },
+  {
+    "id": "osm_stockholm_node_1570245193",
+    "cityId": "stockholm",
+    "name": "Hammarbybacken Skidhyra",
+    "proposed": {
+      "description": "SkiStarshop at Hammarbybacken: ski, boot and snowboard rental at the city slope.",
+      "address": "Hammarby Fabriksväg 111, 120 66 Stockholm",
+      "website": "https://www.skistar.com/sv/hammarbybacken/vinter-i-hammarbybacken/skistarshop/",
+      "actionTags": ["reuse"],
+      "sectorCategories": ["cycling-sports"]
+    },
+    "unchanged": [],
+    "flags": [],
+    "sources": [
+      "https://www.openstreetmap.org/node/1570245193",
+      "https://www.skistar.com/sv/hammarbybacken/vinter-i-hammarbybacken/skistarshop/"
+    ],
+    "notes": "Mapped rental → reuse. Sector cycling-sports covers ski/snowboard sport equipment."
+  },
+  {
+    "id": "osm_stockholm_node_479369231",
+    "cityId": "stockholm",
+    "name": "Myrorna",
+    "proposed": {
+      "description": "Myrorna (Salvation Army) charity second-hand shop for clothes, shoes and homeware.",
+      "address": "Mäster Samuelsgatan 49, 111 57 Stockholm",
+      "actionTags": ["reuse"],
+      "sectorCategories": ["apparel"]
+    },
+    "unchanged": ["website"],
+    "flags": ["duplicate_chain"],
+    "sources": [
+      "https://www.openstreetmap.org/node/479369231",
+      "https://www.myrorna.se/butiker/stockholm/master-samuelsgatan/"
+    ],
+    "notes": "This branch focuses on fashion and smaller home items; apparel is the primary sector."
+  },
+  {
+    "id": "osm_stockholm_node_1948002096",
+    "cityId": "stockholm",
+    "name": "Artikel2",
+    "proposed": {
+      "description": "Artikel2 (formerly Emmaus Stockholm) charity second-hand shop at Slussen.",
+      "address": "Peter Myndes backe 8, 118 46 Stockholm",
+      "actionTags": ["reuse"],
+      "sectorCategories": []
+    },
+    "unchanged": ["website"],
+    "flags": ["duplicate_chain"],
+    "sources": [
+      "https://www.openstreetmap.org/node/1948002096",
+      "https://artikel2.se/second-hand-slussen/"
+    ],
+    "notes": "Mixed second-hand (clothes and objects). Official site already present."
+  },
+  {
+    "id": "osm_stockholm_node_10247563826",
+    "cityId": "stockholm",
+    "name": "Röda Korset",
+    "proposed": {
+      "description": "Swedish Red Cross second-hand shop selling donated clothes, books and household goods.",
+      "address": "Hornsgatan 56, 118 21 Stockholm",
+      "website": "https://www.rodakorset.se/ort/stockholm/stockholms-stad/second-hand/roda-korset-second-hand-stockholm-hornsgatan/",
+      "actionTags": ["reuse"],
+      "sectorCategories": []
+    },
+    "unchanged": [],
+    "flags": [],
+    "sources": [
+      "https://www.openstreetmap.org/node/10247563826",
+      "https://www.rodakorset.se/ort/stockholm/stockholms-stad/second-hand/roda-korset-second-hand-stockholm-hornsgatan/"
+    ],
+    "notes": "Neighbour of Stadsmissionen on Hornsgatan. Mixed charity stock."
+  },
+  {
+    "id": "osm_stockholm_node_10138477888",
+    "cityId": "stockholm",
+    "name": "Vintage Store",
+    "proposed": {
+      "description": "59 Vintage Store: vintage clothing boutique (evening wear and accessories) on Kungsholmen.",
+      "address": "Hantverkargatan 59, 112 31 Stockholm",
+      "actionTags": ["reuse"],
+      "sectorCategories": ["apparel"]
+    },
+    "unchanged": ["website"],
+    "flags": ["uncertain"],
+    "sources": [
+      "https://www.openstreetmap.org/node/10138477888",
+      "https://www.visitstockholm.se/o/59-vintage-store/",
+      "https://thatsup.se/stockholm/butik/59-vintage-store/"
+    ],
+    "notes": "Matches 59 Vintage Store at Hantverkargatan 59. That'sup marks it closed as of Dec 2024; OSM still lists it. Flagged uncertain. No live official site verified."
+  },
+  {
+    "id": "osm_turin_node_2908768644",
+    "cityId": "turin",
+    "name": "Triciclo",
+    "proposed": {
+      "description": "Social cooperative reuse centre: used-goods market, used bikes and a bike repair workshop, next to the municipal ecocentro.",
+      "actionTags": ["reuse", "repair"],
+      "sectorCategories": ["cycling-sports"]
+    },
+    "unchanged": ["address", "website"],
+    "flags": [],
+    "sources": [
+      "https://www.openstreetmap.org/node/2908768644",
+      "https://www.triciclo.com/",
+      "https://www.triciclo.com/dove-siamo/"
+    ],
+    "notes": "Address and official site already present. Bike workshop is a core public service, so cycling-sports + reuse/repair."
+  },
+  {
+    "id": "osm_turin_node_11020032854",
+    "cityId": "turin",
+    "name": "Libraccio",
+    "proposed": {
+      "description": "Libraccio Torino Santa Teresa: used and new books and textbooks.",
+      "website": "https://www.libraccio.it/",
+      "actionTags": ["reuse"],
+      "sectorCategories": ["books-comics-magazines"]
+    },
+    "unchanged": ["address"],
+    "flags": ["duplicate_chain"],
+    "sources": [
+      "https://www.openstreetmap.org/node/11020032854",
+      "https://www.libraccio.it/"
+    ],
+    "notes": "Store-specific locator URL 404'd; used official chain site. Canonicalized books."
+  },
+  {
+    "id": "osm_turin_node_12772876801",
+    "cityId": "turin",
+    "name": "Humana Vintage",
+    "proposed": {
+      "description": "Humana Vintage shop selling selected second-hand and vintage clothing from Humana's collection chain.",
+      "address": "Via Pietro Micca 14, 10122 Torino",
+      "actionTags": ["reuse"],
+      "sectorCategories": ["apparel"]
+    },
+    "unchanged": ["website"],
+    "flags": ["duplicate_chain"],
+    "sources": [
+      "https://www.openstreetmap.org/node/12772876801",
+      "https://humanavintage.it/",
+      "https://www.reteimprese.it/abiti-usati/torino/azienda/798733"
+    ],
+    "notes": "Nominatim places the node on Via Pietro Micca; matches the historic Humana Vintage Torino store. clothing → apparel."
+  },
+  {
+    "id": "osm_turin_node_2017190756",
+    "cityId": "turin",
+    "name": "Humana Second Hand",
+    "proposed": {
+      "description": "Humana People to People second-hand clothing shop.",
+      "website": "https://www.humanaitalia.org/",
+      "actionTags": ["reuse"],
+      "sectorCategories": ["apparel"]
+    },
+    "unchanged": ["address"],
+    "flags": ["duplicate_chain"],
+    "sources": [
+      "https://www.openstreetmap.org/node/2017190756",
+      "https://www.humanaitalia.org/il-vintage-raddoppia-a-torino/"
+    ],
+    "notes": "Address already on candidate (Corso Vittorio Emanuele II 41). Official Humana Italia site; skip store-locator search pages."
+  },
+  {
+    "id": "osm_turin_node_3147953824",
+    "cityId": "turin",
+    "name": "GaldieriRent",
+    "proposed": {
+      "address": "Via Alfonso Ogliaro, 10137 Torino",
+      "actionTags": [],
+      "sectorCategories": []
+    },
+    "unchanged": ["website", "description"],
+    "flags": ["off_concept"],
+    "sources": [
+      "https://www.openstreetmap.org/node/3147953824",
+      "https://galdierirent.it/"
+    ],
+    "notes": "Conventional car-rental company, not a circular sharing/reuse venue. Clearing rental tag. Nominatim street only (no public shop front at this node)."
+  },
+  {
+    "id": "osm_turin_node_7638441256",
+    "cityId": "turin",
+    "name": "Motonolo",
+    "proposed": {
+      "actionTags": [],
+      "sectorCategories": []
+    },
+    "unchanged": ["address", "website", "description"],
+    "flags": ["off_concept"],
+    "sources": [
+      "https://www.openstreetmap.org/node/7638441256",
+      "https://www.motonolo-torino.it/"
+    ],
+    "notes": "Motorcycle driving-school / exam-bike hire, not circular-economy sharing. Address and site already present. Clearing rental tag."
+  },
+  {
+    "id": "osm_turin_way_83386645",
+    "cityId": "turin",
+    "name": "Ecocentro",
+    "proposed": {
+      "description": "AMIAT municipal recycling centre (ecocentro) for household sorted waste, next to Triciclo's reuse area in Via Arbe.",
+      "address": "Via Arbe 12, 10136 Torino",
+      "website": "https://www.amiat.it/servizi/centri-di-raccolta",
+      "actionTags": ["recycle"],
+      "sectorCategories": []
+    },
+    "unchanged": [],
+    "flags": [],
+    "sources": [
+      "https://www.openstreetmap.org/way/83386645",
+      "https://www.amiat.it/servizi/centri-di-raccolta",
+      "https://www.triciclo.com/centro-riutilizzo-ecocentro-rifiuti-torino/"
+    ],
+    "notes": "Public recycling centre. Sector left empty (municipal, no product sector). Nominatim also shows Via Tirreno at the same site."
+  },
+  {
+    "id": "osm_turin_node_3779248190",
+    "cityId": "turin",
+    "name": "Il Mercatino",
+    "proposed": {
+      "description": "Il Mercatino dell'Usato franchise: buy and sell second-hand furniture, household goods and clothing.",
+      "actionTags": ["reuse"],
+      "sectorCategories": ["home-garden"]
+    },
+    "unchanged": ["address", "website"],
+    "flags": ["duplicate_chain"],
+    "sources": [
+      "https://www.openstreetmap.org/node/3779248190",
+      "http://www.torino05.mercatinousato.com/"
+    ],
+    "notes": "Address and store microsite already present. Canonical tags only."
+  },
+  {
+    "id": "osm_uppsala_node_13041901176",
+    "cityId": "uppsala",
+    "name": "Självfallet Hållbart",
+    "proposed": {
+      "description": "Second-hand shop for used clothes, furniture, interior objects, porcelain and glass.",
+      "address": "Drottninggatan 4, 753 10 Uppsala",
+      "website": "https://www.sjalvfallethallbart.se/",
+      "actionTags": ["reuse"],
+      "sectorCategories": ["home-garden"]
+    },
+    "unchanged": [],
+    "flags": [],
+    "sources": [
+      "https://www.openstreetmap.org/node/13041901176",
+      "https://www.sjalvfallethallbart.se/",
+      "https://destinationuppsala.se/se-gora-ata/second-hand-och-vintagebutiker-i-uppsala/"
+    ],
+    "notes": "Official site lists Drottninggatan 4. Mixed stock; home-garden is the distinctive offer alongside clothes."
+  },
+  {
+    "id": "osm_uppsala_node_9836672904",
+    "cityId": "uppsala",
+    "name": "Fritidsbanken",
+    "proposed": {
+      "description": "Free 14-day library for sports and leisure equipment in Gottsunda. Anyone can borrow.",
+      "actionTags": ["reuse"],
+      "sectorCategories": ["cycling-sports"]
+    },
+    "unchanged": ["address", "website"],
+    "flags": [],
+    "sources": [
+      "https://www.openstreetmap.org/node/9836672904",
+      "https://www.fritidsbanken.se/fritidsbank/uppsala-gottsunda/"
+    ],
+    "notes": "Description already present; lightly tightened. Sharing/lending maps to reuse. Sector cycling-sports."
+  },
+  {
+    "id": "osm_uppsala_node_4406868595",
+    "cityId": "uppsala",
+    "name": "Erikshjälpen Second Hand",
+    "proposed": {
+      "description": "Large charity second-hand department store for clothes, furniture, books, electronics and household goods.",
+      "address": "Bolandsgatan 8A, 753 23 Uppsala",
+      "actionTags": ["reuse"],
+      "sectorCategories": []
+    },
+    "unchanged": ["website"],
+    "flags": [],
+    "sources": [
+      "https://www.openstreetmap.org/node/4406868595",
+      "https://erikshjalpen.se/butiker/second-hand-uppsala/"
+    ],
+    "notes": "Official store page uses Bolandsgatan 8A (OSM had housenumber 10). Mixed stock; sectors left empty."
+  },
+  {
+    "id": "osm_uppsala_node_7721882751",
+    "cityId": "uppsala",
+    "name": "Återbruket",
+    "proposed": {
+      "description": "Municipal second-hand shop reselling reusable items collected at Uppsala recycling centres.",
+      "address": "Bolandsgatan 4, 753 23 Uppsala",
+      "website": "https://www.uppsala.se/aterbruket",
+      "actionTags": ["reuse"],
+      "sectorCategories": ["home-garden"]
+    },
+    "unchanged": [],
+    "flags": [],
+    "sources": [
+      "https://www.openstreetmap.org/node/7721882751",
+      "https://www.uppsala.se/aterbruket"
+    ],
+    "notes": "Replaced long CMS path with the municipal short URL. Furniture/household is the main public offer."
+  },
+  {
+    "id": "osm_uppsala_node_8699442617",
+    "cityId": "uppsala",
+    "name": "Myrorna",
+    "proposed": {
+      "description": "Myrorna charity second-hand shop in Uppsala centre: clothes, accessories, interior objects and toys.",
+      "website": "https://www.myrorna.se/butiker/uppsala/uppsala-vaksalagatan/",
+      "actionTags": ["reuse"],
+      "sectorCategories": ["apparel"]
+    },
+    "unchanged": ["address"],
+    "flags": ["duplicate_chain"],
+    "sources": [
+      "https://www.openstreetmap.org/node/8699442617",
+      "https://www.myrorna.se/butiker/uppsala/uppsala-vaksalagatan/"
+    ],
+    "notes": "Address already complete. Added official store page."
+  },
+  {
+    "id": "osm_uppsala_node_2483691482",
+    "cityId": "uppsala",
+    "name": "Restyle Second Hand & Records",
+    "proposed": {
+      "description": "Second-hand clothing boutique with new and used vinyl, plus a small book and games selection.",
+      "website": "https://www.restylesecondhand.se/",
+      "actionTags": ["reuse"],
+      "sectorCategories": ["apparel", "music"]
+    },
+    "unchanged": ["address"],
+    "flags": [],
+    "sources": [
+      "https://www.openstreetmap.org/node/2483691482",
+      "https://www.restylesecondhand.se/contact"
+    ],
+    "notes": "Two sectors justified: clothes + records are both core to the shop."
+  },
+  {
+    "id": "osm_uppsala_node_6612680518",
+    "cityId": "uppsala",
+    "name": "Globalen",
+    "proposed": {
+      "actionTags": [],
+      "sectorCategories": []
+    },
+    "unchanged": ["address", "website", "description"],
+    "flags": ["off_concept"],
+    "sources": [
+      "https://www.openstreetmap.org/node/6612680518",
+      "https://globalen.nu/om-globalen/"
+    ],
+    "notes": "Fair-trade shop selling new food and crafts, not second-hand/reuse/repair. OSM shop=charity is misleading. Clearing reuse tag."
+  },
+  {
+    "id": "osm_uppsala_way_127006322",
+    "cityId": "uppsala",
+    "name": "Librobäck återvinningscentral",
+    "proposed": {
+      "description": "Uppsala Vatten municipal recycling centre for household sorted waste.",
+      "address": "Söderforsgatan 7, 752 28 Uppsala",
+      "website": "https://www.uppsalavatten.se/hushall/avfall-och-atervinning/avc3/oppettider-libroback-atervinningscentral",
+      "actionTags": ["recycle"],
+      "sectorCategories": []
+    },
+    "unchanged": [],
+    "flags": [],
+    "sources": [
+      "https://www.openstreetmap.org/way/127006322",
+      "https://www.uppsalavatten.se/hushall/avfall-och-atervinning/avc3/oppettider-libroback-atervinningscentral"
+    ],
+    "notes": "Public recycling centre. Sector left empty."
+  },
+  {
+    "id": "taxonomy_recheck_uppsala_E7j1qi8fd3I4dBJs6Nli",
+    "cityId": "uppsala",
+    "name": "Sample place (Uppsala)",
+    "proposed": {
+      "actionTags": [],
+      "sectorCategories": []
+    },
+    "unchanged": ["description", "address", "website"],
+    "flags": ["placeholder", "off_concept"],
+    "sources": [],
+    "notes": "Seed/sample placeholder, not a real venue."
+  }
+]
