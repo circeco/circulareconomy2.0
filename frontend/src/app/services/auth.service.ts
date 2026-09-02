@@ -3,7 +3,7 @@ import {
   Auth, user, signInWithEmailAndPassword, createUserWithEmailAndPassword,
   signOut, User
 } from '@angular/fire/auth';
-import { setPersistence, browserLocalPersistence, getIdTokenResult, sendPasswordResetEmail, onAuthStateChanged } from 'firebase/auth';
+import { setPersistence, browserLocalPersistence, getIdTokenResult, sendPasswordResetEmail } from 'firebase/auth';
 import { Observable, from, firstValueFrom, of } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 
@@ -60,15 +60,6 @@ export function holdUserUntilSignOut<T>(
   return signedOut ? null : displayed;
 }
 
-function whenAuthDetermined(auth: Auth): Promise<void> {
-  return new Promise((resolve) => {
-    const unsub = onAuthStateChanged(auth, () => {
-      unsub();
-      resolve();
-    });
-  });
-}
-
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private auth = inject(Auth);
@@ -77,8 +68,14 @@ export class AuthService {
   /** Firebase user stream */
   readonly user$: Observable<User | null> = user(this.auth);
 
-  /** Header chrome: last known user, restored from disk until auth is determined. */
-  readonly displayUser = signal<DisplayUser | null>(readPersistedDisplayUser());
+  /**
+   * Header chrome. Seeded from the live user or last snapshot so a signed-in
+   * person never flashes “Sign in” (hydration, navigation, city reload).
+   * Cleared only on an intentional sign-out.
+   */
+  readonly displayUser = signal<DisplayUser | null>(
+    toDisplayUserSnapshot(this.auth.currentUser) || readPersistedDisplayUser()
+  );
 
   /** Simple UI state for the modal */
   readonly modalOpen = signal(false);
@@ -95,17 +92,6 @@ export class AuthService {
         }));
         if (u) this.signedOutIntentionally = false;
         this.applyDisplayUser(toDisplayUserSnapshot(u), this.signedOutIntentionally);
-    });
-
-    void whenAuthDetermined(this.auth).then(() => {
-      const u = this.auth.currentUser;
-      if (u) {
-        this.signedOutIntentionally = false;
-        this.applyDisplayUser(toDisplayUserSnapshot(u), false);
-        return;
-      }
-      this.displayUser.set(null);
-      writePersistedDisplayUser(null);
     });
 
     const g = window as any;

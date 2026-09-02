@@ -68,4 +68,14 @@ describe('CitySwitcherComponent', () => {
     expect(select.textContent).toContain('Stockholm');
     expect(select.textContent).not.toContain('Loading cities…');
   });
+
+  it('remembers the selected city name for the next load', () => {
+    cities.set([
+      { id: 'stockholm', name: 'Stockholm' },
+      { id: 'milan', name: 'Milan' },
+    ]);
+    const fixture = createInline();
+    fixture.componentInstance.onCityIdChange('milan');
+    expect(cityName()).toBe('Milan');
+  });
 });

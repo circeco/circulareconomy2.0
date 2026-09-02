@@ -2,7 +2,7 @@
   <select
     class="city-select"
     [ngModel]="cityContext.cityId()"
-    (ngModelChange)="cityContext.setCityId($event)"
+    (ngModelChange)="onCityIdChange($event)"
   >
     <ng-container *ngIf="cities.list().length; else loading">
       <option *ngFor="let c of cities.list()" [value]="c.id">{{ c.name }}</option>

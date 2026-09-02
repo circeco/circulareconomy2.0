@@ -6,6 +6,7 @@ import { catchError, map, shareReplay } from 'rxjs/operators';
 
 import { FS_PATHS } from '../data/firestore-paths';
 import type { CityDoc } from '../data/models';
+import { CityContextService } from './city-context.service';
 
 export type CityItem = CityDoc & { id: string };
 
@@ -49,6 +50,7 @@ export function writeCachedCities(rows: CityItem[]): void {
 @Injectable({ providedIn: 'root' })
 export class CitiesService {
   private fs = inject(Firestore);
+  private cityContext = inject(CityContextService);
   private readonly _list = signal<CityItem[]>(readCachedCities());
   readonly list = this._list.asReadonly();
 
@@ -72,6 +74,8 @@ export class CitiesService {
     const next = holdCitiesWhileReloading(this._list(), rows);
     this._list.set(next);
     if (rows.length) writeCachedCities(rows);
+    const match = next.find((c) => c.id === this.cityContext.cityId());
+    if (match?.name) this.cityContext.rememberCityName(match.name);
   });
 }
 

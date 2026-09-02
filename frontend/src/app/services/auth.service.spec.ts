@@ -22,6 +22,13 @@ describe('holdUserUntilSignOut', () => {
     const next = { uid: 'u2', email: 'c@d.e', photoURL: null } as User;
     expect(holdUserUntilSignOut(user, next, false)).toBe(next);
   });
+
+  it('keeps a persisted avatar through auth hydration, navigation, and city-list nulls', () => {
+    const persisted = { uid: 'u1', email: 'a@b.c', photoURL: 'https://img/a.png' };
+    expect(holdUserUntilSignOut(persisted, null, false)).toBe(persisted);
+    const live = { uid: 'u1', email: 'a@b.c', photoURL: 'https://img/a.png' };
+    expect(holdUserUntilSignOut(persisted, live, false)).toBe(live);
+  });
 });
 
 describe('display user persistence', () => {
