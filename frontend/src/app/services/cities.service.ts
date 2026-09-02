@@ -9,15 +9,47 @@ import type { CityDoc } from '../data/models';
 
 export type CityItem = CityDoc & { id: string };
 
+export const CITIES_CACHE_LS_KEY = 'circeco.citiesCache';
+
 /** Keep the last city list while Firestore reloads; do not flash an empty list. */
 export function holdCitiesWhileReloading(displayed: CityItem[], next: CityItem[]): CityItem[] {
   return next.length > 0 ? next : displayed;
 }
 
+export function readCachedCities(): CityItem[] {
+  try {
+    const raw = localStorage.getItem(CITIES_CACHE_LS_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((c: unknown): c is CityItem => {
+      if (!c || typeof c !== 'object') return false;
+      const row = c as Partial<CityItem>;
+      return typeof row.id === 'string' && !!row.id && typeof row.name === 'string' && !!row.name;
+    }) as CityItem[];
+  } catch {
+    return [];
+  }
+}
+
+export function writeCachedCities(rows: CityItem[]): void {
+  try {
+    if (!rows.length) return;
+    const compact = rows.map((c) => ({
+      id: c.id,
+      name: c.name,
+      countryCode: c.countryCode,
+      center: c.center,
+      enabled: c.enabled,
+    }));
+    localStorage.setItem(CITIES_CACHE_LS_KEY, JSON.stringify(compact));
+  } catch {}
+}
+
 @Injectable({ providedIn: 'root' })
 export class CitiesService {
   private fs = inject(Firestore);
-  private readonly _list = signal<CityItem[]>([]);
+  private readonly _list = signal<CityItem[]>(readCachedCities());
   readonly list = this._list.asReadonly();
 
   readonly cities$: Observable<CityItem[]> = collectionData(
@@ -37,7 +69,9 @@ export class CitiesService {
   );
 
   private readonly keepListHot = this.cities$.subscribe((rows) => {
-    this._list.set(holdCitiesWhileReloading(this._list(), rows));
+    const next = holdCitiesWhileReloading(this._list(), rows);
+    this._list.set(next);
+    if (rows.length) writeCachedCities(rows);
   });
 }
 

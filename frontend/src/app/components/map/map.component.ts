@@ -170,11 +170,14 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     });
 
     this.subs.push(
-      this.cityContext.cityId$.subscribe(() => {
+      this.cityContext.cityId$.subscribe((cityId) => {
         this.listingsReady = false;
         this.cityPlacesReceived = false;
         this.filter.setAllFeatures([]);
         this.filteredList = [];
+        this.map.clearPlaces();
+        const stayOnPinnedPlace = !!this.pinnedPlaceCityId && this.pinnedPlaceCityId === cityId;
+        if (!stayOnPinnedPlace) this.moveMapToSelectedCity(cityId);
         this.cdr.markForCheck();
       })
     );
@@ -207,16 +210,11 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         const city = this.cityList.find((c) => c.id === cityId) || null;
         this.selectedCity = city;
         const cityChanged = cityId !== prevId;
-        const lat = city?.center?.lat;
-        const lng = city?.center?.lng;
-        if (typeof lat === 'number' && typeof lng === 'number' && isFinite(lat) && isFinite(lng)) {
-          this.lastCityCenter = [lng, lat];
-          const stayOnPinnedPlace = !!this.pinnedPlaceCityId && this.pinnedPlaceCityId === cityId;
-          if (!stayOnPinnedPlace && cityChanged) {
-            this.pinnedPlaceCityId = null;
-            this.pendingFocusPlaceId = null;
-            this.map.flyToCity([lng, lat], 11);
-          }
+        const stayOnPinnedPlace = !!this.pinnedPlaceCityId && this.pinnedPlaceCityId === cityId;
+        if (!stayOnPinnedPlace && cityChanged) {
+          this.pinnedPlaceCityId = null;
+          this.pendingFocusPlaceId = null;
+          this.moveMapToSelectedCity(cityId);
         }
         this.reapplyLastFixForCity();
       })
@@ -388,6 +386,18 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
       return;
     }
     this.applyFix(this.lastFix, false);
+  }
+
+  /** Jump as soon as the city record (center) is known; do not wait for GeoJSON. */
+  private moveMapToSelectedCity(cityId: string) {
+    const city = this.cityList.find((c) => c.id === cityId)
+      || this.cities.list()?.find((c) => c.id === cityId)
+      || (this.selectedCity?.id === cityId ? this.selectedCity : null);
+    const lat = city?.center?.lat;
+    const lng = city?.center?.lng;
+    if (typeof lat !== 'number' || typeof lng !== 'number' || !isFinite(lat) || !isFinite(lng)) return;
+    this.lastCityCenter = [lng, lat];
+    this.map.jumpToCity([lng, lat], 11);
   }
 
   private applyFix(fix: GeoFix, flyToUser: boolean) {

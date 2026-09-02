@@ -45,4 +45,13 @@ describe('NavbarComponent', () => {
     expect(fixture.nativeElement.querySelector('#loginBtn')).toBeNull();
     expect(fixture.nativeElement.querySelector('#avatar')).toBeTruthy();
   });
+
+  it('shows the default avatar when the persisted user has no photo URL', () => {
+    auth.displayUser.set({ uid: 'u1', email: 'a@b.c', photoURL: null });
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('#loginBtn')).toBeNull();
+    const avatar = fixture.nativeElement.querySelector('#avatar') as HTMLImageElement;
+    expect(avatar).toBeTruthy();
+    expect(avatar.src).toContain('assets/img/avatar.png');
+  });
 });

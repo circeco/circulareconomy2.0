@@ -9,9 +9,11 @@ import { CityContextService } from '../../services/city-context.service';
 
 describe('CitySwitcherComponent', () => {
   const cities = signal<{ id: string; name: string }[]>([]);
+  const cityName = signal('');
 
   beforeEach(async () => {
     cities.set([]);
+    cityName.set('');
     await TestBed.configureTestingModule({
       imports: [CitySwitcherComponent],
       providers: [
@@ -25,7 +27,9 @@ describe('CitySwitcherComponent', () => {
           useValue: {
             cityId: signal('stockholm'),
             cityId$: of('stockholm'),
+            cityName,
             setCityId: () => {},
+            rememberCityName: (name: string) => cityName.set(name),
           },
         },
       ],
@@ -54,6 +58,14 @@ describe('CitySwitcherComponent', () => {
     const select = fixture.nativeElement.querySelector('select') as HTMLSelectElement;
     expect(select.textContent).toContain('Stockholm');
     expect(select.textContent).toContain('Milan');
+    expect(select.textContent).not.toContain('Loading cities…');
+  });
+
+  it('shows the last city name instead of Loading cities when the list has not arrived', () => {
+    cityName.set('Stockholm');
+    const fixture = createInline();
+    const select = fixture.nativeElement.querySelector('select') as HTMLSelectElement;
+    expect(select.textContent).toContain('Stockholm');
     expect(select.textContent).not.toContain('Loading cities…');
   });
 });

@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { of, BehaviorSubject } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 
 import { MapComponent } from './map.component';
@@ -16,17 +16,32 @@ describe('MapComponent', () => {
   let component: MapComponent;
   let fixture: ComponentFixture<MapComponent>;
   let geo: GeolocationService;
+  const cityId$ = new BehaviorSubject('milan');
+  const cities = [
+    { id: 'milan', name: 'Milan', center: { lat: 45.4642, lng: 9.19 } },
+    { id: 'stockholm', name: 'Stockholm', center: { lat: 59.325, lng: 18.072 } },
+  ];
 
   beforeEach(async () => {
     try { sessionStorage.removeItem('circeco.geoConsent'); } catch {}
+    cityId$.next('milan');
     await TestBed.configureTestingModule({
       imports: [MapComponent],
       providers: [
         { provide: MapService, useClass: MapServiceStub },
         { provide: PlacesFilter, useClass: PlacesFilterStub },
         { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: { get: () => null } }, queryParams: of({}) } },
-        { provide: CityContextService, useValue: { cityId$: of('milan'), cityId: () => 'milan', setCityId: () => {} } },
-        { provide: CitiesService, useValue: { cities$: of([{ id: 'milan', name: 'Milan', center: { lat: 45.4642, lng: 9.19 } }]) } },
+        {
+          provide: CityContextService,
+          useValue: { cityId$: cityId$.asObservable(), cityId: () => cityId$.value, setCityId: () => {} },
+        },
+        {
+          provide: CitiesService,
+          useValue: {
+            cities$: of(cities),
+            list: () => cities,
+          },
+        },
         {
           provide: FeaturedPlacesService,
           useValue: {
@@ -93,5 +108,15 @@ describe('MapComponent', () => {
     });
     await component.onLocateAllow();
     expect(map.showUserLocation).toHaveBeenCalledWith(9.19, 45.4642, 10, true);
+  });
+
+  it('clears previous city pins and jumps viewport as soon as cityId changes', () => {
+    const map = TestBed.inject(MapService);
+    const clear = spyOn(map, 'clearPlaces').and.callThrough();
+    const jump = spyOn(map, 'jumpToCity');
+    cityId$.next('stockholm');
+    expect(clear).toHaveBeenCalled();
+    expect(jump).toHaveBeenCalledWith([18.072, 59.325], 11);
+    expect(component.listingsReady).toBeFalse();
   });
 });

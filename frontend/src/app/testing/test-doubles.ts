@@ -35,7 +35,7 @@ export class EventFavoritesServiceStub implements Partial<EventFavoritesService>
   toggle(_eventId: string) { return Promise.resolve(); }
 }
 
-export class MapServiceStub implements Pick<MapService, 'init' | 'onReady' | 'queryRenderedFeatures$' | 'onFeatureClick' | 'onLocateClick' | 'openPopup' | 'flyTo' | 'flyToCity' | 'setPlacesData' | 'setFavoritesVisibility' | 'setCategoryFilter' | 'setActionTagFilter' | 'showUserLocation' | 'clearUserLocation' | 'resize' | 'destroy'> {
+export class MapServiceStub implements Pick<MapService, 'init' | 'onReady' | 'queryRenderedFeatures$' | 'onFeatureClick' | 'onLocateClick' | 'openPopup' | 'closePopup' | 'flyTo' | 'flyToCity' | 'jumpToCity' | 'clearPlaces' | 'setPlacesData' | 'setFavoritesVisibility' | 'setCategoryFilter' | 'setActionTagFilter' | 'showUserLocation' | 'clearUserLocation' | 'resize' | 'destroy'> {
   private ready$ = new Subject<boolean>();
   private features$ = new Subject<any[]>();
   private click$ = new Subject<{ feature: any; coords: [number, number] }>();
@@ -48,8 +48,11 @@ export class MapServiceStub implements Pick<MapService, 'init' | 'onReady' | 'qu
   onLocateClick() { return this.locate$.asObservable(); }
 
   openPopup() {}
+  closePopup() {}
   flyTo() {}
   flyToCity() {}
+  jumpToCity() {}
+  clearPlaces() {}
   setPlacesData() {}
   setFavoritesVisibility(_v: boolean) {}
   setCategoryFilter(_set: Set<string>) {}

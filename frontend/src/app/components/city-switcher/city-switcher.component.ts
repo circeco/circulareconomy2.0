@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NgIf } from '@angular/common';
 import { NavigationEnd, Router } from '@angular/router';
@@ -29,6 +29,12 @@ export class CitySwitcherComponent {
     this.router.events
       .pipe(filter((e) => e instanceof NavigationEnd))
       .subscribe(() => this.currentPath.set(this.pathOf(this.router.url)));
+
+    effect(() => {
+      const id = this.cityContext.cityId();
+      const match = this.cities.list().find((c) => c.id === id);
+      if (match?.name) this.cityContext.rememberCityName(match.name);
+    });
   }
 
   readonly visible = computed(() => {

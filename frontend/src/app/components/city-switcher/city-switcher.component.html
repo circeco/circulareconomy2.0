@@ -8,7 +8,12 @@
       <option *ngFor="let c of cities.list()" [value]="c.id">{{ c.name }}</option>
     </ng-container>
     <ng-template #loading>
-      <option [value]="cityContext.cityId()">Loading cities…</option>
+      <option *ngIf="cityContext.cityName() as name; else loadingCities" [value]="cityContext.cityId()">
+        {{ name }}
+      </option>
+      <ng-template #loadingCities>
+        <option [value]="cityContext.cityId()">Loading cities…</option>
+      </ng-template>
     </ng-template>
   </select>
 </div>

@@ -101,7 +101,8 @@ export class MapService {
       // Apply latest queued places once source exists.
       this.setPlacesData(this.pendingPlacesData);
       if (this.pendingCityCenter) {
-        this.map.flyTo({ center: this.pendingCityCenter, zoom: 11 });
+        if (this.map.jumpTo) this.map.jumpTo({ center: this.pendingCityCenter, zoom: 11 });
+        else this.map.flyTo({ center: this.pendingCityCenter, zoom: 11, duration: 0 });
       }
       this.syncFavoriteKeysFromGlobal();
       this.applyFilters(); // ensures stored favorites recolor once layers exist
@@ -293,10 +294,27 @@ export class MapService {
     this.map.flyTo({ center, zoom });
   }
 
+  /** Instant city camera — do not leave the previous city on screen while GeoJSON loads. */
+  jumpToCity(center: [number, number], zoom = 11) {
+    this.pendingCityCenter = center;
+    if (!this.map) return;
+    if (this.map.jumpTo) this.map.jumpTo({ center, zoom });
+    else if (this.map.flyTo) this.map.flyTo({ center, zoom, duration: 0 });
+  }
+
   flyToCity(center: [number, number], zoom = 11) {
     this.pendingCityCenter = center;
     if (!this.map?.flyTo) return;
     this.map.flyTo({ center, zoom });
+  }
+
+  clearPlaces() {
+    this.setPlacesData(this.EMPTY_FC);
+    this.closePopup();
+  }
+
+  closePopup() {
+    document.querySelector('.mapboxgl-popup')?.remove();
   }
 
   setPlacesData(fc: { type: 'FeatureCollection'; features: any[] }) {
@@ -314,7 +332,7 @@ export class MapService {
   }
 
   openPopup(center: [number, number], content: HTMLElement) {
-    document.querySelector('.mapboxgl-popup')?.remove();
+    this.closePopup();
     new mapboxgl.Popup({ closeOnClick: true }).setLngLat(center).setDOMContent(content).addTo(this.map);
   }
 

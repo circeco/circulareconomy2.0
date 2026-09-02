@@ -4,11 +4,20 @@ import { filter } from 'rxjs/operators';
 import { toObservable } from '@angular/core/rxjs-interop';
 
 const LS_KEY = 'circeco.cityId';
+const LS_NAME_KEY = 'circeco.cityName';
 const DEFAULT_CITY_ID = 'stockholm';
 
 function readStoredCityId(): string {
   try {
     return String(localStorage.getItem(LS_KEY) || '').trim().toLowerCase();
+  } catch {
+    return '';
+  }
+}
+
+function readStoredCityName(): string {
+  try {
+    return String(localStorage.getItem(LS_NAME_KEY) || '').trim();
   } catch {
     return '';
   }
@@ -21,6 +30,8 @@ export class CityContextService {
 
   readonly cityId = signal<string>(readStoredCityId() || DEFAULT_CITY_ID);
   readonly cityId$ = toObservable(this.cityId);
+  /** Last known city label, restored on boot so the switcher does not flash “Loading cities…”. */
+  readonly cityName = signal<string>(readStoredCityName());
 
   constructor() {
     // Keep in sync on navigation; first NavigationEnd is treated as initial sync.
@@ -55,6 +66,15 @@ export class CityContextService {
   private persistCityId(id: string): void {
     try {
       localStorage.setItem(LS_KEY, id);
+    } catch {}
+  }
+
+  rememberCityName(name: string): void {
+    const n = String(name || '').trim();
+    if (!n || n === this.cityName()) return;
+    this.cityName.set(n);
+    try {
+      localStorage.setItem(LS_NAME_KEY, n);
     } catch {}
   }
 

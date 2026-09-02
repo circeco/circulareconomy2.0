@@ -3,18 +3,70 @@ import {
   Auth, user, signInWithEmailAndPassword, createUserWithEmailAndPassword,
   signOut, User
 } from '@angular/fire/auth';
-import { setPersistence, browserLocalPersistence, getIdTokenResult, sendPasswordResetEmail } from 'firebase/auth';
+import { setPersistence, browserLocalPersistence, getIdTokenResult, sendPasswordResetEmail, onAuthStateChanged } from 'firebase/auth';
 import { Observable, from, firstValueFrom, of } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 
+/** Header-safe user snapshot (survives reload; not a live Firebase User). */
+export type DisplayUser = {
+  uid: string;
+  email: string | null;
+  photoURL: string | null;
+};
+
+export const DISPLAY_USER_LS_KEY = 'circeco.displayUser';
+
+export function toDisplayUserSnapshot(
+  u: { uid: string; email?: string | null; photoURL?: string | null } | null,
+): DisplayUser | null {
+  if (!u?.uid) return null;
+  return {
+    uid: String(u.uid),
+    email: u.email ?? null,
+    photoURL: u.photoURL ?? null,
+  };
+}
+
+export function readPersistedDisplayUser(): DisplayUser | null {
+  try {
+    const raw = localStorage.getItem(DISPLAY_USER_LS_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed.uid !== 'string' || !parsed.uid.trim()) return null;
+    return {
+      uid: parsed.uid,
+      email: typeof parsed.email === 'string' ? parsed.email : null,
+      photoURL: typeof parsed.photoURL === 'string' ? parsed.photoURL : null,
+    };
+  } catch {
+    return null;
+  }
+}
+
+export function writePersistedDisplayUser(u: DisplayUser | null): void {
+  try {
+    if (!u) localStorage.removeItem(DISPLAY_USER_LS_KEY);
+    else localStorage.setItem(DISPLAY_USER_LS_KEY, JSON.stringify(toDisplayUserSnapshot(u)));
+  } catch {}
+}
+
 /** Keep the last user across transient `null` emissions; clear only after sign-out. */
-export function holdUserUntilSignOut(
-  displayed: User | null,
-  emitted: User | null,
+export function holdUserUntilSignOut<T>(
+  displayed: T | null,
+  emitted: T | null,
   signedOut: boolean,
-): User | null {
+): T | null {
   if (emitted) return emitted;
   return signedOut ? null : displayed;
+}
+
+function whenAuthDetermined(auth: Auth): Promise<void> {
+  return new Promise((resolve) => {
+    const unsub = onAuthStateChanged(auth, () => {
+      unsub();
+      resolve();
+    });
+  });
 }
 
 @Injectable({ providedIn: 'root' })
@@ -25,8 +77,8 @@ export class AuthService {
   /** Firebase user stream */
   readonly user$: Observable<User | null> = user(this.auth);
 
-  /** Header chrome: last known user, not cleared by a brief `user$` null. */
-  readonly displayUser = signal<User | null>(null);
+  /** Header chrome: last known user, restored from disk until auth is determined. */
+  readonly displayUser = signal<DisplayUser | null>(readPersistedDisplayUser());
 
   /** Simple UI state for the modal */
   readonly modalOpen = signal(false);
@@ -42,9 +94,18 @@ export class AuthService {
           detail: { user: u ? { uid: u.uid, email: u.email ?? null } : null }
         }));
         if (u) this.signedOutIntentionally = false;
-        this.displayUser.set(
-          holdUserUntilSignOut(this.displayUser(), u, this.signedOutIntentionally)
-        );
+        this.applyDisplayUser(toDisplayUserSnapshot(u), this.signedOutIntentionally);
+    });
+
+    void whenAuthDetermined(this.auth).then(() => {
+      const u = this.auth.currentUser;
+      if (u) {
+        this.signedOutIntentionally = false;
+        this.applyDisplayUser(toDisplayUserSnapshot(u), false);
+        return;
+      }
+      this.displayUser.set(null);
+      writePersistedDisplayUser(null);
     });
 
     const g = window as any;
@@ -66,8 +127,18 @@ export class AuthService {
   }
   signOut() {
     this.signedOutIntentionally = true;
+    this.displayUser.set(null);
+    writePersistedDisplayUser(null);
     return from(signOut(this.auth));
   }
+
+  private applyDisplayUser(emitted: DisplayUser | null, signedOut: boolean) {
+    const next = holdUserUntilSignOut(this.displayUser(), emitted, signedOut);
+    this.displayUser.set(next);
+    if (emitted) writePersistedDisplayUser(emitted);
+    else if (signedOut) writePersistedDisplayUser(null);
+  }
+
   resetPassword(email: string) {
     return from(sendPasswordResetEmail(this.auth, email));
   }
