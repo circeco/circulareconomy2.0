@@ -69,10 +69,17 @@ export class NavbarComponent implements AfterViewInit, OnDestroy {
     document.body.classList.remove('snap-landing');
   }
 
+  private currentPath(): string {
+    return this.router.url.split('?')[0].split('#')[0];
+  }
+
   private updateModeFromUrl(): void {
-    const url = this.router.url.split('?')[0].split('#')[0];
-    // Treat /atlas* and /events* as non-landing pages, everything else as "landing"
-    const landing = !url.startsWith('/atlas') && !url.startsWith('/events');
+    const url = this.currentPath();
+    // Atlas, events, and admin share the logo site menu; everything else is landing.
+    const landing =
+      !url.startsWith('/atlas') &&
+      !url.startsWith('/events') &&
+      !url.startsWith('/admin');
     this.isLanding.set(landing);
     this.logoMenuOpen.set(false);
     this.toggleSnapClass(landing);
@@ -215,8 +222,12 @@ export class NavbarComponent implements AfterViewInit, OnDestroy {
   }
 
   get nonLandingTitle(): string {
-    const url = this.router.url.split('?')[0].split('#')[0];
-    return url.startsWith('/events') ? 'Circular Events: Find circular solutions in your area!' : 'CIRCULAR ATLAS: Find circular solutions in your area!';
+    const url = this.currentPath();
+    if (url.startsWith('/events')) {
+      return 'Circular Events: Find circular solutions in your area!';
+    }
+    if (url.startsWith('/admin')) return 'CIRCECO';
+    return 'CIRCULAR ATLAS: Find circular solutions in your area!';
   }
 
   showSearchBar(): boolean {
