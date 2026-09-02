@@ -1,0 +1,3584 @@
+{
+  "exportedAt": "2026-09-01",
+  "collection": "reviewQueue",
+  "filter": {
+    "kind": "place",
+    "status": "needs_review"
+  },
+  "count": 175,
+  "items": [
+    {
+      "id": "osm_milan_node_1080818668",
+      "cityId": "milan",
+      "confidence": 0.5700000000000001,
+      "candidate": {
+        "name": "Eco-Angel's",
+        "description": "",
+        "address": "45.54367, 9.18752",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 9.1875196,
+          "lat": 45.5436681
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_milan_node_11230010248",
+      "cityId": "milan",
+      "confidence": 0.7000000000000001,
+      "candidate": {
+        "name": "Libraccio",
+        "description": "",
+        "address": "45.45164, 9.17340",
+        "website": "https://negozi.libraccio.it/",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [
+          "books"
+        ],
+        "coords": {
+          "lng": 9.1734027,
+          "lat": 45.4516442
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_milan_node_11728146520",
+      "cityId": "milan",
+      "confidence": 0.67,
+      "candidate": {
+        "name": "Spazio Sarca",
+        "description": "",
+        "address": "Viale Sarca 193",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 9.2093289,
+          "lat": 45.517077
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_milan_node_12262893108",
+      "cityId": "milan",
+      "confidence": 0.6200000000000001,
+      "candidate": {
+        "name": "Usato da usare",
+        "description": "",
+        "address": "45.45575, 9.08851",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 9.0885089,
+          "lat": 45.4557518
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_milan_node_13108707212",
+      "cityId": "milan",
+      "confidence": 0.67,
+      "candidate": {
+        "name": "Libraccio",
+        "description": "",
+        "address": "Via Corsico 9",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [
+          "books"
+        ],
+        "coords": {
+          "lng": 9.1736867,
+          "lat": 45.451965
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_milan_node_13112546401",
+      "cityId": "milan",
+      "confidence": 0.8,
+      "candidate": {
+        "name": "Libraccio",
+        "description": "",
+        "address": "Viale Monza 9",
+        "website": "https://www.libraccio.it/",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [
+          "books"
+        ],
+        "coords": {
+          "lng": 9.2170571,
+          "lat": 45.4881048
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_milan_node_13686102461",
+      "cityId": "milan",
+      "confidence": 0.5700000000000001,
+      "candidate": {
+        "name": "YogAmica Di Micaela",
+        "description": "",
+        "address": "45.53327, 9.23512",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 9.2351235,
+          "lat": 45.5332651
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_milan_node_13847141401",
+      "cityId": "milan",
+      "confidence": 0.5700000000000001,
+      "candidate": {
+        "name": "Bivio compra vendi scambia",
+        "description": "",
+        "address": "45.44899, 9.20652",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 9.2065203,
+          "lat": 45.448987
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_milan_node_13974227668",
+      "cityId": "milan",
+      "confidence": 0.65,
+      "candidate": {
+        "name": "LoveMeTandem",
+        "description": "",
+        "address": "45.47378, 9.17228",
+        "website": "https://lovemetandem.com",
+        "actionTags": [
+          "rental"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 9.1722819,
+          "lat": 45.4737817
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_milan_node_13983802018",
+      "cityId": "milan",
+      "confidence": 0.67,
+      "candidate": {
+        "name": "Baddarò",
+        "description": "",
+        "address": "Piazza San Materno 10",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 9.2270868,
+          "lat": 45.4886047
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_milan_node_4294302830",
+      "cityId": "milan",
+      "confidence": 0.8,
+      "candidate": {
+        "name": "Libraccio",
+        "description": "",
+        "address": "Alzaia Naviglio Grande 26, Milano, 20144",
+        "website": "https://negozi.libraccio.it/",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [
+          "books"
+        ],
+        "coords": {
+          "lng": 9.1736054,
+          "lat": 45.4517005
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_milan_node_4294302831",
+      "cityId": "milan",
+      "confidence": 0.8,
+      "candidate": {
+        "name": "Libraccio",
+        "description": "",
+        "address": "Via Corsico 9, Milano, 20144",
+        "website": "https://negozi.libraccio.it/",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [
+          "books"
+        ],
+        "coords": {
+          "lng": 9.1738053,
+          "lat": 45.4517365
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_milan_node_4608448203",
+      "cityId": "milan",
+      "confidence": 0.67,
+      "candidate": {
+        "name": "Scalo Merci",
+        "description": "",
+        "address": "Via Domenico Scarlatti 32",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 9.2066424,
+          "lat": 45.4844314
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_milan_node_543421935",
+      "cityId": "milan",
+      "confidence": 0.5700000000000001,
+      "candidate": {
+        "name": "Recupero Metalli",
+        "description": "",
+        "address": "45.51714, 9.11980",
+        "website": "",
+        "actionTags": [
+          "recycle"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 9.1198021,
+          "lat": 45.5171376
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_milan_node_9761760511",
+      "cityId": "milan",
+      "confidence": 0.7000000000000001,
+      "candidate": {
+        "name": "Pulci e non solo",
+        "description": "",
+        "address": "45.42235, 9.25478",
+        "website": "http://www.pulcienonsolo.it/",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 9.2547752,
+          "lat": 45.4223464
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_milan_way_125835754",
+      "cityId": "milan",
+      "confidence": 0.5700000000000001,
+      "candidate": {
+        "name": "Piattaforma Ecologica comunale Rozzano",
+        "description": "",
+        "address": "45.38713, 9.16701",
+        "website": "",
+        "actionTags": [
+          "recycle"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 9.1670088,
+          "lat": 45.3871254
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_milan_way_1432594216",
+      "cityId": "milan",
+      "confidence": 0.6200000000000001,
+      "candidate": {
+        "name": "Centro di riciclaggio di Olgettina",
+        "description": "",
+        "address": "45.50712, 9.26810",
+        "website": "",
+        "actionTags": [
+          "recycle"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 9.268098,
+          "lat": 45.5071248
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_milan_way_193444070",
+      "cityId": "milan",
+      "confidence": 0.67,
+      "candidate": {
+        "name": "Piattaforma Ecologica",
+        "description": "",
+        "address": "Via Amerigo Vespucci 20, Cesano Boscone, 20090",
+        "website": "",
+        "actionTags": [
+          "recycle"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 9.083171,
+          "lat": 45.4431461
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_milan_way_326209629",
+      "cityId": "milan",
+      "confidence": 0.7200000000000001,
+      "candidate": {
+        "name": "Piattaforma ecologica",
+        "description": "",
+        "address": "Via Copernico 74, Sesto San Giovanni, 20099",
+        "website": "",
+        "actionTags": [
+          "recycle"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 9.2593066,
+          "lat": 45.5227056
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_milan_way_534201587",
+      "cityId": "milan",
+      "confidence": 0.6200000000000001,
+      "candidate": {
+        "name": "C.U.S.L.",
+        "description": "",
+        "address": "45.47721, 9.22735",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [
+          "books"
+        ],
+        "coords": {
+          "lng": 9.2273536,
+          "lat": 45.4772082
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_milan_way_657325612",
+      "cityId": "milan",
+      "confidence": 0.7000000000000001,
+      "candidate": {
+        "name": "Centro di Raccolta",
+        "description": "",
+        "address": "45.52617, 9.14626",
+        "website": "https://www.comune.novate-milanese.mi.it/uffici-e-servizi/gestione-e-sviluppo-del-territorio/ambiente-e-politiche-energetiche-suap/ecologia/igiene-urbana/raccolta-differenziata/centro-di-raccolta/",
+        "actionTags": [
+          "recycle"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 9.1462592,
+          "lat": 45.5261679
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_milan_way_90606252",
+      "cityId": "milan",
+      "confidence": 0.5700000000000001,
+      "candidate": {
+        "name": "Isola ecologica di Segrate",
+        "description": "",
+        "address": "45.48320, 9.30296",
+        "website": "",
+        "actionTags": [
+          "recycle"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 9.3029633,
+          "lat": 45.4831993
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_milan_way_93275814",
+      "cityId": "milan",
+      "confidence": 0.5700000000000001,
+      "candidate": {
+        "name": "Piattaforma Ecologica",
+        "description": "",
+        "address": "45.53861, 9.18254",
+        "website": "",
+        "actionTags": [
+          "recycle"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 9.1825395,
+          "lat": 45.5386142
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_10138477888",
+      "cityId": "stockholm",
+      "confidence": 0.5700000000000001,
+      "candidate": {
+        "name": "Vintage Store",
+        "description": "",
+        "address": "59.32979, 18.03667",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [
+          "clothing"
+        ],
+        "coords": {
+          "lng": 18.0366728,
+          "lat": 59.3297862
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_10239704728",
+      "cityId": "stockholm",
+      "confidence": 0.6200000000000001,
+      "candidate": {
+        "name": "Returpunkt",
+        "description": "",
+        "address": "59.35968, 18.00192",
+        "website": "",
+        "actionTags": [
+          "recycle"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 18.0019185,
+          "lat": 59.3596775
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_10247563826",
+      "cityId": "stockholm",
+      "confidence": 0.5700000000000001,
+      "candidate": {
+        "name": "Röda Korset",
+        "description": "",
+        "address": "59.31894, 18.06197",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 18.0619694,
+          "lat": 59.3189416
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_10253684651",
+      "cityId": "stockholm",
+      "confidence": 0.6200000000000001,
+      "candidate": {
+        "name": "Brocante Second Hand",
+        "description": "",
+        "address": "59.31752, 18.05273",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 18.0527264,
+          "lat": 59.3175193
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_1025469701",
+      "cityId": "stockholm",
+      "confidence": 0.6200000000000001,
+      "candidate": {
+        "name": "Stadsmissionen",
+        "description": "",
+        "address": "59.31888, 18.06156",
+        "website": "https://www.stadsmissionen.se/butiker/second-hand-sodermalm-mariatorget-hornsgatan",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 18.0615613,
+          "lat": 59.3188795
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_10755867095",
+      "cityId": "stockholm",
+      "confidence": 0.6200000000000001,
+      "candidate": {
+        "name": "Trafik-Nostalgiska Förlaget",
+        "description": "",
+        "address": "59.32424, 18.07376",
+        "website": "https://tnf.se/",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [
+          "books"
+        ],
+        "coords": {
+          "lng": 18.0737598,
+          "lat": 59.3242399
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_11010765225",
+      "cityId": "stockholm",
+      "confidence": 0.7000000000000001,
+      "candidate": {
+        "name": "Artikel2",
+        "description": "",
+        "address": "59.30980, 18.02295",
+        "website": "https://emmausstockholm.se/second-hand-liljeholmen/",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 18.0229512,
+          "lat": 59.3098034
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_11107378245",
+      "cityId": "stockholm",
+      "confidence": 0.6200000000000001,
+      "candidate": {
+        "name": "Loop all",
+        "description": "",
+        "address": "59.33830, 18.02528",
+        "website": "https://loopall.se",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 18.0252776,
+          "lat": 59.3382958
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_11245625829",
+      "cityId": "stockholm",
+      "confidence": 0.6200000000000001,
+      "candidate": {
+        "name": "Ryös antikvariat",
+        "description": "",
+        "address": "59.31292, 18.06520",
+        "website": "https://ryo.se",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [
+          "books"
+        ],
+        "coords": {
+          "lng": 18.0651998,
+          "lat": 59.3129193
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_11248160786",
+      "cityId": "stockholm",
+      "confidence": 0.6200000000000001,
+      "candidate": {
+        "name": "Humana",
+        "description": "",
+        "address": "59.33408, 18.06019",
+        "website": "https://www.humanasecondhand.se",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [
+          "clothing"
+        ],
+        "coords": {
+          "lng": 18.0601882,
+          "lat": 59.3340821
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_1144620900",
+      "cityId": "stockholm",
+      "confidence": 0.7200000000000001,
+      "candidate": {
+        "name": "Humana",
+        "description": "",
+        "address": "Timmermansgatan 23",
+        "website": "https://www.humanasecondhand.se",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 18.0608294,
+          "lat": 59.317198
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_11850731375",
+      "cityId": "stockholm",
+      "confidence": 0.6200000000000001,
+      "candidate": {
+        "name": "Klevgränd 5",
+        "description": "",
+        "address": "59.31861, 18.07495",
+        "website": "",
+        "actionTags": [
+          "recycle"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 18.0749506,
+          "lat": 59.3186108
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_11868908361",
+      "cityId": "stockholm",
+      "confidence": 0.6200000000000001,
+      "candidate": {
+        "name": "Siv & Åke Vintage",
+        "description": "",
+        "address": "59.31795, 18.06548",
+        "website": "https://sivake.se/",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [
+          "clothing"
+        ],
+        "coords": {
+          "lng": 18.0654842,
+          "lat": 59.3179451
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_11952587141",
+      "cityId": "stockholm",
+      "confidence": 0.6200000000000001,
+      "candidate": {
+        "name": "Abiti Vintage",
+        "description": "",
+        "address": "59.31791, 18.06504",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [
+          "clothing"
+        ],
+        "coords": {
+          "lng": 18.0650426,
+          "lat": 59.3179098
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_11979061271",
+      "cityId": "stockholm",
+      "confidence": 0.7200000000000001,
+      "candidate": {
+        "name": "Loppis Kärrtorp",
+        "description": "",
+        "address": "Fyrskeppsvägen 110, Johanneshov",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 18.1118373,
+          "lat": 59.2872308
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_12002665775",
+      "cityId": "stockholm",
+      "confidence": 0.6200000000000001,
+      "candidate": {
+        "name": "Skyddsvärnet second hand",
+        "description": "",
+        "address": "59.31564, 18.03817",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 18.0381734,
+          "lat": 59.3156384
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_12027884717",
+      "cityId": "stockholm",
+      "confidence": 0.5700000000000001,
+      "candidate": {
+        "name": "Midsommarkransens Vintage",
+        "description": "",
+        "address": "59.30140, 18.01367",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 18.0136692,
+          "lat": 59.3014049
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_12030655594",
+      "cityId": "stockholm",
+      "confidence": 0.5700000000000001,
+      "candidate": {
+        "name": "Second Hand Butik",
+        "description": "",
+        "address": "59.29745, 18.04670",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 18.0467026,
+          "lat": 59.2974519
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_12064763459",
+      "cityId": "stockholm",
+      "confidence": 0.6200000000000001,
+      "candidate": {
+        "name": "Brocante Second hand",
+        "description": "",
+        "address": "59.31747, 18.05228",
+        "website": "https://secondhandsthlm.se/",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 18.0522824,
+          "lat": 59.3174688
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_12087360881",
+      "cityId": "stockholm",
+      "confidence": 0.7000000000000001,
+      "candidate": {
+        "name": "Lorenz B. Hatt",
+        "description": "",
+        "address": "59.30533, 18.00015",
+        "website": "http://www.hatt.se/",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [
+          "books"
+        ],
+        "coords": {
+          "lng": 18.0001514,
+          "lat": 59.3053347
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_12581525954",
+      "cityId": "stockholm",
+      "confidence": 0.6200000000000001,
+      "candidate": {
+        "name": "Re-tail secondhand",
+        "description": "",
+        "address": "59.33325, 18.06565",
+        "website": "https://re-tail.se",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 18.0656536,
+          "lat": 59.3332463
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_12622786155",
+      "cityId": "stockholm",
+      "confidence": 0.5700000000000001,
+      "candidate": {
+        "name": "Vintage & Friends",
+        "description": "",
+        "address": "59.33271, 18.06645",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 18.0664467,
+          "lat": 59.3327109
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_12765641451",
+      "cityId": "stockholm",
+      "confidence": 0.6200000000000001,
+      "candidate": {
+        "name": "Recykleriet",
+        "description": "",
+        "address": "59.30900, 17.99561",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 17.9956118,
+          "lat": 59.3089963
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_12856715391",
+      "cityId": "stockholm",
+      "confidence": 0.6200000000000001,
+      "candidate": {
+        "name": "Vintage Mall",
+        "description": "",
+        "address": "59.33374, 18.05934",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [
+          "clothing"
+        ],
+        "coords": {
+          "lng": 18.0593396,
+          "lat": 59.3337434
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_13023135717",
+      "cityId": "stockholm",
+      "confidence": 0.7000000000000001,
+      "candidate": {
+        "name": "Bye Buy",
+        "description": "",
+        "address": "59.33660, 18.03457",
+        "website": "https://www.byebuy.se/",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 18.0345698,
+          "lat": 59.3366031
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_13348282964",
+      "cityId": "stockholm",
+      "confidence": 0.6200000000000001,
+      "candidate": {
+        "name": "Friends of Léon",
+        "description": "",
+        "address": "59.33154, 18.04609",
+        "website": "https://friendsofleon.se",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 18.0460927,
+          "lat": 59.3315419
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_13369836541",
+      "cityId": "stockholm",
+      "confidence": 0.6200000000000001,
+      "candidate": {
+        "name": "Twist & Tango",
+        "description": "",
+        "address": "59.31251, 18.08213",
+        "website": "https://twisttango.com",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 18.0821333,
+          "lat": 59.3125065
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_13376584495",
+      "cityId": "stockholm",
+      "confidence": 0.6200000000000001,
+      "candidate": {
+        "name": "Ruth & Raoul",
+        "description": "",
+        "address": "59.31715, 18.04760",
+        "website": "https://www.ruthraoul.com",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 18.0476042,
+          "lat": 59.3171469
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_13523603050",
+      "cityId": "stockholm",
+      "confidence": 0.5700000000000001,
+      "candidate": {
+        "name": "Second space wear",
+        "description": "",
+        "address": "59.30334, 18.01206",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 18.0120645,
+          "lat": 59.3033377
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_13587940638",
+      "cityId": "stockholm",
+      "confidence": 0.6200000000000001,
+      "candidate": {
+        "name": "Artikel2",
+        "description": "",
+        "address": "59.36046, 17.99975",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 17.9997523,
+          "lat": 59.3604572
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_13808850475",
+      "cityId": "stockholm",
+      "confidence": 0.7000000000000001,
+      "candidate": {
+        "name": "Antikvariat Boksamlaren",
+        "description": "",
+        "address": "59.28918, 18.11331",
+        "website": "https://boksamlaren.se/",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [
+          "books"
+        ],
+        "coords": {
+          "lng": 18.1133074,
+          "lat": 59.2891786
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_1384928921",
+      "cityId": "stockholm",
+      "confidence": 0.6200000000000001,
+      "candidate": {
+        "name": "Ersta secondhand",
+        "description": "",
+        "address": "59.31543, 18.08586",
+        "website": "https://www.erstadiakoni.se/verksamheter/bo-och-motas/ersta-second-hand/valkommen-till-ersta-secondhand/",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 18.0858571,
+          "lat": 59.3154283
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_14019394101",
+      "cityId": "stockholm",
+      "confidence": 0.5700000000000001,
+      "candidate": {
+        "name": "An Ideal for Living",
+        "description": "",
+        "address": "59.31294, 18.08094",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 18.080941,
+          "lat": 59.3129408
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_14082299001",
+      "cityId": "stockholm",
+      "confidence": 0.5700000000000001,
+      "candidate": {
+        "name": "Artikel2",
+        "description": "",
+        "address": "59.36042, 17.99980",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 17.9997998,
+          "lat": 59.3604226
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_14095317759",
+      "cityId": "stockholm",
+      "confidence": 0.7200000000000001,
+      "candidate": {
+        "name": "Re SoFo",
+        "description": "",
+        "address": "Östgötagatan 44",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 18.0778161,
+          "lat": 59.3113378
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_1509877783",
+      "cityId": "stockholm",
+      "confidence": 0.6200000000000001,
+      "candidate": {
+        "name": "Stockholms stadsmission Second hand",
+        "description": "",
+        "address": "59.31275, 18.08241",
+        "website": "https://www.stadsmissionen.se/butiker/second-hand-sodermalm-nytorget-skanegatan",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 18.0824069,
+          "lat": 59.3127524
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_1570245193",
+      "cityId": "stockholm",
+      "confidence": 0.5700000000000001,
+      "candidate": {
+        "name": "Hammarbybacken Skidhyra",
+        "description": "",
+        "address": "59.30130, 18.10964",
+        "website": "",
+        "actionTags": [
+          "rental"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 18.1096399,
+          "lat": 59.3013028
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_1948002096",
+      "cityId": "stockholm",
+      "confidence": 0.7000000000000001,
+      "candidate": {
+        "name": "Artikel2",
+        "description": "",
+        "address": "59.31941, 18.07038",
+        "website": "https://artikel2.se/",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 18.0703836,
+          "lat": 59.3194061
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_2025395441",
+      "cityId": "stockholm",
+      "confidence": 0.5700000000000001,
+      "candidate": {
+        "name": "Vintage & friends",
+        "description": "",
+        "address": "59.33556, 18.05991",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [
+          "clothing"
+        ],
+        "coords": {
+          "lng": 18.0599104,
+          "lat": 59.3355585
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_2335694983",
+      "cityId": "stockholm",
+      "confidence": 0.7000000000000001,
+      "candidate": {
+        "name": "Second Hand",
+        "description": "",
+        "address": "59.33355, 18.03165",
+        "website": "https://secondhandsthlm.se/",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 18.0316536,
+          "lat": 59.3335478
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_2378205419",
+      "cityId": "stockholm",
+      "confidence": 0.6200000000000001,
+      "candidate": {
+        "name": "Antikvariat August",
+        "description": "",
+        "address": "59.33847, 18.05671",
+        "website": "http://antikvariataugust.se/",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [
+          "books"
+        ],
+        "coords": {
+          "lng": 18.0567127,
+          "lat": 59.3384678
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_2496655892",
+      "cityId": "stockholm",
+      "confidence": 0.6200000000000001,
+      "candidate": {
+        "name": "Rönnells Antikvariat",
+        "description": "",
+        "address": "59.33849, 18.06896",
+        "website": "https://ronnells.se/",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [
+          "books"
+        ],
+        "coords": {
+          "lng": 18.068962,
+          "lat": 59.3384934
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_2777888879",
+      "cityId": "stockholm",
+      "confidence": 0.5700000000000001,
+      "candidate": {
+        "name": "Humana",
+        "description": "",
+        "address": "59.31532, 18.06223",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 18.0622349,
+          "lat": 59.3153184
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_2859414315",
+      "cityId": "stockholm",
+      "confidence": 0.6200000000000001,
+      "candidate": {
+        "name": "Birgittas Dam Herr Second Hand",
+        "description": "",
+        "address": "59.33976, 18.08276",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 18.0827631,
+          "lat": 59.3397629
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_3260084790",
+      "cityId": "stockholm",
+      "confidence": 0.6200000000000001,
+      "candidate": {
+        "name": "STHLMGRÖN",
+        "description": "",
+        "address": "59.31722, 18.06356",
+        "website": "http://www.sthlmgron.com",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 18.0635644,
+          "lat": 59.317223
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_3269090388",
+      "cityId": "stockholm",
+      "confidence": 0.6200000000000001,
+      "candidate": {
+        "name": "Brandstationen",
+        "description": "",
+        "address": "59.31877, 18.06063",
+        "website": "https://brandstationenstore.se",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 18.0606322,
+          "lat": 59.3187652
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_3362926377",
+      "cityId": "stockholm",
+      "confidence": 0.6200000000000001,
+      "candidate": {
+        "name": "Serier & Sånt",
+        "description": "",
+        "address": "59.34595, 18.04501",
+        "website": "https://seriersant.se/om-butiken",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [
+          "books"
+        ],
+        "coords": {
+          "lng": 18.0450094,
+          "lat": 59.3459545
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_3617891726",
+      "cityId": "stockholm",
+      "confidence": 0.6200000000000001,
+      "candidate": {
+        "name": "Antikvariat Verklighetsflykt",
+        "description": "",
+        "address": "59.31521, 18.08414",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [
+          "books"
+        ],
+        "coords": {
+          "lng": 18.084143,
+          "lat": 59.3152148
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_369721112",
+      "cityId": "stockholm",
+      "confidence": 0.6200000000000001,
+      "candidate": {
+        "name": "Kretsa",
+        "description": "",
+        "address": "59.33419, 18.01458",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 18.014578,
+          "lat": 59.3341874
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_4092281747",
+      "cityId": "stockholm",
+      "confidence": 0.6200000000000001,
+      "candidate": {
+        "name": "MJ Retro",
+        "description": "",
+        "address": "59.31497, 18.03235",
+        "website": "https://www.mjretro.se/",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 18.0323457,
+          "lat": 59.3149739
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_4359284973",
+      "cityId": "stockholm",
+      "confidence": 0.6200000000000001,
+      "candidate": {
+        "name": "Vintagefabriken",
+        "description": "",
+        "address": "59.30189, 18.01454",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 18.0145406,
+          "lat": 59.3018869
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_4610504389",
+      "cityId": "stockholm",
+      "confidence": 0.5700000000000001,
+      "candidate": {
+        "name": "Föreningen Åter Vinnarna",
+        "description": "",
+        "address": "59.30696, 18.07727",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 18.0772661,
+          "lat": 59.3069609
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_479369231",
+      "cityId": "stockholm",
+      "confidence": 0.7000000000000001,
+      "candidate": {
+        "name": "Myrorna",
+        "description": "",
+        "address": "59.33301, 18.06334",
+        "website": "https://www.myrorna.se/butiker/stockholm/master-samuelsgatan/",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 18.0633363,
+          "lat": 59.3330135
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_502523394",
+      "cityId": "stockholm",
+      "confidence": 0.7000000000000001,
+      "candidate": {
+        "name": "Stockholms stadsmission Second hand",
+        "description": "",
+        "address": "59.30933, 18.02409",
+        "website": "https://www.stadsmissionen.se/butiker/second-hand-liljeholmen-liljeholmstorget",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 18.02409,
+          "lat": 59.3093315
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_5418287207",
+      "cityId": "stockholm",
+      "confidence": 0.6200000000000001,
+      "candidate": {
+        "name": "Stockholms stadsmission Second hand",
+        "description": "",
+        "address": "59.32506, 18.07185",
+        "website": "https://www.stadsmissionen.se/butiker/second-hand-gamla-stan-kopmangatan-15",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 18.071847,
+          "lat": 59.3250619
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_5645241700",
+      "cityId": "stockholm",
+      "confidence": 0.5700000000000001,
+      "candidate": {
+        "name": "Pro Rebus Antiquis antikvariat",
+        "description": "",
+        "address": "59.33995, 18.06745",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [
+          "books"
+        ],
+        "coords": {
+          "lng": 18.0674488,
+          "lat": 59.3399493
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_5645241702",
+      "cityId": "stockholm",
+      "confidence": 0.7000000000000001,
+      "candidate": {
+        "name": "Aderton antikvariat",
+        "description": "",
+        "address": "59.34231, 18.05136",
+        "website": "https://www.aderton.se/",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [
+          "books"
+        ],
+        "coords": {
+          "lng": 18.0513613,
+          "lat": 59.3423141
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_5766092747",
+      "cityId": "stockholm",
+      "confidence": 0.7000000000000001,
+      "candidate": {
+        "name": "Stadsmissionen Second Hand",
+        "description": "",
+        "address": "59.34390, 18.05275",
+        "website": "https://www.stadsmissionen.se/butiker/second-hand-vasastan-hagagatan-3",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 18.0527508,
+          "lat": 59.3438974
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_5861326251",
+      "cityId": "stockholm",
+      "confidence": 0.6200000000000001,
+      "candidate": {
+        "name": "Myrorna",
+        "description": "",
+        "address": "59.31773, 18.05220",
+        "website": "https://www.myrorna.se/butiker/stockholm/sodermalm-hornsgatan/",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 18.0521988,
+          "lat": 59.3177323
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_6200873020",
+      "cityId": "stockholm",
+      "confidence": 0.7000000000000001,
+      "candidate": {
+        "name": "Essingeboden",
+        "description": "",
+        "address": "59.32527, 18.00732",
+        "website": "https://www.facebook.com/essingeboden/",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 18.0073191,
+          "lat": 59.325268
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_6480957150",
+      "cityId": "stockholm",
+      "confidence": 0.6200000000000001,
+      "candidate": {
+        "name": "Svenningssonskans boklåda",
+        "description": "",
+        "address": "59.32479, 18.07258",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [
+          "books"
+        ],
+        "coords": {
+          "lng": 18.0725822,
+          "lat": 59.3247924
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_6480999048",
+      "cityId": "stockholm",
+      "confidence": 0.6200000000000001,
+      "candidate": {
+        "name": "Eddies loppis",
+        "description": "",
+        "address": "59.32406, 18.07299",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 18.0729933,
+          "lat": 59.3240614
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_7040625017",
+      "cityId": "stockholm",
+      "confidence": 0.6200000000000001,
+      "candidate": {
+        "name": "Artikel2",
+        "description": "",
+        "address": "59.35952, 18.00160",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 18.0016014,
+          "lat": 59.3595167
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_7043248175",
+      "cityId": "stockholm",
+      "confidence": 0.7000000000000001,
+      "candidate": {
+        "name": "Proklama",
+        "description": "",
+        "address": "59.34402, 18.05263",
+        "website": "https://www.proklama.se/",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [
+          "books"
+        ],
+        "coords": {
+          "lng": 18.0526335,
+          "lat": 59.3440165
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_7222046352",
+      "cityId": "stockholm",
+      "confidence": 0.6200000000000001,
+      "candidate": {
+        "name": "Vintage Lotta",
+        "description": "",
+        "address": "59.34119, 18.04978",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 18.0497818,
+          "lat": 59.3411882
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_7488338570",
+      "cityId": "stockholm",
+      "confidence": 0.6200000000000001,
+      "candidate": {
+        "name": "Röda korset",
+        "description": "",
+        "address": "59.34024, 18.04736",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 18.0473616,
+          "lat": 59.340244
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_7497791428",
+      "cityId": "stockholm",
+      "confidence": 0.6200000000000001,
+      "candidate": {
+        "name": "Röda Korset Second Hand & Café Södermalm",
+        "description": "På Mötesplats Kupan Södermalm kan du dricka en kopp kaffe, fika och göra förmånliga inköp av skänkta kläder, möbler och prylar. Överskottet av försäljningen går till Röda Korsets verksamheter. Vi tar tacksamt emot hela och rena kläder, prylar och möbler.",
+        "address": "59.31064, 18.07864",
+        "website": "https://www.rodakorset.se/ort/stockholm/stockholms-stad/second-hand/roda-korset-second-hand-stockholm-sodermalm/",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 18.0786379,
+          "lat": 59.3106368
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_7605623241",
+      "cityId": "stockholm",
+      "confidence": 0.6200000000000001,
+      "candidate": {
+        "name": "Stockholms Science Fiction-antikvariat",
+        "description": "Vintage science fiction, fantasy and horror literature.",
+        "address": "59.30691, 18.07806",
+        "website": "https://sfantikvariatet.se/",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [
+          "books"
+        ],
+        "coords": {
+          "lng": 18.078063,
+          "lat": 59.3069108
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_8954312967",
+      "cityId": "stockholm",
+      "confidence": 0.7000000000000001,
+      "candidate": {
+        "name": "Antikvariat Hundörat",
+        "description": "",
+        "address": "59.31540, 18.07600",
+        "website": "http://hundorat.se/",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [
+          "books"
+        ],
+        "coords": {
+          "lng": 18.0759955,
+          "lat": 59.3153959
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_8980048769",
+      "cityId": "stockholm",
+      "confidence": 0.7000000000000001,
+      "candidate": {
+        "name": "Agape second hand",
+        "description": "",
+        "address": "59.35267, 18.08947",
+        "website": "https://secondhandagape.se/butiker/stockholm",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 18.0894707,
+          "lat": 59.3526707
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_9048052017",
+      "cityId": "stockholm",
+      "confidence": 0.6200000000000001,
+      "candidate": {
+        "name": "Ting från förr och nu",
+        "description": "",
+        "address": "59.33120, 18.02989",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 18.0298871,
+          "lat": 59.3312021
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_9048057525",
+      "cityId": "stockholm",
+      "confidence": 0.7000000000000001,
+      "candidate": {
+        "name": "Antiqua",
+        "description": "",
+        "address": "59.33826, 18.08121",
+        "website": "http://www.antiqua.se/",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [
+          "books"
+        ],
+        "coords": {
+          "lng": 18.0812092,
+          "lat": 59.3382553
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_9232382889",
+      "cityId": "stockholm",
+      "confidence": 0.8,
+      "candidate": {
+        "name": "Lindra second hand",
+        "description": "",
+        "address": "Smedjegatan 6, Nacka, 131 54",
+        "website": "https://lindra.se/vara-butiker/",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 18.1228483,
+          "lat": 59.3049938
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_9232387979",
+      "cityId": "stockholm",
+      "confidence": 0.8,
+      "candidate": {
+        "name": "Stockholms stadsmission second hand",
+        "description": "",
+        "address": "Smedjegatan 4, Nacka, 131 34",
+        "website": "https://www.stadsmissionen.se/butiker/second-hand-sickla-nacka",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 18.1229286,
+          "lat": 59.3047925
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_9545091703",
+      "cityId": "stockholm",
+      "confidence": 0.6200000000000001,
+      "candidate": {
+        "name": "Återvinningsstation",
+        "description": "",
+        "address": "59.36990, 18.06602",
+        "website": "",
+        "actionTags": [
+          "recycle"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 18.0660183,
+          "lat": 59.3699001
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_9555035840",
+      "cityId": "stockholm",
+      "confidence": 0.8,
+      "candidate": {
+        "name": "Röda Korset Second hand Lidingö",
+        "description": "",
+        "address": "Pyrolavägen 5, Lidingö",
+        "website": "https://www.rodakorset.se/vad-vi-gor/second-hand/butiker/roda-korset-second-hand-lidingo/",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 18.1690147,
+          "lat": 59.3443735
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_node_9811112805",
+      "cityId": "stockholm",
+      "confidence": 0.8,
+      "candidate": {
+        "name": "Rent a bike",
+        "description": "",
+        "address": "Strandvägen 18, Stockholm, 114 56",
+        "website": "https://rentabike.se",
+        "actionTags": [
+          "rental"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 18.0832886,
+          "lat": 59.331298
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_way_157664757",
+      "cityId": "stockholm",
+      "confidence": 0.6200000000000001,
+      "candidate": {
+        "name": "Östberga återvinningscentral",
+        "description": "",
+        "address": "59.28558, 18.04663",
+        "website": "",
+        "actionTags": [
+          "recycle"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 18.0466347,
+          "lat": 59.2855753
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_stockholm_way_779952828",
+      "cityId": "stockholm",
+      "confidence": 0.8,
+      "candidate": {
+        "name": "Roslagstulls återbruk och återvinning",
+        "description": "",
+        "address": "Cedersdalsgatan 7, Stockholm",
+        "website": "http://www.stockholmvattenochavfall.se/avfall-och-atervinning/har-lamnar-du-dina-sopor/privatkund/har-lamnar-du-sopor/atervinningscentral/#!/roslagstulls-aterbruk",
+        "actionTags": [
+          "recycle"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 18.053899,
+          "lat": 59.350197
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_turin_node_10102275022",
+      "cityId": "turin",
+      "confidence": 0.7200000000000001,
+      "candidate": {
+        "name": "Il mercatino",
+        "description": "",
+        "address": "Via Ceresole 27, Torino, 10155",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 7.6891496,
+          "lat": 45.0957869
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_turin_node_10132251384",
+      "cityId": "turin",
+      "confidence": 0.5700000000000001,
+      "candidate": {
+        "name": "Il Mercatino",
+        "description": "",
+        "address": "45.11133, 7.65973",
+        "website": "http://www.torinovialanzo.mercatinousato.com/",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 7.6597286,
+          "lat": 45.1113324
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_turin_node_10245695696",
+      "cityId": "turin",
+      "confidence": 0.5700000000000001,
+      "candidate": {
+        "name": "Il Mercatino",
+        "description": "",
+        "address": "45.06664, 7.61381",
+        "website": "http://www.torino16.mercatinousato.com/",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 7.6138075,
+          "lat": 45.0666428
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_turin_node_10896540917",
+      "cityId": "turin",
+      "confidence": 0.5700000000000001,
+      "candidate": {
+        "name": "Humana Vintage",
+        "description": "",
+        "address": "45.06720, 7.69199",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 7.6919859,
+          "lat": 45.0672019
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_turin_node_11020032854",
+      "cityId": "turin",
+      "confidence": 0.67,
+      "candidate": {
+        "name": "Libraccio",
+        "description": "",
+        "address": "Via Santa Teresa 7, Torino, 10121",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [
+          "books"
+        ],
+        "coords": {
+          "lng": 7.6809621,
+          "lat": 45.0690349
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_turin_node_11280677238",
+      "cityId": "turin",
+      "confidence": 0.8,
+      "candidate": {
+        "name": "Libraccio",
+        "description": "",
+        "address": "Via Ormea 134b",
+        "website": "https://negozi.libraccio.it/negozi/torino/libraccio-torino",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [
+          "books"
+        ],
+        "coords": {
+          "lng": 7.676053,
+          "lat": 45.0454483
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_turin_node_1214095349",
+      "cityId": "turin",
+      "confidence": 0.5700000000000001,
+      "candidate": {
+        "name": "Cash Time",
+        "description": "",
+        "address": "45.05796, 7.67380",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 7.6738034,
+          "lat": 45.0579638
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_turin_node_12165781921",
+      "cityId": "turin",
+      "confidence": 0.5700000000000001,
+      "candidate": {
+        "name": "Asino d'Oro",
+        "description": "Libri scolastici nuovi e usati",
+        "address": "45.07585, 7.65739",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [
+          "books"
+        ],
+        "coords": {
+          "lng": 7.6573895,
+          "lat": 45.0758522
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_turin_node_12195424732",
+      "cityId": "turin",
+      "confidence": 0.7000000000000001,
+      "candidate": {
+        "name": "Lo straniero",
+        "description": "",
+        "address": "45.06989, 7.70123",
+        "website": "https://lostraniero.store/",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [
+          "books"
+        ],
+        "coords": {
+          "lng": 7.7012274,
+          "lat": 45.0698871
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_turin_node_12511867888",
+      "cityId": "turin",
+      "confidence": 0.5700000000000001,
+      "candidate": {
+        "name": "Humana",
+        "description": "",
+        "address": "45.05403, 7.66986",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 7.669856,
+          "lat": 45.0540287
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_turin_node_12522629340",
+      "cityId": "turin",
+      "confidence": 0.5700000000000001,
+      "candidate": {
+        "name": "Raccolta abiti usati",
+        "description": "Punto raccolta abiti vestiti scarpe usati",
+        "address": "45.05262, 7.66699",
+        "website": "",
+        "actionTags": [
+          "recycle"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 7.6669922,
+          "lat": 45.0526231
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_turin_node_12590166091",
+      "cityId": "turin",
+      "confidence": 0.7000000000000001,
+      "candidate": {
+        "name": "Libropoli",
+        "description": "",
+        "address": "45.06901, 7.69467",
+        "website": "https://libri-universitari.eu/",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [
+          "books"
+        ],
+        "coords": {
+          "lng": 7.6946694,
+          "lat": 45.0690104
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_turin_node_12752045707",
+      "cityId": "turin",
+      "confidence": 0.7200000000000001,
+      "candidate": {
+        "name": "Humana raccolta abbigliamento",
+        "description": "",
+        "address": "Corso Sebastopoli",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 7.6558826,
+          "lat": 45.0416203
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_turin_node_12772876801",
+      "cityId": "turin",
+      "confidence": 0.65,
+      "candidate": {
+        "name": "Humana Vintage",
+        "description": "",
+        "address": "45.07057, 7.68021",
+        "website": "https://humanavintage.it/",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [
+          "clothing"
+        ],
+        "coords": {
+          "lng": 7.6802096,
+          "lat": 45.0705746
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_turin_node_12783341801",
+      "cityId": "turin",
+      "confidence": 0.8,
+      "candidate": {
+        "name": "Cha.rly Vintage & Flowers",
+        "description": "",
+        "address": "Via Giuseppe Pomba 29",
+        "website": "http://www.charlyvintageandflowers.com",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [
+          "clothing"
+        ],
+        "coords": {
+          "lng": 7.68553,
+          "lat": 45.0656361
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_turin_node_12995552841",
+      "cityId": "turin",
+      "confidence": 0.5700000000000001,
+      "candidate": {
+        "name": "Libraccio",
+        "description": "",
+        "address": "45.06455, 7.64668",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [
+          "books"
+        ],
+        "coords": {
+          "lng": 7.6466809,
+          "lat": 45.0645522
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_turin_node_13040780764",
+      "cityId": "turin",
+      "confidence": 0.5700000000000001,
+      "candidate": {
+        "name": "Il Supermercatino dell'Usato",
+        "description": "",
+        "address": "45.07025, 7.61746",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 7.6174575,
+          "lat": 45.0702537
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_turin_node_13165890205",
+      "cityId": "turin",
+      "confidence": 0.5700000000000001,
+      "candidate": {
+        "name": "Secondamanina",
+        "description": "",
+        "address": "45.06947, 7.69974",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 7.6997359,
+          "lat": 45.0694716
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_turin_node_13432891655",
+      "cityId": "turin",
+      "confidence": 0.7200000000000001,
+      "candidate": {
+        "name": "CambiaMenti",
+        "description": "",
+        "address": "Via Antonio Vagnone 24a, Torino, 10144",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 7.664761,
+          "lat": 45.0812216
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_turin_node_13446481912",
+      "cityId": "turin",
+      "confidence": 0.5700000000000001,
+      "candidate": {
+        "name": "Les Coquettes - Vintage",
+        "description": "",
+        "address": "45.07155, 7.68177",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [
+          "accessories"
+        ],
+        "coords": {
+          "lng": 7.6817674,
+          "lat": 45.071547
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_turin_node_13611533933",
+      "cityId": "turin",
+      "confidence": 0.67,
+      "candidate": {
+        "name": "Ecocentro Venaria Reale",
+        "description": "",
+        "address": "Corso Lombardia 49, Venaria Reale, 10078",
+        "website": "",
+        "actionTags": [
+          "recycle"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 7.6493644,
+          "lat": 45.1160741
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_turin_node_13640689143",
+      "cityId": "turin",
+      "confidence": 0.75,
+      "candidate": {
+        "name": "CambiaMenti",
+        "description": "",
+        "address": "Via Antonio Pacinotti 2a, Torino, 10144",
+        "website": "https://www.facebook.com/cambiamentishop/",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 7.6658813,
+          "lat": 45.0801059
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_turin_node_13651642608",
+      "cityId": "turin",
+      "confidence": 0.7200000000000001,
+      "candidate": {
+        "name": "Mercatino Lara Luis",
+        "description": "",
+        "address": "Via Bruino 22b, Torino, 10138",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 7.6548242,
+          "lat": 45.0742158
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_turin_node_13679724050",
+      "cityId": "turin",
+      "confidence": 0.5700000000000001,
+      "candidate": {
+        "name": "Compagnia delle pulci",
+        "description": "",
+        "address": "45.07491, 7.64062",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 7.6406222,
+          "lat": 45.0749109
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_turin_node_2017190756",
+      "cityId": "turin",
+      "confidence": 0.7200000000000001,
+      "candidate": {
+        "name": "Humana Second Hand",
+        "description": "",
+        "address": "Corso Vittorio Emanuele II 41, Torino, 10125",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 7.6815719,
+          "lat": 45.0615176
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_turin_node_2682276110",
+      "cityId": "turin",
+      "confidence": 0.67,
+      "candidate": {
+        "name": "Libro Mastro",
+        "description": "",
+        "address": "Via Principe Amedeo 46e, Torino, 10123",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [
+          "books"
+        ],
+        "coords": {
+          "lng": 7.6919947,
+          "lat": 45.066002
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_turin_node_2908768644",
+      "cityId": "turin",
+      "confidence": 0.8,
+      "candidate": {
+        "name": "Triciclo",
+        "description": "",
+        "address": "Via Arbe 12, Torino, 10136",
+        "website": "https://www.triciclo.com/",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 7.6318536,
+          "lat": 45.0555258
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_turin_node_3147953824",
+      "cityId": "turin",
+      "confidence": 0.5700000000000001,
+      "candidate": {
+        "name": "GaldieriRent",
+        "description": "",
+        "address": "45.04245, 7.64027",
+        "website": "",
+        "actionTags": [
+          "rental"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 7.6402668,
+          "lat": 45.0424539
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_turin_node_3779248190",
+      "cityId": "turin",
+      "confidence": 0.7200000000000001,
+      "candidate": {
+        "name": "Il Mercatino",
+        "description": "",
+        "address": "Via Gorizia 40/5, Torino, 10136",
+        "website": "http://www.torino05.mercatinousato.com/",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 7.6407904,
+          "lat": 45.0514029
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_turin_node_3779248193",
+      "cityId": "turin",
+      "confidence": 0.67,
+      "candidate": {
+        "name": "Il Mercatino",
+        "description": "",
+        "address": "Via Carlo Tenivelli 16 I, Torino, 10144",
+        "website": "http://www.torino29.mercatinousato.com/",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 7.6625934,
+          "lat": 45.080518
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_turin_node_3779272665",
+      "cityId": "turin",
+      "confidence": 0.67,
+      "candidate": {
+        "name": "Il Mercatino",
+        "description": "",
+        "address": "Via Francesco Millio 53, Torino, 10141",
+        "website": "http://www.torinosanpaolo.mercatinousato.com/",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 7.6483653,
+          "lat": 45.0589974
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_turin_node_3779272671",
+      "cityId": "turin",
+      "confidence": 0.67,
+      "candidate": {
+        "name": "Mercatino",
+        "description": "",
+        "address": "Via Tommaso Grossi 2, Torino, 10126",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 7.6712893,
+          "lat": 45.0473536
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_turin_node_4734138771",
+      "cityId": "turin",
+      "confidence": 0.7200000000000001,
+      "candidate": {
+        "name": "Ri-Trovo",
+        "description": "",
+        "address": "Via Don Giovanni Bosco 80, 10144",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 7.6607491,
+          "lat": 45.0852065
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_turin_node_4734248857",
+      "cityId": "turin",
+      "confidence": 0.67,
+      "candidate": {
+        "name": "de Martino",
+        "description": "",
+        "address": "Via Chambery 93 int. 114, 10142",
+        "website": "",
+        "actionTags": [
+          "rental"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 7.6109025,
+          "lat": 45.0688916
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_turin_node_4735021647",
+      "cityId": "turin",
+      "confidence": 0.7200000000000001,
+      "candidate": {
+        "name": "Tutto Usato",
+        "description": "",
+        "address": "Piazza Tancredi Galimberti 4e, Torino, 10134",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 7.6535857,
+          "lat": 45.0329083
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_turin_node_7105585584",
+      "cityId": "turin",
+      "confidence": 0.7200000000000001,
+      "candidate": {
+        "name": "Piccolo Mondo Antico",
+        "description": "",
+        "address": "Via Monginevro 242/3a, Torino, 10142",
+        "website": "http://www.mercatinounotorino.it/",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 7.6202769,
+          "lat": 45.0648725
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_turin_node_7638441256",
+      "cityId": "turin",
+      "confidence": 0.75,
+      "candidate": {
+        "name": "Motonolo",
+        "description": "",
+        "address": "Via Garessio 35, Torino, 10126",
+        "website": "https://www.motonolo-torino.it/",
+        "actionTags": [
+          "rental"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 7.6703844,
+          "lat": 45.0311427
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_turin_node_8024246877",
+      "cityId": "turin",
+      "confidence": 0.6200000000000001,
+      "candidate": {
+        "name": "Vintage Loundrette",
+        "description": "",
+        "address": "45.07191, 7.69711",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 7.6971085,
+          "lat": 45.0719057
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_turin_node_8405565905",
+      "cityId": "turin",
+      "confidence": 0.7200000000000001,
+      "candidate": {
+        "name": "Balù Green",
+        "description": "",
+        "address": "Via Luigi Carcano 22",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 7.7148297,
+          "lat": 45.0796839
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_turin_way_286292515",
+      "cityId": "turin",
+      "confidence": 0.5700000000000001,
+      "candidate": {
+        "name": "Ecocentro Circoscrizione 6",
+        "description": "",
+        "address": "45.09327, 7.71660",
+        "website": "",
+        "actionTags": [
+          "recycle"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 7.7165964,
+          "lat": 45.0932671
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_turin_way_321793381",
+      "cityId": "turin",
+      "confidence": 0.5700000000000001,
+      "candidate": {
+        "name": "Ecocentro Circoscrizione 7",
+        "description": "",
+        "address": "45.07962, 7.69946",
+        "website": "",
+        "actionTags": [
+          "recycle"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 7.6994641,
+          "lat": 45.079617
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_turin_way_321794079",
+      "cityId": "turin",
+      "confidence": 0.5700000000000001,
+      "candidate": {
+        "name": "Ecocentro Circoscrizione 6",
+        "description": "",
+        "address": "45.11865, 7.69067",
+        "website": "",
+        "actionTags": [
+          "recycle"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 7.6906716,
+          "lat": 45.1186529
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_turin_way_321795718",
+      "cityId": "turin",
+      "confidence": 0.6200000000000001,
+      "candidate": {
+        "name": "Ecocentro Circoscrizione 9",
+        "description": "",
+        "address": "45.03533, 7.66021",
+        "website": "",
+        "actionTags": [
+          "recycle"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 7.660214,
+          "lat": 45.0353304
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_turin_way_321797518",
+      "cityId": "turin",
+      "confidence": 0.5700000000000001,
+      "candidate": {
+        "name": "Ecocentro Circoscrizione 8",
+        "description": "",
+        "address": "45.02400, 7.67580",
+        "website": "",
+        "actionTags": [
+          "recycle"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 7.6758019,
+          "lat": 45.0240015
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_turin_way_83386645",
+      "cityId": "turin",
+      "confidence": 0.6200000000000001,
+      "candidate": {
+        "name": "Ecocentro",
+        "description": "",
+        "address": "45.05550, 7.63132",
+        "website": "",
+        "actionTags": [
+          "recycle"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 7.6313152,
+          "lat": 45.0555023
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_turin_way_960204572",
+      "cityId": "turin",
+      "confidence": 0.8,
+      "candidate": {
+        "name": "Centro di raccolta Via Ravina",
+        "description": "",
+        "address": "Via Amedeo Ravina 19a, Torino, 10153",
+        "website": "https://www.amiat.it/servizi/centri-di-raccolta",
+        "actionTags": [
+          "recycle"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 7.7123827,
+          "lat": 45.0776338
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_uppsala_node_10814296289",
+      "cityId": "uppsala",
+      "confidence": 0.8,
+      "candidate": {
+        "name": "Bokhandeln Röda Stjärnan",
+        "description": "",
+        "address": "Djäknegatan 15, Uppsala",
+        "website": "https://kommunistiskapartietuppsala.se/",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [
+          "books"
+        ],
+        "coords": {
+          "lng": 17.6423703,
+          "lat": 59.8688155
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_uppsala_node_11495625482",
+      "cityId": "uppsala",
+      "confidence": 0.7000000000000001,
+      "candidate": {
+        "name": "Uppsala stadsmission Outlet och Gåvomottagning",
+        "description": "",
+        "address": "59.85106, 17.68529",
+        "website": "https://uppsalastadsmission.se/",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 17.6852901,
+          "lat": 59.8510595
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_uppsala_node_11495629999",
+      "cityId": "uppsala",
+      "confidence": 0.5700000000000001,
+      "candidate": {
+        "name": "Återvinningcentral Fyrislund",
+        "description": "",
+        "address": "59.85614, 17.72073",
+        "website": "",
+        "actionTags": [
+          "recycle"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 17.7207346,
+          "lat": 59.8561422
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_uppsala_node_12127993601",
+      "cityId": "uppsala",
+      "confidence": 0.8,
+      "candidate": {
+        "name": "SIRIUS LOPPIS | MÖBLER",
+        "description": "",
+        "address": "Svartbäcksgatan 65",
+        "website": "https://siriusuppsala.se/sirius-loppis",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 17.6297387,
+          "lat": 59.8677108
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_uppsala_node_13041901176",
+      "cityId": "uppsala",
+      "confidence": 0.6200000000000001,
+      "candidate": {
+        "name": "Självfallet Hållbart",
+        "description": "",
+        "address": "59.85753, 17.63689",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 17.6368931,
+          "lat": 59.8575251
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_uppsala_node_2483691482",
+      "cityId": "uppsala",
+      "confidence": 0.7200000000000001,
+      "candidate": {
+        "name": "Restyle Second Hand & Records",
+        "description": "",
+        "address": "Sysslomansgatan 5, Uppsala, 75311",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 17.6313911,
+          "lat": 59.8596479
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_uppsala_node_3700207430",
+      "cityId": "uppsala",
+      "confidence": 0.8,
+      "candidate": {
+        "name": "Röda Korsets Second Hand",
+        "description": "",
+        "address": "Danmarksgatan 20 B, Uppsala, 75323",
+        "website": "https://www.rodakorset.se/ort/uppsala/uppsala-kommun/second-hand/roda-korset-second-hand-uppsala/",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 17.6711008,
+          "lat": 59.8535358
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_uppsala_node_3913032384",
+      "cityId": "uppsala",
+      "confidence": 0.6200000000000001,
+      "candidate": {
+        "name": "Uppsala stadsmissionen Second hand",
+        "description": "",
+        "address": "59.81053, 17.62909",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 17.6290935,
+          "lat": 59.8105314
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_uppsala_node_4339471426",
+      "cityId": "uppsala",
+      "confidence": 0.7000000000000001,
+      "candidate": {
+        "name": "Söder's gammalt & nytt",
+        "description": "",
+        "address": "59.85585, 17.64906",
+        "website": "https://sites.google.com/site/sodersgammalt",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 17.6490612,
+          "lat": 59.855847
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_uppsala_node_4340138188",
+      "cityId": "uppsala",
+      "confidence": 0.7000000000000001,
+      "candidate": {
+        "name": "Loppis Poppis",
+        "description": "",
+        "address": "59.86089, 17.62958",
+        "website": "https://www.loppispoppis.se/",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 17.629579,
+          "lat": 59.8608922
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_uppsala_node_4345061078",
+      "cityId": "uppsala",
+      "confidence": 0.5700000000000001,
+      "candidate": {
+        "name": "Uppsala Antik och Vintage",
+        "description": "",
+        "address": "59.86199, 17.64933",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 17.649326,
+          "lat": 59.8619938
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_uppsala_node_4362452190",
+      "cityId": "uppsala",
+      "confidence": 0.5700000000000001,
+      "candidate": {
+        "name": "Uppsala Stadsmission",
+        "description": "",
+        "address": "59.86988, 17.61153",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 17.6115328,
+          "lat": 59.86988
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_uppsala_node_4406868595",
+      "cityId": "uppsala",
+      "confidence": 0.8,
+      "candidate": {
+        "name": "Erikshjälpen Second Hand",
+        "description": "",
+        "address": "Bolandsgatan 10",
+        "website": "https://erikshjalpen.se/store/uppsala/",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 17.6734376,
+          "lat": 59.8559527
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_uppsala_node_598510497",
+      "cityId": "uppsala",
+      "confidence": 0.7000000000000001,
+      "candidate": {
+        "name": "Sirius loppmarknad",
+        "description": "",
+        "address": "59.86194, 17.62851",
+        "website": "https://siriusloppis.nu/",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 17.6285115,
+          "lat": 59.8619399
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_uppsala_node_6612680518",
+      "cityId": "uppsala",
+      "confidence": 0.7000000000000001,
+      "candidate": {
+        "name": "Globalen",
+        "description": "",
+        "address": "59.85649, 17.64294",
+        "website": "https://globalen.nu/",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 17.6429352,
+          "lat": 59.8564923
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_uppsala_node_7721882751",
+      "cityId": "uppsala",
+      "confidence": 0.7000000000000001,
+      "candidate": {
+        "name": "Återbruket",
+        "description": "",
+        "address": "59.85599, 17.66885",
+        "website": "https://www.uppsala.se/bygga-och-bo/avfall-och-atervinning/aterbruket-second-hand",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 17.6688463,
+          "lat": 59.8559889
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_uppsala_node_8699442617",
+      "cityId": "uppsala",
+      "confidence": 0.7200000000000001,
+      "candidate": {
+        "name": "Myrorna",
+        "description": "",
+        "address": "Vaksalagatan 7-11, Uppsala, 75320",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 17.6410942,
+          "lat": 59.8594297
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_uppsala_node_8968640651",
+      "cityId": "uppsala",
+      "confidence": 0.7000000000000001,
+      "candidate": {
+        "name": "Uppsala stadsmission Second hand",
+        "description": "",
+        "address": "59.87754, 17.67511",
+        "website": "https://uppsalastadsmission.se/verksamheter/second-hand/",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 17.6751084,
+          "lat": 59.8775373
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_uppsala_node_8995856560",
+      "cityId": "uppsala",
+      "confidence": 0.6200000000000001,
+      "candidate": {
+        "name": "Antikvariat Thomas Andersson",
+        "description": "",
+        "address": "59.85660, 17.62975",
+        "website": "",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [
+          "books"
+        ],
+        "coords": {
+          "lng": 17.6297535,
+          "lat": 59.8565996
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_uppsala_node_9836672904",
+      "cityId": "uppsala",
+      "confidence": 0.8,
+      "candidate": {
+        "name": "Fritidsbanken",
+        "description": "Fritidsbanken is like a library for sports and leisure items. Each lending period is 14 days. Anyone can borrow and everything is free!",
+        "address": "Valthornsvägen 7, Uppsala, 75650",
+        "website": "https://www.fritidsbanken.se/fritidsbank/uppsala-gottsunda/",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 17.630174,
+          "lat": 59.8094739
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_uppsala_way_127006322",
+      "cityId": "uppsala",
+      "confidence": 0.5700000000000001,
+      "candidate": {
+        "name": "Librobäck återvinningscentral",
+        "description": "",
+        "address": "59.87865, 17.59431",
+        "website": "",
+        "actionTags": [
+          "recycle"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 17.5943135,
+          "lat": 59.8786485
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_uppsala_way_159552312",
+      "cityId": "uppsala",
+      "confidence": 0.7000000000000001,
+      "candidate": {
+        "name": "Helping Hand - second hand",
+        "description": "",
+        "address": "59.85113, 17.68701",
+        "website": "https://helpinghand.se/",
+        "actionTags": [
+          "reuse"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 17.687008,
+          "lat": 59.8511321
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "osm_uppsala_way_94339237",
+      "cityId": "uppsala",
+      "confidence": 0.6200000000000001,
+      "candidate": {
+        "name": "Gottsunda Återvinningscentral",
+        "description": "",
+        "address": "59.81158, 17.63478",
+        "website": "",
+        "actionTags": [
+          "recycle"
+        ],
+        "sectorCategories": [],
+        "coords": {
+          "lng": 17.6347809,
+          "lat": 59.8115838
+        },
+        "locationName": null
+      }
+    },
+    {
+      "id": "taxonomy_recheck_milan_5hn3odh5Prpv6LDTtuHD",
+      "cityId": "milan",
+      "confidence": 0.6,
+      "candidate": {
+        "name": "Biblioteca Ostinata",
+        "description": "",
+        "address": "Via Osti 6, Milan",
+        "website": "https://www.bibliotecaostinata.it",
+        "actionTags": [
+          "reuse; rental"
+        ],
+        "sectorCategories": [
+          "books"
+        ],
+        "coords": {
+          "lng": 9.1919347,
+          "lat": 45.4589517
+        },
+        "locationName": ""
+      }
+    },
+    {
+      "id": "taxonomy_recheck_milan_ZYg6HdAQQY2AhbE0Dlkl",
+      "cityId": "milan",
+      "confidence": 0.6,
+      "candidate": {
+        "name": "Calzoleria Sorace",
+        "description": "",
+        "address": "Via Alessandro Zanoli 11, 20161",
+        "website": "https://www.calzoleriasorace.it/",
+        "actionTags": [
+          "repair",
+          "refurnish"
+        ],
+        "sectorCategories": [
+          "clothing"
+        ],
+        "coords": {
+          "lng": 9.1713571,
+          "lat": 45.5157406
+        },
+        "locationName": ""
+      }
+    },
+    {
+      "id": "taxonomy_recheck_milan_ZyFwFEtyct5Dxcrdsrm3",
+      "cityId": "milan",
+      "confidence": 0.6,
+      "candidate": {
+        "name": "Sample place (Milan)",
+        "description": "",
+        "address": "Sample address, Milan",
+        "website": "",
+        "actionTags": [],
+        "sectorCategories": [],
+        "coords": null,
+        "locationName": ""
+      }
+    },
+    {
+      "id": "taxonomy_recheck_uppsala_E7j1qi8fd3I4dBJs6Nli",
+      "cityId": "uppsala",
+      "confidence": 0.6,
+      "candidate": {
+        "name": "Sample place (Uppsala)",
+        "description": "",
+        "address": "Sample address, Uppsala",
+        "website": "",
+        "actionTags": [],
+        "sectorCategories": [],
+        "coords": null,
+        "locationName": ""
+      }
+    }
+  ]
+}
