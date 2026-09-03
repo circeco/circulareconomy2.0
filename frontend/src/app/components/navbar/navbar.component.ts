@@ -12,6 +12,7 @@ import { filter } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 import { SearchService } from '../../services/search.service';
+import { ViewportService } from '../../services/viewport.service';
 
 @Component({
   selector: 'app-navbar',
@@ -40,7 +41,8 @@ export class NavbarComponent implements AfterViewInit, OnDestroy {
     public auth: AuthService,
     public searchService: SearchService,
     private zone: NgZone,
-    private router: Router
+    private router: Router,
+    private viewport: ViewportService
   ) {
     this.admin$ = this.auth.isAdmin();
     // Watch route changes to toggle landing/atlas mode and (re)wire scrollspy
@@ -87,7 +89,7 @@ export class NavbarComponent implements AfterViewInit, OnDestroy {
 
   private toggleSnapClass(enable: boolean): void {
     // Adds/removes a class on <body> so we can scope scroll-snap to Landing only
-    if (enable) {
+    if (enable && !this.viewport.isPhone()) {
       document.body.classList.add('snap-landing');
     } else {
       document.body.classList.remove('snap-landing');

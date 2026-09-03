@@ -1,0 +1,71 @@
+@use 'variables' as *;
+
+.phone-tab-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 4;
+  display: flex;
+  justify-content: space-around;
+  align-items: stretch;
+  min-height: 56px;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  background: #ffffff;
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.phone-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 10px 4px;
+  color: $brand-deep;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+
+  &.active {
+    color: $color-accent;
+  }
+
+  &.disabled {
+    color: #b5b5b5;
+    pointer-events: none;
+    cursor: default;
+  }
+}
+
+.phone-tab-icon {
+  width: 24px;
+  height: 24px;
+  display: block;
+  background: currentColor;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+
+  &[data-tab='action'] {
+    -webkit-mask-image: url('/assets/icons/tab-home.png');
+    mask-image: url('/assets/icons/tab-home.png');
+  }
+
+  &[data-tab='atlas'] {
+    -webkit-mask-image: url('/assets/icons/tab-atlas.png');
+    mask-image: url('/assets/icons/tab-atlas.png');
+  }
+
+  &[data-tab='events'] {
+    -webkit-mask-image: url('/assets/icons/tab-events.png');
+    mask-image: url('/assets/icons/tab-events.png');
+  }
+
+  &[data-tab='user'] {
+    -webkit-mask-image: url('/assets/icons/tab-user.png');
+    mask-image: url('/assets/icons/tab-user.png');
+  }
+}

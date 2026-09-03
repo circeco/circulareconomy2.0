@@ -1,0 +1,25 @@
+<header class="phone-top-bar">
+  <a class="phone-logo" routerLink="/" queryParamsHandling="merge" aria-label="Circeco home"></a>
+
+  <button
+    *ngIf="showCity()"
+    type="button"
+    class="phone-city"
+    (click)="openCity()"
+    [attr.aria-label]="'Change city, currently ' + cityLabel()"
+  >
+    {{ cityLabel() }}
+    <span class="phone-city-caret" aria-hidden="true"></span>
+  </button>
+  <h1 *ngIf="isAccount()" class="phone-title">Profile</h1>
+
+  <button
+    *ngIf="showHeart()"
+    type="button"
+    class="phone-heart"
+    [class.on]="savedOn()"
+    [attr.aria-pressed]="savedOn()"
+    aria-label="Show saved only"
+    (click)="onHeart()"
+  >{{ savedOn() ? '♥' : '♡' }}</button>
+</header>

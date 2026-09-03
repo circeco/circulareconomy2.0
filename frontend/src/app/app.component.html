@@ -1,8 +1,14 @@
-<app-navbar></app-navbar>
+<app-navbar *ngIf="!phoneShell()"></app-navbar>
+<app-phone-top-bar *ngIf="phoneShell() && !chrome.cityPickerOpen()"></app-phone-top-bar>
 
-<app-city-switcher></app-city-switcher>
+<app-city-switcher *ngIf="!phoneShell()"></app-city-switcher>
 
 <app-login></app-login>
 
-<!-- Routed pages go here (Landing, Atlas, etc.) -->
-<router-outlet></router-outlet>
+<app-city-list *ngIf="phoneShell() && chrome.cityPickerOpen()"></app-city-list>
+
+<div class="app-main" [class.phone]="phoneShell()">
+  <router-outlet></router-outlet>
+</div>
+
+<app-phone-tab-bar *ngIf="phoneShell()"></app-phone-tab-bar>

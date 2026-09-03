@@ -1,0 +1,17 @@
+<nav class="phone-tab-bar" aria-label="Main">
+  <a
+    *ngFor="let tab of tabs"
+    class="phone-tab"
+    [class.active]="isActive(tab)"
+    [class.disabled]="tab.disabled"
+    [routerLink]="tab.disabled ? null : tab.link"
+    [attr.aria-label]="tab.label"
+    [attr.aria-current]="isActive(tab) ? 'page' : null"
+    [attr.aria-disabled]="tab.disabled"
+    [attr.tabindex]="tab.disabled ? -1 : 0"
+    queryParamsHandling="merge"
+    (click)="onTabClick($event, tab)"
+  >
+    <span class="phone-tab-icon" [attr.data-tab]="tab.id" aria-hidden="true"></span>
+  </a>
+</nav>

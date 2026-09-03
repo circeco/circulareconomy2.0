@@ -1,0 +1,72 @@
+@use 'variables' as *;
+
+.phone-top-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 4;
+  height: var(--header-offset, 52px);
+  padding: env(safe-area-inset-top, 0px) 8px 0;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.phone-logo {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  background: url(/assets/img/logo.svg) center / cover no-repeat;
+  border-radius: 8px;
+}
+
+.phone-city,
+.phone-title {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+  border: 0;
+  background: transparent;
+  font-family: $font-bebas;
+  font-size: 22px;
+  letter-spacing: 0.04em;
+  color: #1a1a1a;
+  cursor: pointer;
+}
+
+.phone-title {
+  cursor: default;
+  font-size: 20px;
+}
+
+.phone-city-caret {
+  display: inline-block;
+  width: 0;
+  height: 0;
+  margin-left: 6px;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid #1a1a1a;
+  vertical-align: middle;
+}
+
+.phone-heart {
+  width: 44px;
+  height: 44px;
+  margin-left: auto;
+  border: 0;
+  background: transparent;
+  color: $color-accent;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+
+  &.on {
+    font-weight: 700;
+  }
+}
