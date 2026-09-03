@@ -82,6 +82,29 @@ describe('PlacesFilter nearby sort', () => {
     expect(list.map((f) => f.properties.STORE_NAME)).toEqual(['Reuse shop']);
   });
 
+  it('matches search text in DESCRIPTION even when the listing hides it', async () => {
+    const city = [
+      feat('Verdandi', 18.08, 59.33, {
+        ACTION_TAGS: ['reuse'],
+        ADDRESS_LINE1: 'Hornsgatan 104',
+        DESCRIPTION: 'second hand clothes and textiles',
+      }),
+      feat('Bike kitchen', 18.09, 59.331, {
+        ACTION_TAGS: ['repair'],
+        DESCRIPTION: 'fix your bicycle',
+      }),
+    ];
+    // Rendered features omit DESCRIPTION (common from Mapbox queryRenderedFeatures).
+    filter.setCityFeatures({ type: 'FeatureCollection', features: city });
+    filter.setAllFeatures([
+      feat('Verdandi', 18.08, 59.33, { ACTION_TAGS: ['reuse'], ADDRESS_LINE1: 'Hornsgatan 104' }),
+      feat('Bike kitchen', 18.09, 59.331, { ACTION_TAGS: ['repair'] }),
+    ]);
+    filter.setFilter('textiles');
+    const list = await firstValueFrom(filter.filteredFeatures$);
+    expect(list.map((f) => f.properties.STORE_NAME)).toEqual(['Verdandi']);
+  });
+
   it('does not sort when sort-by-distance is off even if origin exists', async () => {
     const visible = [
       feat('Far', 18.2, 59.4),

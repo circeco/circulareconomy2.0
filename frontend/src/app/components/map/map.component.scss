@@ -86,6 +86,18 @@
   }
 }
 
+.search-cancel {
+  display: none;
+  flex-shrink: 0;
+  border: 0;
+  background: transparent;
+  color: $brand-deep;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 4px 0;
+}
+
 .listings {
   flex: 1 1 auto;
   min-height: 0;
@@ -94,11 +106,35 @@
   background-color: transparent;
 }
 
-.listing-header {
+.listing-row {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  align-items: flex-start;
   gap: 8px;
+}
+
+.listing-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.stockholmlist {
+  min-width: 0;
+}
+
+.listing-action-tag {
+  flex-shrink: 0;
+  display: none;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: capitalize;
+  padding: 3px 7px;
+  border: 1px solid var(--tag-color, #45818e);
+  color: var(--tag-color, #45818e);
+  background: #fff;
+}
+
+.listing-row .heart-btn {
+  flex-shrink: 0;
 }
 
 .listings-empty {
@@ -118,6 +154,11 @@
 }
 
 .locate-status {
+  position: absolute;
+  left: 6px;
+  top: 118px;
+  width: 280px;
+  z-index: 2;
   background: rgba(255, 255, 255, 0.55);
   border-radius: 8px;
   padding: 8px 10px;
@@ -211,6 +252,14 @@
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
 }
 
+.sheet-handle-hit {
+  display: none;
+}
+
+.phone-map-fabs {
+  display: none;
+}
+
 .category-filters {
   position: absolute;
   bottom: 22px;
@@ -221,6 +270,10 @@
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
+}
+
+.category-filters.phone-search-cats {
+  display: none;
 }
 
 .category-pill {
@@ -327,7 +380,7 @@
     right: auto;
   }
 
-  .category-filters {
+  .category-filters.desktop-cats {
     left: 12px;
     right: 12px;
   }
@@ -336,4 +389,243 @@
     bottom: 156px;
     right: 10px;
   }
+}
+
+:host-context(body.layout-phone) {
+  #circular_atlas {
+    position: fixed;
+    top: var(--header-offset);
+    bottom: var(--tabbar-height);
+    left: 0;
+    right: 0;
+    height: auto !important;
+    min-height: 0;
+    padding: 0 !important;
+    margin: 0;
+    overflow: hidden;
+  }
+
+  #map {
+    width: 100%;
+    height: 100%;
+  }
+
+  .atlas-sidebar {
+    display: flex;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: auto;
+    bottom: 0;
+    width: 100%;
+    height: var(--sheet-h, 55%);
+    max-height: 92%;
+    z-index: 3;
+    background: #ffffff;
+    padding: 0 12px 12px;
+    overflow: hidden;
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.18);
+    transform: translateY(110%);
+    pointer-events: none;
+    transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1),
+      height 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+
+  .atlas-sidebar.phone-search-open {
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+
+  .atlas-sidebar.sheet-dragging {
+    transition: none;
+  }
+
+  .sheet-handle-hit {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    height: 28px;
+    margin: 0 -12px;
+    cursor: grab;
+    touch-action: none;
+  }
+
+  .sheet-handle {
+    width: 36px;
+    height: 4px;
+    border-radius: 9999px;
+    background: #c4c4c4;
+  }
+
+  .search-cancel {
+    display: block;
+  }
+
+  .filter-section,
+  .category-filters.phone-search-cats {
+    flex-shrink: 0;
+  }
+
+  .category-filters.phone-search-cats {
+    display: flex;
+    flex-wrap: nowrap;
+    position: static;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    width: 100%;
+    padding: 4px 0 8px;
+    gap: 6px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+
+    .category-pill {
+      flex: 0 0 auto;
+      gap: 6px;
+      padding: 10px 14px;
+      font-size: 12px;
+    }
+
+    .category-icon {
+      margin-left: 4px;
+      gap: 4px;
+    }
+
+    .category-icon-mask {
+      width: 13px;
+      height: 13px;
+    }
+
+    .category-icon-emoji {
+      font-size: 12px;
+    }
+  }
+
+  .desktop-cats,
+  .map-action-tags-row {
+    display: none;
+  }
+
+  .listing-row {
+    align-items: center;
+  }
+
+  .listing-action-tag {
+    display: inline-block;
+    align-self: center;
+    font-size: 12px;
+    padding: 4px 10px;
+  }
+
+  .listing-description {
+    display: none;
+  }
+
+  #circular_atlas .listings .stockholmlist {
+    line-height: 1.05;
+    margin: 0;
+  }
+
+  #circular_atlas .listings .address {
+    font-size: 12px;
+    line-height: 1.2;
+    margin: 0;
+    padding: 0;
+    color: #5f6770;
+  }
+
+  .listing-row .heart-btn {
+    align-self: center;
+  }
+
+  .listings-section,
+  .filter-section {
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+  }
+
+  .locate-status {
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    top: 12px;
+    width: auto;
+    z-index: 3;
+  }
+
+  .locate-consent {
+    bottom: calc(12px + 48px + 8px + 48px + 12px);
+    right: 12px;
+  }
+
+  .phone-map-fabs {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    position: absolute;
+    right: 12px;
+    bottom: 12px;
+    z-index: 2;
+  }
+
+  .phone-map-fab {
+    display: block;
+    position: relative;
+    width: 48px;
+    height: 48px;
+    border: 0;
+    border-radius: 50%;
+    background: #ffffff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+    cursor: pointer;
+    padding: 0;
+
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      margin: auto;
+      width: 18px;
+      height: 18px;
+      background-color: $brand-deep;
+      -webkit-mask-repeat: no-repeat;
+      mask-repeat: no-repeat;
+      -webkit-mask-position: center;
+      mask-position: center;
+      -webkit-mask-size: contain;
+      mask-size: contain;
+    }
+  }
+
+  .phone-search-fab::after {
+    -webkit-mask-image: url('/assets/icons/search.png');
+    mask-image: url('/assets/icons/search.png');
+  }
+
+  .phone-locate-fab::after {
+    -webkit-mask-image: url('/assets/icons/locate.png');
+    mask-image: url('/assets/icons/locate.png');
+  }
+
+  #circular_atlas.phone-search-open .phone-map-fabs,
+  #circular_atlas.phone-search-open .locate-status {
+    display: none;
+  }
+}
+
+:host-context(body.layout-phone) ::ng-deep .mapboxgl-ctrl-bottom-right {
+  display: none;
+}
+
+:host ::ng-deep .mapboxgl-ctrl-logo {
+  opacity: 0.2;
 }

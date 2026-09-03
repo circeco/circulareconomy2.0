@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 
 import type { LatLng } from '../data/models';
 
@@ -20,6 +20,16 @@ export type CityLike = {
 /** Fallback when a city has no `bounds`: within this distance of `center`. */
 export const CITY_CENTER_RADIUS_KM = 40;
 
+const USE_LOCATION_LS_KEY = 'circeco.useMyLocation';
+
+function readUseMyLocation(): boolean {
+  try {
+    return localStorage.getItem(USE_LOCATION_LS_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
 const EARTH_RADIUS_KM = 6371;
 
 /**
@@ -32,6 +42,16 @@ const EARTH_RADIUS_KM = 6371;
  */
 @Injectable({ providedIn: 'root' })
 export class GeolocationService {
+  /** Profile toggle: show nearby places on the Atlas. */
+  readonly useMyLocation = signal(readUseMyLocation());
+
+  setUseMyLocation(on: boolean): void {
+    this.useMyLocation.set(on);
+    try {
+      localStorage.setItem(USE_LOCATION_LS_KEY, on ? '1' : '0');
+    } catch {}
+  }
+
   locate(options?: PositionOptions): Promise<GeoResult> {
     if (typeof window !== 'undefined' && window.isSecureContext === false) {
       return Promise.resolve({ ok: false, code: 'insecure' });

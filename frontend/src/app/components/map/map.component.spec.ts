@@ -101,13 +101,19 @@ describe('MapComponent', () => {
 
   it('centers and zooms to the user after a successful locate', async () => {
     const map = TestBed.inject(MapService);
+    const filter = TestBed.inject(PlacesFilter);
     spyOn(map, 'showUserLocation');
+    const sort = spyOn(filter, 'setSortByDistance');
+    const origin = spyOn(filter, 'setUserOrigin');
     spyOn(geo, 'locate').and.resolveTo({
       ok: true,
       fix: { lat: 45.4642, lng: 9.19, accuracy: 10 },
     });
     await component.onLocateAllow();
     expect(map.showUserLocation).toHaveBeenCalledWith(9.19, 45.4642, 10, true);
+    expect(origin).toHaveBeenCalledWith({ lat: 45.4642, lng: 9.19 });
+    expect(sort).toHaveBeenCalledWith(true);
+    expect(geo.useMyLocation()).toBeTrue();
   });
 
   it('clears previous city pins and jumps viewport as soon as cityId changes', () => {
@@ -118,5 +124,19 @@ describe('MapComponent', () => {
     expect(clear).toHaveBeenCalled();
     expect(jump).toHaveBeenCalledWith([18.072, 59.325], 11);
     expect(component.listingsReady).toBeFalse();
+  });
+
+  it('opens the search sheet and closes it when focusing a place', () => {
+    component.openSearch();
+    fixture.detectChanges();
+    expect(component.searchOpen).toBeTrue();
+    expect(fixture.nativeElement.querySelector('.atlas-sidebar.phone-search-open')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.sheet-handle')).toBeTruthy();
+    component.focusOn({
+      type: 'Feature',
+      geometry: { type: 'Point', coordinates: [18.07, 59.33] },
+      properties: { STORE_NAME: 'Myrorna' },
+    });
+    expect(component.searchOpen).toBeFalse();
   });
 });

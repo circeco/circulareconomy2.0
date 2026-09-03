@@ -74,23 +74,24 @@ export class PlacesFilter {
   readonly enabledActionTagsState$ = this.enabledActionTags$.asObservable();
   readonly filteredFeatures$ = combineLatest([
     this.allFeatures$,
+    this.cityFeatures$,
     this.filterText$,
+    this.enabledCats$,
     this.enabledActionTags$,
     this.userOrigin$,
     this.sortByDistance$,
   ]).pipe(
-    map(([visible, typed, enabledTags, origin, sortByDistance]) => {
+    map(([visible, city, typed, enabledCats, enabledTags, origin, sortByDistance]) => {
       const nearby = !!sortByDistance && !!origin;
-      let list = this.dedupe(visible);
+      // Full city catalogue while searching so DESCRIPTION (and other fields) are available
+      // even when the list UI hides them and Mapbox rendered features omit them.
+      let list = typed && city.length ? this.dedupe(city) : this.dedupe(visible);
+      if (typed && city.length) {
+        list = list.filter((f: Feature) => this.matchesCategories(f, enabledCats));
+      }
       list = list.filter((f: Feature) => this.matchesActionTags(f, enabledTags));
       if (typed) {
-        list = list.filter((f: Feature) => {
-          const p = this.enrichProps(f);
-          const descr = (p.DESCRIPTION || '').toLowerCase();
-          const name  = (p.STORE_NAME || p.NAME || '').toLowerCase();
-          const addr  = (p.ADDRESS_LINE1 || p.ADDRESS || '').toLowerCase();
-          return descr.includes(typed) || name.includes(typed) || addr.includes(typed);
-        });
+        list = list.filter((f: Feature) => this.matchesSearchText(f, typed));
       }
       if (nearby && origin) {
         list = list
@@ -128,9 +129,8 @@ export class PlacesFilter {
   }
 
   private enrichProps(feat: Feature){
-    if (feat?.layer?.id !== 'favorites') return feat.properties || {};
-    if (!this.placesIndexReady) return feat.properties || {};
     const p = feat.properties || {};
+    if (!this.placesIndexReady) return p;
     const name = p.STORE_NAME || p.NAME || '';
     const addr = p.ADDRESS_LINE1 || p.ADDRESS || '';
     const c = feat.geometry?.coordinates || [];
@@ -139,11 +139,48 @@ export class PlacesFilter {
               || null;
     if (!base) return p;
     const bp = base.properties || {};
+    if (feat?.layer?.id === 'favorites') {
+      return {
+        ...bp,
+        STORE_NAME: p.STORE_NAME || bp.STORE_NAME || bp.NAME || 'Unknown place',
+        ADDRESS_LINE1: p.ADDRESS_LINE1 || bp.ADDRESS_LINE1 || bp.ADDRESS || ''
+      };
+    }
     return {
       ...bp,
-      STORE_NAME: p.STORE_NAME || bp.STORE_NAME || bp.NAME || 'Unknown place',
-      ADDRESS_LINE1: p.ADDRESS_LINE1 || bp.ADDRESS_LINE1 || bp.ADDRESS || ''
+      ...p,
+      DESCRIPTION: p.DESCRIPTION || (p as any).description || bp.DESCRIPTION || '',
+      STORE_NAME: p.STORE_NAME || p.NAME || bp.STORE_NAME || bp.NAME,
+      ADDRESS_LINE1: p.ADDRESS_LINE1 || p.ADDRESS || bp.ADDRESS_LINE1 || bp.ADDRESS || '',
     };
+  }
+
+  private matchesSearchText(feature: Feature, typed: string): boolean {
+    const p = this.enrichProps(feature) as PlaceProps & { description?: string };
+    const hay = [
+      p.DESCRIPTION,
+      p.description,
+      p.STORE_NAME,
+      p.NAME,
+      p.ADDRESS_LINE1,
+      p.ADDRESS,
+    ]
+      .map((s) => String(s || '').toLowerCase())
+      .join('\n');
+    return hay.includes(typed);
+  }
+
+  private matchesCategories(feature: Feature, enabled: Set<string>): boolean {
+    // Empty set means "all categories" (same convention as the map filter).
+    if (!enabled.size || enabled.size >= this.CATEGORY_IDS.length) return true;
+    const props = this.enrichProps(feature) as PlaceProps & { CATEGORIES?: unknown[] };
+    const primary = String(props.CATEGORY || '').toLowerCase();
+    if (primary && enabled.has(primary)) return true;
+    const cats = Array.isArray(props.CATEGORIES) ? props.CATEGORIES : [];
+    for (const c of cats) {
+      if (enabled.has(String(c || '').toLowerCase())) return true;
+    }
+    return false;
   }
 
   private canonicalKey(feature: Feature){

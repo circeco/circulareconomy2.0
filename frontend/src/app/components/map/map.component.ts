@@ -10,6 +10,7 @@ import {
   OnInit,
   NgZone,
   ChangeDetectorRef,
+  effect,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
@@ -21,11 +22,13 @@ import { CitiesService, CityItem } from '../../services/cities.service';
 import { FeaturedPlacesService } from '../../services/featured-places.service';
 import { AuthService } from '../../services/auth.service';
 import { GeolocationService, GeoFix } from '../../services/geolocation.service';
+import { PhoneChromeService } from '../../services/phone-chrome.service';
 import {
   ACTION_TAG_COLORS,
   ACTION_TAGS,
   ACTION_TAG_LABELS,
   ActionTag,
+  canonicalizeActionTag,
   canonicalizeSectorCategory,
   SECTOR_CATEGORY_LABELS,
   SectorCategory,
@@ -63,6 +66,10 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   nearbyActive = false;
   locateStatusMessage = '';
   suggestedCity: CityItem | null = null;
+  searchOpen = false;
+  searchSheetDragging = false;
+  searchSheetHeightPx: number | null = null;
+  private searchSheetDrag: { pointerId: number; startY: number; startHeight: number } | null = null;
 
   // queue hearts until favourites service ready
   private heartMountQueue: Array<{ btn: HTMLButtonElement, place: any }> = [];
@@ -88,8 +95,14 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     private cities: CitiesService,
     private featuredPlaces: FeaturedPlacesService,
     private auth: AuthService,
-    private geo: GeolocationService
-  ) { }
+    private geo: GeolocationService,
+    private chrome: PhoneChromeService
+  ) {
+    effect(() => {
+      const on = this.geo.useMyLocation();
+      if (!on && this.nearbyActive) this.clearNearby();
+    });
+  }
 
   ngOnInit(): void {
     // initialize categories
@@ -128,8 +141,15 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         if (!authed) {
           this.favoritesVisible = false;
           this.filter.setFavoritesOnly(false);
+          this.chrome.atlasFavoritesOn.set(false);
         }
         this.map.setFavoritesVisibility(authed && this.favoritesVisible);
+      })
+    );
+
+    this.subs.push(
+      this.chrome.atlasSavedToggle$.subscribe(() => {
+        this.onToggleFavorites(new Event('click'));
       })
     );
   }
@@ -137,6 +157,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   ngAfterViewInit(): void {
     this.map.init(this.mapHost.nativeElement);
     setTimeout(() => this.map.resize(), 0);
+    setTimeout(() => this.map.resize(), 100);
 
     this.subs.push(
       this.map.onLocateClick().subscribe(() => this.onLocateControlClick())
@@ -277,6 +298,72 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   actionTagTextColor(tag: string) {
     return tag === 'recycle' || tag === 'reduce' ? '#0c343d' : '#ffffff';
   }
+  listingActionTag(item: Feature): string {
+    const p = this.propsOf(item) as any;
+    const primary = canonicalizeActionTag(String(p?.ACTION_TAG || p?.actionTag || ''));
+    if (primary) return primary;
+    const raw = [...(Array.isArray(p?.ACTION_TAGS) ? p.ACTION_TAGS : []), ...(Array.isArray(p?.actionTags) ? p.actionTags : [])];
+    for (const t of raw) {
+      const tag = canonicalizeActionTag(String(t || ''));
+      if (tag) return tag;
+    }
+    return '';
+  }
+  openSearch(): void {
+    this.searchSheetHeightPx = this.sheetMidHeight();
+    this.searchSheetDragging = false;
+    this.searchSheetDrag = null;
+    this.searchOpen = true;
+    this.cdr.markForCheck();
+  }
+  closeSearch(): void {
+    this.searchOpen = false;
+    this.searchSheetDragging = false;
+    this.searchSheetDrag = null;
+    this.cdr.markForCheck();
+  }
+  onSearchSheetPointerDown(ev: PointerEvent): void {
+    if (!this.searchOpen) return;
+    ev.preventDefault();
+    (ev.currentTarget as HTMLElement).setPointerCapture(ev.pointerId);
+    this.searchSheetDragging = true;
+    this.searchSheetDrag = {
+      pointerId: ev.pointerId,
+      startY: ev.clientY,
+      startHeight: this.searchSheetHeightPx ?? this.sheetMidHeight(),
+    };
+  }
+  onSearchSheetPointerMove(ev: PointerEvent): void {
+    const drag = this.searchSheetDrag;
+    if (!drag || ev.pointerId !== drag.pointerId) return;
+    const dy = drag.startY - ev.clientY;
+    this.searchSheetHeightPx = Math.max(0, Math.min(this.sheetExpandedHeight(), drag.startHeight + dy));
+  }
+  onSearchSheetPointerUp(ev: PointerEvent): void {
+    const drag = this.searchSheetDrag;
+    if (!drag || ev.pointerId !== drag.pointerId) return;
+    const mid = this.sheetMidHeight();
+    const expanded = this.sheetExpandedHeight();
+    const h = this.searchSheetHeightPx ?? mid;
+    this.searchSheetDragging = false;
+    this.searchSheetDrag = null;
+    if (h < mid * 0.65) {
+      this.closeSearch();
+      return;
+    }
+    this.searchSheetHeightPx = h > (mid + expanded) / 2 ? expanded : mid;
+    this.cdr.markForCheck();
+  }
+  private atlasHeight(): number {
+    const atlas = this.mapHost?.nativeElement?.closest('#circular_atlas') as HTMLElement | null;
+    return atlas?.clientHeight || window.innerHeight;
+  }
+  private sheetMidHeight(): number {
+    return Math.round(this.atlasHeight() * 0.55);
+  }
+  private sheetExpandedHeight(): number {
+    return Math.round(this.atlasHeight() * 0.92);
+  }
   categoryLabel(cat: string) { return SECTOR_CATEGORY_LABELS[cat as SectorCategory] || cat; }
   categoryImageIcons(cat: string): string[] {
     if (cat === 'apparel') return ['assets/icons/clothing-shirt.png', 'assets/icons/clothing-trainers.png'];
@@ -305,6 +392,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.favoritesVisible = !this.favoritesVisible;
     this.map.setFavoritesVisibility(this.favoritesVisible);
     this.filter.setFavoritesOnly(this.favoritesVisible);
+    this.chrome.atlasFavoritesOn.set(this.favoritesVisible);
     this.syncFavoriteKeysToFilter();
   }
 
@@ -325,6 +413,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
   onLocateAllow() {
     this.setSessionConsent();
+    this.geo.setUseMyLocation(true);
     return this.runLocate();
   }
 
@@ -406,6 +495,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.map.showUserLocation(fix.lng, fix.lat, fix.accuracy, flyToUser);
 
     if (inSelected) {
+      this.geo.setUseMyLocation(true);
       this.syncFavoriteKeysToFilter();
       this.filter.setUserOrigin({ lat: fix.lat, lng: fix.lng });
       this.filter.setSortByDistance(true);
@@ -508,6 +598,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
   focusOn(feature: Feature) {
     if (!feature.geometry?.coordinates) return;
+    this.closeSearch();
     const props = this.propsOf(feature);
     const center = feature.geometry.coordinates;
     const content = this.buildPopupContent({ ...feature, properties: props });

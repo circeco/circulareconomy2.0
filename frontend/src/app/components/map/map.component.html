@@ -1,5 +1,20 @@
-<section class="section scroll" id="circular_atlas">
-  <aside id="maplist" class="atlas-sidebar">
+<section class="section scroll" id="circular_atlas" [class.phone-search-open]="searchOpen">
+  <aside
+    id="maplist"
+    class="atlas-sidebar"
+    [class.phone-search-open]="searchOpen"
+    [class.sheet-dragging]="searchSheetDragging"
+    [style.--sheet-h]="searchSheetHeightPx == null ? null : searchSheetHeightPx + 'px'"
+  >
+    <div
+      class="sheet-handle-hit"
+      (pointerdown)="onSearchSheetPointerDown($event)"
+      (pointermove)="onSearchSheetPointerMove($event)"
+      (pointerup)="onSearchSheetPointerUp($event)"
+      (pointercancel)="onSearchSheetPointerUp($event)"
+    >
+      <div class="sheet-handle" aria-hidden="true"></div>
+    </div>
     <div class="filter-section">
       <div class="search-box">
         <span class="search-icon" aria-hidden="true"></span>
@@ -11,24 +26,36 @@
           (input)="onFilter($event)"
           aria-label="Search places"
         />
+        <button
+          type="button"
+          class="search-cancel"
+          (click)="closeSearch()"
+        >Cancel</button>
       </div>
     </div>
 
-    <div class="locate-status" *ngIf="locateStatusMessage" role="status">
-      <p>{{ locateStatusMessage }}</p>
-      <div class="locate-status-actions">
-        <button
-          *ngIf="suggestedCity"
-          type="button"
-          class="locate-status-switch"
-          (click)="switchToSuggestedCity()"
-        >
-          Switch to {{ suggestedCity.name }}
-        </button>
-        <button type="button" class="locate-status-dismiss" (click)="dismissLocateStatus()">
-          Dismiss
-        </button>
-      </div>
+    <div class="category-filters phone-search-cats">
+      <button
+        *ngFor="let cat of categoryIds"
+        type="button"
+        class="category-pill"
+        [class.active]="isCatEnabled(cat)"
+        (click)="onToggleCategory($event, cat)"
+      >
+        <span class="category-pill-label">{{ categoryLabel(cat) }}</span>
+        <span class="category-icon" aria-hidden="true">
+          <ng-container *ngIf="categoryImageIcons(cat).length; else atlasEmojiIconPhone">
+            <span
+              *ngFor="let iconPath of categoryImageIcons(cat)"
+              class="category-icon-mask"
+              [style.--icon-url]="'url(' + iconPath + ')'"
+            ></span>
+          </ng-container>
+          <ng-template #atlasEmojiIconPhone>
+            <span class="category-icon-emoji">{{ categoryEmojiIcon(cat) }}</span>
+          </ng-template>
+        </span>
+      </button>
     </div>
 
     <div class="listings-section">
@@ -39,10 +66,30 @@
           [id]="'listing-' + i"
           (click)="focusOn(item)"
         >
-          <div class="listing-header">
-            <div class="stockholmlist" [id]="'link-' + i">
-              {{ propsOf(item).STORE_NAME || propsOf(item).NAME || 'Unknown place' }}
+          <div class="listing-row">
+            <span
+              *ngIf="listingActionTag(item) as tag"
+              class="listing-action-tag"
+              [style.--tag-color]="actionTagColor(tag)"
+              [style.--tag-text-color]="actionTagTextColor(tag)"
+            >{{ actionTagLabel(tag) }}</span>
+
+            <div class="listing-main">
+              <div class="stockholmlist" [id]="'link-' + i">
+                {{ propsOf(item).STORE_NAME || propsOf(item).NAME || 'Unknown place' }}
+              </div>
+              <p
+                class="address"
+                *ngIf="propsOf(item).ADDRESS_LINE1 || propsOf(item).ADDRESS"
+              >
+                {{ propsOf(item).ADDRESS_LINE1 || propsOf(item).ADDRESS }}
+              </p>
+              <p class="listing-distance" *ngIf="propsOf(item).distanceLabel">
+                {{ propsOf(item).distanceLabel }}
+              </p>
+              <p *ngIf="propsOf(item).DESCRIPTION" class="listing-description">{{ propsOf(item).DESCRIPTION }}</p>
             </div>
+
             <button
               class="heart-btn"
               type="button"
@@ -51,17 +98,6 @@
               (click)="onHeartClick(heartBtn, item); $event.stopPropagation()"
             >♡</button>
           </div>
-
-          <p
-            class="address"
-            *ngIf="propsOf(item).ADDRESS_LINE1 || propsOf(item).ADDRESS"
-          >
-            {{ propsOf(item).ADDRESS_LINE1 || propsOf(item).ADDRESS }}
-          </p>
-          <p class="listing-distance" *ngIf="propsOf(item).distanceLabel">
-            {{ propsOf(item).distanceLabel }}
-          </p>
-          <p *ngIf="propsOf(item).DESCRIPTION">{{ propsOf(item).DESCRIPTION }}</p>
         </div>
 
         <p class="listings-empty" *ngIf="!listingsReady">
@@ -88,7 +124,7 @@
     </button>
   </div>
 
-  <div class="category-filters">
+  <div class="category-filters desktop-cats">
     <button
       type="button"
       class="category-pill"
@@ -123,6 +159,23 @@
     </button>
   </div>
 
+  <div class="locate-status" *ngIf="locateStatusMessage" role="status">
+    <p>{{ locateStatusMessage }}</p>
+    <div class="locate-status-actions">
+      <button
+        *ngIf="suggestedCity"
+        type="button"
+        class="locate-status-switch"
+        (click)="switchToSuggestedCity()"
+      >
+        Switch to {{ suggestedCity.name }}
+      </button>
+      <button type="button" class="locate-status-dismiss" (click)="dismissLocateStatus()">
+        Dismiss
+      </button>
+    </div>
+  </div>
+
   <div
     class="locate-consent"
     *ngIf="locateAskOpen"
@@ -135,6 +188,21 @@
       <button type="button" class="locate-consent-allow" (click)="onLocateAllow()">Allow</button>
       <button type="button" class="locate-consent-deny" (click)="onLocateNotNow()">Not now</button>
     </div>
+  </div>
+
+  <div class="phone-map-fabs">
+    <button
+      type="button"
+      class="phone-map-fab phone-search-fab"
+      aria-label="Search places"
+      (click)="openSearch()"
+    ></button>
+    <button
+      type="button"
+      class="phone-map-fab phone-locate-fab"
+      aria-label="Show nearby places"
+      (click)="onLocateControlClick()"
+    ></button>
   </div>
 
   <div id="map" #mapHost></div>
