@@ -199,7 +199,7 @@
   padding-top: 0;
 }
 
-.events-grid {
+.events-by-day {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 24px;
@@ -207,11 +207,21 @@
   margin-top: 0;
 }
 
+.events-day-group,
+.events-day-row {
+  display: contents;
+}
+
+.events-day-heading {
+  display: none;
+}
+
 .events-empty {
   grid-column: 1 / -1;
   margin: 0.5rem 0 0;
   color: #5f6770;
   font-size: 0.92rem;
+  text-align: center;
 }
 
 .event-card {
@@ -437,12 +447,110 @@
     overflow: visible;
   }
 
-  .events-grid {
+  .events-by-day {
     grid-template-columns: 1fr;
     margin-top: 0;
   }
 
   .events-content {
     padding-top: 0;
+  }
+}
+
+:host-context(body.layout-phone) {
+  .events-page {
+    padding: calc(var(--header-offset) + 12px) 12px calc(var(--tabbar-height) + 16px);
+  }
+
+  .map-action-tags-row,
+  .events-sidebar .filter-section,
+  .events-sidebar .category-filters {
+    display: none;
+  }
+
+  .events-layout {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .events-sidebar {
+    flex: none;
+    width: 100%;
+    position: static;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .events-content {
+    padding-top: 0;
+    width: 100%;
+  }
+
+  .events-by-day {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 4px 0 8px;
+  }
+
+  .events-day-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+  }
+
+  .events-day-heading {
+    display: block;
+    margin: 0;
+    padding: 0 2px;
+    font-family: $font-bebas;
+    font-size: 22px;
+    font-weight: 400;
+    line-height: 1.1;
+    letter-spacing: 0.02em;
+    color: #1a1a1a;
+    text-align: left;
+    text-transform: none;
+    text-decoration: none;
+  }
+
+  .events-day-row {
+    display: flex;
+    flex-direction: row;
+    gap: 12px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+
+  .event-card {
+    flex: 0 0 min(82vw, 320px);
+    scroll-snap-align: start;
+    background: #ffffff;
+    color: inherit;
+  }
+
+  .events-empty {
+    grid-column: auto;
+    width: 100%;
+    padding: 24px 16px;
+    margin: 0;
+    text-align: center;
+    box-sizing: border-box;
+  }
+
+  .events-by-day:has(> .events-empty:only-child) {
+    flex: 1;
+    justify-content: center;
+    align-items: center;
+    min-height: 40vh;
   }
 }

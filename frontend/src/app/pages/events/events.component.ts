@@ -10,6 +10,7 @@ import { AuthService } from '../../services/auth.service';
 import { EventFavoritesService } from '../../services/event-favorites.service';
 import { CityContextService } from '../../services/city-context.service';
 import { CitiesService } from '../../services/cities.service';
+import { PhoneChromeService } from '../../services/phone-chrome.service';
 import { CalendarComponent } from '../../components/calendar/calendar.component';
 import {
   ACTION_TAG_COLORS,
@@ -79,6 +80,7 @@ export class EventsComponent implements AfterViewChecked {
     public eventFavorites: EventFavoritesService,
     private cityContext: CityContextService,
     private cities: CitiesService,
+    private chrome: PhoneChromeService,
     private router: Router,
     private route: ActivatedRoute
   ) {
@@ -137,13 +139,23 @@ export class EventsComponent implements AfterViewChecked {
     this.auth.user$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((user) => {
-        if (!user) this.favoritesFilterActive.set(false);
+        if (!user) {
+          this.favoritesFilterActive.set(false);
+          this.chrome.eventsFavoritesOn.set(false);
+        }
+      });
+
+    this.chrome.eventsSavedToggle$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        void this.toggleFavoritesFilter();
       });
   }
 
   async toggleFavoritesFilter(): Promise<void> {
     if (this.favoritesFilterActive()) {
       this.favoritesFilterActive.set(false);
+      this.chrome.eventsFavoritesOn.set(false);
       return;
     }
     const user = await firstValueFrom(this.auth.user$);
@@ -152,6 +164,7 @@ export class EventsComponent implements AfterViewChecked {
       return;
     }
     this.favoritesFilterActive.set(true);
+    this.chrome.eventsFavoritesOn.set(true);
   }
 
   async toggleFavorite(eventId: string): Promise<void> {
@@ -387,6 +400,37 @@ export class EventsComponent implements AfterViewChecked {
       }
     }
     return filtered;
+  });
+
+  readonly eventsByDay = computed(() => {
+    const events = this.filteredEvents();
+    const byDay = new Map<number, EventItem[]>();
+    for (const event of events) {
+      const key = new Date(
+        event.date.getFullYear(),
+        event.date.getMonth(),
+        event.date.getDate()
+      ).getTime();
+      const list = byDay.get(key);
+      if (list) list.push(event);
+      else byDay.set(key, [event]);
+    }
+
+    const groups: { key: number; label: string; events: EventItem[] }[] = [];
+    for (const [key, dayEvents] of byDay) {
+      const d = new Date(key);
+      groups.push({
+        key,
+        label: d.toLocaleDateString('en-GB', {
+          weekday: 'short',
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric',
+        }),
+        events: dayEvents,
+      });
+    }
+    return groups;
   });
 
   readonly hasRealFilter = computed(() => {

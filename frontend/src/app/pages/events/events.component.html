@@ -73,83 +73,92 @@
     </aside>
 
     <div class="events-content">
-      <div class="events-grid">
-        <article
-          *ngFor="let event of filteredEvents()"
-          class="event-card"
-          [attr.data-event-id]="event.id"
-          [class.selected-event]="selectedEventId() === event.id"
+      <div class="events-by-day">
+        <section
+          *ngFor="let group of eventsByDay()"
+          class="events-day-group"
+          [attr.data-day]="group.key"
         >
-          <div class="event-card-content">
-            <div class="event-card-header">
-              <div class="action-tag-pills">
-                <span
-                  *ngFor="let tag of event.actionTags"
-                  class="action-tag-pill"
-                  [style.--tag-color]="actionTagColor(tag)"
-                  [style.--tag-text-color]="actionTagTextColor(tag)"
+          <h2 class="events-day-heading">{{ group.label }}</h2>
+          <div class="events-day-row">
+            <article
+              *ngFor="let event of group.events"
+              class="event-card"
+              [attr.data-event-id]="event.id"
+              [class.selected-event]="selectedEventId() === event.id"
+            >
+              <div class="event-card-content">
+                <div class="event-card-header">
+                  <div class="action-tag-pills">
+                    <span
+                      *ngFor="let tag of event.actionTags"
+                      class="action-tag-pill"
+                      [style.--tag-color]="actionTagColor(tag)"
+                      [style.--tag-text-color]="actionTagTextColor(tag)"
+                    >
+                      {{ actionTagLabel(tag) }}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    class="fav-btn"
+                    [class.favorited]="eventFavorites.isFavorite(event.id)"
+                    [attr.aria-label]="eventFavorites.isFavorite(event.id) ? 'Remove from favorites' : 'Add to favorites'"
+                    (click)="toggleFavorite(event.id)"
+                  >
+                    {{ eventFavorites.isFavorite(event.id) ? '♥' : '♡' }}
+                  </button>
+                </div>
+
+                <h3 class="event-title">{{ event.title }}</h3>
+
+                <div class="event-datetime">
+                  <span class="event-date">{{ event.dateStr }}</span>
+                  <span class="event-recurrence" *ngIf="event.recurrenceLabel">{{ event.recurrenceLabel }}</span>
+                </div>
+
+                <div class="event-address" *ngIf="event.location">{{ event.location }}</div>
+
+                <div
+                  class="event-description-block"
+                  *ngIf="event.description"
+                  [class.expanded]="isDescriptionExpanded(event.id)"
                 >
-                  {{ actionTagLabel(tag) }}
-                </span>
+                  <p class="event-description">{{ event.description }}</p>
+                  <button
+                    *ngIf="descriptionNeedsMore(event.id, event.description)"
+                    type="button"
+                    class="desc-more-btn"
+                    (click)="toggleDescription(event.id)"
+                  >
+                    {{ isDescriptionExpanded(event.id) ? 'less' : 'more' }}
+                  </button>
+                </div>
+
+                <a
+                  *ngIf="event.website"
+                  class="event-website"
+                  [href]="event.website"
+                  [attr.title]="event.website"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {{ websiteDisplayLabel(event.website) }}
+                </a>
+
+                <div class="sector-icons" *ngIf="sectorIconsFor(event.sectorCategories).length">
+                  <span
+                    *ngFor="let iconPath of sectorIconsFor(event.sectorCategories)"
+                    class="sector-icon-mask"
+                    [style.--icon-url]="'url(' + iconPath + ')'"
+                    [attr.title]="sectorLabelForIcon(iconPath)"
+                    aria-hidden="true"
+                  ></span>
+                </div>
               </div>
-              <button
-                type="button"
-                class="fav-btn"
-                [class.favorited]="eventFavorites.isFavorite(event.id)"
-                [attr.aria-label]="eventFavorites.isFavorite(event.id) ? 'Remove from favorites' : 'Add to favorites'"
-                (click)="toggleFavorite(event.id)"
-              >
-                {{ eventFavorites.isFavorite(event.id) ? '♥' : '♡' }}
-              </button>
-            </div>
-
-            <h2 class="event-title">{{ event.title }}</h2>
-
-            <div class="event-datetime">
-              <span class="event-date">{{ event.dateStr }}</span>
-              <span class="event-recurrence" *ngIf="event.recurrenceLabel">{{ event.recurrenceLabel }}</span>
-            </div>
-
-            <div class="event-address" *ngIf="event.location">{{ event.location }}</div>
-
-            <div
-              class="event-description-block"
-              *ngIf="event.description"
-              [class.expanded]="isDescriptionExpanded(event.id)"
-            >
-              <p class="event-description">{{ event.description }}</p>
-              <button
-                *ngIf="descriptionNeedsMore(event.id, event.description)"
-                type="button"
-                class="desc-more-btn"
-                (click)="toggleDescription(event.id)"
-              >
-                {{ isDescriptionExpanded(event.id) ? 'less' : 'more' }}
-              </button>
-            </div>
-
-            <a
-              *ngIf="event.website"
-              class="event-website"
-              [href]="event.website"
-              [attr.title]="event.website"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {{ websiteDisplayLabel(event.website) }}
-            </a>
-
-            <div class="sector-icons" *ngIf="sectorIconsFor(event.sectorCategories).length">
-              <span
-                *ngFor="let iconPath of sectorIconsFor(event.sectorCategories)"
-                class="sector-icon-mask"
-                [style.--icon-url]="'url(' + iconPath + ')'"
-                [attr.title]="sectorLabelForIcon(iconPath)"
-                aria-hidden="true"
-              ></span>
-            </div>
+            </article>
           </div>
-        </article>
+        </section>
 
         <p class="events-empty" *ngIf="filteredEvents().length === 0">
           {{ emptyEventsMessage() }}
