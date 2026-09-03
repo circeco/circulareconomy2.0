@@ -17,6 +17,13 @@
 :root {
   --safe-bottom: env(safe-area-inset-bottom);
   --header-offset: 60px; /* keep in sync with headerOffset in the navbar TS */
+  --tabbar-height: 0px;
+}
+
+body.layout-phone {
+  --header-offset: calc(52px + env(safe-area-inset-top, 0px));
+  --tabbar-height: calc(56px + env(safe-area-inset-bottom, 0px));
+  scroll-snap-type: none;
 }
 
 /* Sections that should align to top */
@@ -153,18 +160,20 @@ p {
 
 @media screen and (max-width: 900px){
   p { font-size: 30px }
-  .topnav a { font-size: 24px !important }
-  .rw-wrapper h2, span { font-size: 30px !important }
-  #circular_action h4, p { font-size: 24px !important }
+  .topnav a { font-size: 24px }
+  .rw-wrapper h2,
+  .rw-wrapper span { font-size: 30px }
+  #circular_action h4,
+  #circular_action p { font-size: 24px }
   #reuse, #refuse, #reduce, #repair, #reporpouse, #recycle { height: 200px }
 }
 
 @media screen and (max-width: 450px){
   #reuse, #refuse, #reduce, #repair, #reporpouse, #recycle { height: 120px; width: 90% }
   .circactions {
-    h4 { top: 20% !important }
-    p { top: 5% !important }
+    h4 { top: 20% }
+    p { top: 5% }
   }
-  .rw-wrapper { width: 60% !important }
+  .rw-wrapper { width: 60% }
 }
 

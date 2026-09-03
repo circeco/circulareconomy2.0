@@ -55,6 +55,7 @@ export class LandingComponent implements AfterViewInit, AfterViewChecked, OnDest
   private lastClampMeasureKey = '';
   expandedDescriptions = signal<Set<string>>(new Set());
   clampedDescriptionIds = signal<Set<string>>(new Set());
+  revealedAction = signal<string | null>(null);
 
   constructor(
     private zone: NgZone,
@@ -185,6 +186,10 @@ export class LandingComponent implements AfterViewInit, AfterViewChecked, OnDest
 
   goToMapPage(): void {
     this.router.navigate(['/atlas'], { queryParamsHandling: 'merge' });
+  }
+
+  toggleActionCard(id: string): void {
+    this.revealedAction.set(this.revealedAction() === id ? null : id);
   }
 
   goToMapWithPlace(placeId: string): void {

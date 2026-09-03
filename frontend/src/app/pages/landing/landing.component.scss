@@ -135,9 +135,15 @@
 /* ---------------- Search results ---------------- */
 .no-results {
   color: #718096;
-  font-size: 16px;
+  font-size: 20px;
   margin: 0;
   padding: 24px 2%;
+  text-align: left;
+}
+
+.events-container > .no-results {
+  margin-left: 0;
+  padding-left: 0;
 }
 
 .search-results-block {
@@ -165,6 +171,8 @@
     font-weight: 700;
     margin: 0;
     font-family: $font-bebas;
+    text-decoration: none;
+    -webkit-text-decoration: none;
   }
 
   .view-all-link {
@@ -469,7 +477,8 @@
   span { text-shadow: 1px 1px 2px rgb(150, 150, 150);}
 }
 
-.card:hover { p { visibility: visible; } h4 { visibility: hidden; } }
+.card:hover,
+.card.open { p { visibility: visible; } h4 { visibility: hidden; } }
 
 #refuse     { background-color: $brand-deep; }
 #reuse      { background-color: $brand-mid; }
@@ -557,10 +566,16 @@
     text-shadow: 1px 1px 2px rgb(150, 150, 150);
   }
 
+  .atlas-demo-kicker,
+  .atlas-demo-line {
+    display: inline;
+  }
+
   a:hover { cursor: pointer; }
 
-  img {
+  img.arrow {
     height: 32px;
+    vertical-align: middle;
     transition: 0.4s;
     &:hover { transform: scale(0.9, 0.9); }
   }
@@ -568,4 +583,294 @@
   video {
     width: 100%;
   }
+}
+
+:host-context(body.layout-phone) {
+  display: block;
+  max-width: 100%;
+  overflow-x: hidden;
+  padding-bottom: var(--tabbar-height);
+  font-size: 14px;
+
+  .hero-city-switch {
+    display: none;
+  }
+
+  /* ---- Hero: title + red-wood fill one screen ---- */
+  > section:first-of-type {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 100%;
+    min-height: calc(100dvh - var(--header-offset) - var(--tabbar-height));
+    height: auto;
+    max-height: none;
+    margin-top: var(--header-offset);
+    overflow: hidden;
+    box-sizing: border-box;
+  }
+
+  #title_section {
+    flex: 1 1 auto;
+    min-height: 80vh;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 8px 16px 12px;
+  }
+
+  #title_div {
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+    height: clamp(100px, 26vh, 160px);
+    overflow: visible;
+  }
+
+  .text.title {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: max-content;
+    max-width: none;
+    font-size: clamp(34px, 11vw, 52px);
+    line-height: 1;
+  }
+
+  /* Never override ghost collapse — that is what keeps CIRCECO one word. */
+  .text li.ghost {
+    max-width: 0 !important;
+    opacity: 0;
+    padding-left: 0 !important;
+  }
+
+  #subtitle {
+    font-size: 30px;
+    line-height: 0.7;
+    margin: 20px auto 32px;
+    padding: 0;
+    max-width: 100%;
+    text-shadow: none;
+  }
+
+  .hero-search {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+    gap: 10px;
+    box-sizing: border-box;
+  }
+
+  .hero-search-row,
+  .hero-search-bar {
+    max-width: 100%;
+  }
+
+  .hero-search-bar {
+    padding: 10px 14px;
+
+    .hero-search-input {
+      font-size: 15px;
+    }
+  }
+
+  #red-wood {
+    flex: 0 0 220px;
+    width: 100%;
+    height: 220px;
+    min-height: 220px;
+    max-height: 220px;
+    margin: 0;
+    overflow: hidden;
+    background: url('/assets/img/red-wood.jpg') center / cover no-repeat;
+    background-attachment: fixed;
+  }
+
+  /* ---- Events / places: horizontal cards ---- */
+  #circular_events {
+    min-height: calc(0.9 * (100dvh - var(--header-offset) - var(--tabbar-height)));
+    padding: 36px 0 40px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .events-header {
+    margin-bottom: 20px;
+    padding: 0 12px;
+    gap: 8px;
+
+    h2 {
+      font-size: 22px;
+      padding-top: 0;
+      text-decoration: none;
+      -webkit-text-decoration: none;
+    }
+
+    .view-all-link {
+      font-size: 13px;
+    }
+  }
+
+  .events-container,
+  .places-container,
+  .search-results-container {
+    display: flex;
+    grid-template-columns: none;
+    overflow-x: auto;
+    overflow-y: hidden;
+    gap: 12px;
+    padding: 8px 0 28px;
+    margin: 0 0 36px;
+    max-width: none;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 16px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+
+  .events-container:has(> .no-results:only-child),
+  .places-container:has(> .no-results:only-child) {
+    overflow-x: hidden;
+    justify-content: center;
+    align-items: center;
+    min-height: 120px;
+  }
+
+  .places-container {
+    margin-bottom: 0;
+  }
+
+  .event-card {
+    flex: 0 0 min(78vw, 280px);
+    scroll-snap-align: start;
+    max-width: min(78vw, 280px);
+
+    &:first-child {
+      margin-left: 16px;
+    }
+
+    &:last-child {
+      margin-right: 16px;
+    }
+  }
+
+  .event-title {
+    font-size: 0.9rem;
+  }
+
+  .event-description {
+    font-size: 13px;
+  }
+
+  .no-results {
+    flex: 1 0 100%;
+    width: 100%;
+    font-size: 20px;
+    padding: 24px 16px;
+    text-align: center;
+    box-sizing: border-box;
+  }
+
+  /* ---- Circular Action ---- */
+  #circular_action {
+    min-height: calc(0.9 * (100dvh - var(--header-offset) - var(--tabbar-height)));
+    padding: 36px 12px 40px;
+    box-sizing: border-box;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+
+    > p {
+      font-size: 18px !important;
+      line-height: 1.25;
+      padding: 0 4px 16px;
+      margin: 0;
+    }
+
+    h2 {
+      padding-top: 0;
+    }
+  }
+
+  .rw-wrapper {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 4px 0 12px;
+
+    h2 {
+      text-decoration: underline $color-accent 4px;
+      -webkit-text-decoration: underline $color-accent 4px;
+      text-decoration-thickness: 4px;
+    }
+
+    h2,
+    span {
+      font-size: 26px !important;
+    }
+  }
+
+  .circactions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    justify-content: stretch;
+
+    .card,
+    #refuse,
+    #reuse,
+    #repair,
+    #reporpouse,
+    #recycle,
+    #reduce {
+      clear: none;
+      width: auto !important;
+      min-width: 0 !important;
+      max-width: none !important;
+      height: clamp(140px, 38vw, 180px) !important;
+      min-height: 0;
+      max-height: none;
+      margin: 0;
+      position: relative;
+      overflow: hidden;
+    }
+
+    h4 {
+      font-size: 18px !important;
+      top: 38%;
+      padding: 6%;
+      line-height: 1.1;
+    }
+
+    p {
+      font-size: 14px !important;
+      line-height: 1.25;
+      margin: 4% 5%;
+      top: 6%;
+    }
+  }
+
+
+  #circular_atlas_demo {
+    display: none;
+  }
+
 }

@@ -116,3 +116,45 @@
 }
 
 @keyframes rotating { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+:host-context(body.layout-phone) {
+  #footer {
+    min-height: calc(0.85 * (100dvh - var(--header-offset) - var(--tabbar-height)));
+    display: flex;
+    flex-direction: column;
+  }
+
+  #red-wood {
+    flex: 0 0 auto;
+    background-attachment: fixed;
+  }
+
+  #actual-footer {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 8% 0;
+    box-sizing: border-box;
+  }
+
+  #info-footer {
+    p {
+      line-height: 1;
+      text-align: center;
+      padding: 0 10%;
+      font-size: 22px;
+    }
+  }
+
+  #author {
+    font-size: 18px !important;
+    padding-top: 16px;
+  }
+
+  .form-control {
+    font-size: 20px !important;
+    max-width: 90%;
+  }
+}
+

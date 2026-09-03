@@ -18,7 +18,7 @@
           <input
             type="search"
             class="hero-search-input"
-            placeholder="Search places and events..."
+            placeholder="Search for circular places and events"
             [value]="searchService.query()"
             (input)="onSearchInput($event)"
             (keydown.enter)="showSearchResults($event)"
@@ -274,7 +274,12 @@
   </p>
 
   <div class="circactions">
-    <div class="card" id="refuse">
+    <div
+      class="card"
+      id="refuse"
+      [class.open]="revealedAction() === 'refuse'"
+      (click)="toggleActionCard('refuse')"
+    >
       <h4>REFUSE</h4>
       <p>
         Refuse ownership towards sharing systems. Remove redundancy. Make overconsumption unappealing and
@@ -282,7 +287,12 @@
       </p>
     </div>
 
-    <div class="card" id="reuse">
+    <div
+      class="card"
+      id="reuse"
+      [class.open]="revealedAction() === 'reuse'"
+      (click)="toggleActionCard('reuse')"
+    >
       <h4>REUSE</h4>
       <p>
         Extend usage time by one or several users until the product or material reaches the end of its
@@ -290,7 +300,12 @@
       </p>
     </div>
 
-    <div class="card" id="repair">
+    <div
+      class="card"
+      id="repair"
+      [class.open]="revealedAction() === 'repair'"
+      (click)="toggleActionCard('repair')"
+    >
       <h4>REPAIR</h4>
       <p>
         Maintain product functionality for longer through repairing and refurbishing so that the product or
@@ -298,7 +313,12 @@
       </p>
     </div>
 
-    <div class="card" id="reporpouse">
+    <div
+      class="card"
+      id="reporpouse"
+      [class.open]="revealedAction() === 'reporpouse'"
+      (click)="toggleActionCard('reporpouse')"
+    >
       <h4>REPURPOSE</h4>
       <p>
         Use a product or its part for a new product with a different function, also upcycling. Use materials
@@ -307,7 +327,12 @@
       </p>
     </div>
 
-    <div class="card" id="recycle">
+    <div
+      class="card"
+      id="recycle"
+      [class.open]="revealedAction() === 'recycle'"
+      (click)="toggleActionCard('recycle')"
+    >
       <h4>RECYCLE</h4>
       <p>
         Process material from a discarded product that in part can be used to create a new product with a
@@ -315,7 +340,12 @@
       </p>
     </div>
 
-    <div class="card" id="reduce">
+    <div
+      class="card"
+      id="reduce"
+      [class.open]="revealedAction() === 'reduce'"
+      (click)="toggleActionCard('reduce')"
+    >
       <h4>REDUCE</h4>
       <p>
         Phase-out waste, harmful emissions and the use of non-renewable resources throughout the supply chain,
@@ -326,10 +356,14 @@
 </section>
 
 <section id="circular_atlas_demo" class="section scroll" >
-    <h3>CIRCULAR ATLAS: Find circular solutions in your area!
-      <a (click)="goToMapPage()">
-        <img class="arrow" [src]="'assets/img/arrowto.png'" alt="arrow" />
-      </a>
+    <h3>
+      <span class="atlas-demo-kicker">CIRCULAR ATLAS:</span>
+      <span class="atlas-demo-line">
+        Find circular solutions in your area!
+        <a (click)="goToMapPage()">
+          <img class="arrow" [src]="'assets/img/arrowto.png'" alt="arrow" />
+        </a>
+      </span>
     </h3>
     <video controls preload="metadata" autoplay loop playsinline>
       <source [src]="demoUrl" type="video/mp4"/>
