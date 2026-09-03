@@ -2,6 +2,7 @@ import { Injectable, NgZone } from '@angular/core';
 import { Observable, ReplaySubject, Subject } from 'rxjs';
 import { environment } from '../../environments/environments';
 import { ACTION_TAG_COLORS, ACTION_TAGS } from '../data/taxonomy';
+import { ViewportService } from './viewport.service';
 
 declare const mapboxgl: any;
 
@@ -33,7 +34,10 @@ export class MapService {
   private pendingPlacesData: { type: 'FeatureCollection'; features: any[] } = this.EMPTY_FC;
   private pendingCityCenter: [number, number] | null = null;
 
-  constructor(private zone: NgZone) { }
+  constructor(
+    private zone: NgZone,
+    private viewport: ViewportService
+  ) { }
 
   onReady(): Observable<boolean> { return this.ready$.asObservable(); }
   onFeatureClick(): Observable<{ feature: any; coords: [number, number] }> { return this.click$.asObservable(); }
@@ -81,7 +85,7 @@ export class MapService {
           id: 'places', type: 'circle', source: 'places',
           layout: { visibility: 'visible' },
           paint: {
-            'circle-radius': 5,
+            'circle-radius': this.placeCircleRadius(),
             'circle-color': this.baseColor
           }
         });
@@ -94,7 +98,7 @@ export class MapService {
         this.map.addLayer({
           id: 'favorites', type: 'circle', source: 'favorites',
           layout: { visibility: 'none' },
-          paint: { 'circle-radius': 5, 'circle-color': '#FF5252' }
+          paint: { 'circle-radius': this.placeCircleRadius(), 'circle-color': '#FF5252' }
         });
       }
       this.ensureUserLocationLayers();
@@ -139,16 +143,16 @@ export class MapService {
   // --- interactions: click + hover pointer ---
   private wireClickAndHover() {
     const layers = () => this.existingVisibleLayers(['places', 'favorites']);
+    this.applyPlaceCircleRadius();
 
     this.map.on('click', (e: any) => {
       const ids = layers();
       if (!ids.length) return;
 
-      const feats = this.map.queryRenderedFeatures(e.point, { layers: ids }) || [];
+      const feats = this.queryFeaturesNearPoint(e.point, ids);
       if (!feats.length) return;
 
-      // prefer non-favorites if both overlap
-      const best = feats.find((f: any) => f.layer?.id !== 'favorites') || feats[0];
+      const best = this.nearestFeature(feats, e.point) || feats[0];
 
       // popup coordinates (handle antimeridian)
       const coords: [number, number] = best?.geometry?.coordinates
@@ -164,9 +168,52 @@ export class MapService {
 
     this.map.on('mousemove', (e: any) => {
       const ids = layers();
-      const feats = ids.length ? this.map.queryRenderedFeatures(e.point, { layers: ids }) : [];
+      const feats = ids.length ? this.queryFeaturesNearPoint(e.point, ids) : [];
       this.map.getCanvas().style.cursor = (feats && feats.length) ? 'pointer' : '';
     });
+  }
+
+  private placeCircleRadius(): number {
+    return this.viewport.isPhone() ? 8 : 5;
+  }
+
+  private tapPadPx(): number {
+    return this.viewport.isPhone() ? 28 : 14;
+  }
+
+  private applyPlaceCircleRadius(): void {
+    const radius = this.placeCircleRadius();
+    for (const id of ['places', 'favorites']) {
+      if (this.getLayer(id)) this.map.setPaintProperty(id, 'circle-radius', radius);
+    }
+  }
+
+  private queryFeaturesNearPoint(point: { x: number; y: number }, layerIds: string[]): any[] {
+    if (!this.map?.queryRenderedFeatures) return [];
+    const pad = this.tapPadPx();
+    const bbox: [[number, number], [number, number]] = [
+      [point.x - pad, point.y - pad],
+      [point.x + pad, point.y + pad],
+    ];
+    return this.map.queryRenderedFeatures(bbox, { layers: layerIds }) || [];
+  }
+
+  private nearestFeature(feats: any[], point: { x: number; y: number }): any {
+    if (!feats.length) return null;
+    if (feats.length === 1 || !this.map?.project) return feats[0];
+    let best = feats[0];
+    let bestD = Infinity;
+    for (const f of feats) {
+      const coords = f?.geometry?.coordinates;
+      if (!Array.isArray(coords) || coords.length < 2) continue;
+      const p = this.map.project(coords);
+      const d = (p.x - point.x) ** 2 + (p.y - point.y) ** 2;
+      if (d < bestD) {
+        bestD = d;
+        best = f;
+      }
+    }
+    return best;
   }
 
   // ---------- Safe helpers ----------
