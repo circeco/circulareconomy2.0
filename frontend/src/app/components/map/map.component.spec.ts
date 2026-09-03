@@ -24,6 +24,7 @@ describe('MapComponent', () => {
 
   beforeEach(async () => {
     try { sessionStorage.removeItem('circeco.geoConsent'); } catch {}
+    try { localStorage.removeItem('circeco.useMyLocation'); } catch {}
     cityId$.next('milan');
     await TestBed.configureTestingModule({
       imports: [MapComponent],
@@ -33,7 +34,12 @@ describe('MapComponent', () => {
         { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: { get: () => null } }, queryParams: of({}) } },
         {
           provide: CityContextService,
-          useValue: { cityId$: cityId$.asObservable(), cityId: () => cityId$.value, setCityId: () => {} },
+          useValue: {
+            cityId$: cityId$.asObservable(),
+            cityId: () => cityId$.value,
+            setCityId: (id: string) => cityId$.next(id),
+            rememberCityName: () => {},
+          },
         },
         {
           provide: CitiesService,
@@ -68,6 +74,16 @@ describe('MapComponent', () => {
     expect(component.listingsReady).toBeFalse();
     const empty = fixture.nativeElement.querySelector('.listings-empty') as HTMLElement;
     expect(empty?.textContent).toContain('Loading places');
+  });
+
+  it('asks again when the location switch is off even after session consent', () => {
+    const spy = spyOn(geo, 'locate');
+    try { sessionStorage.setItem('circeco.geoConsent', 'allowed'); } catch {}
+    geo.setUseMyLocation(false);
+    component.onLocateControlClick();
+    fixture.detectChanges();
+    expect(spy).not.toHaveBeenCalled();
+    expect(component.locateAskOpen).toBeTrue();
   });
 
   it('asks before checking location', () => {
@@ -116,6 +132,21 @@ describe('MapComponent', () => {
     expect(geo.useMyLocation()).toBeTrue();
   });
 
+  it('does not recenter when GPS is outside the selected city until the user switches', async () => {
+    const map = TestBed.inject(MapService);
+    spyOn(map, 'showUserLocation');
+    spyOn(geo, 'locate').and.resolveTo({
+      ok: true,
+      fix: { lat: 59.325, lng: 18.072, accuracy: 10 },
+    });
+    await component.onLocateAllow();
+    expect(map.showUserLocation).toHaveBeenCalledWith(18.072, 59.325, 10, false);
+    expect(component.suggestedCity?.id).toBe('stockholm');
+
+    component.switchToSuggestedCity();
+    expect(map.showUserLocation).toHaveBeenCalledWith(18.072, 59.325, 10, true);
+  });
+
   it('clears previous city pins and jumps viewport as soon as cityId changes', () => {
     const map = TestBed.inject(MapService);
     const clear = spyOn(map, 'clearPlaces').and.callThrough();
@@ -124,6 +155,16 @@ describe('MapComponent', () => {
     expect(clear).toHaveBeenCalled();
     expect(jump).toHaveBeenCalledWith([18.072, 59.325], 11);
     expect(component.listingsReady).toBeFalse();
+  });
+
+  it('updates the stored city name when switching to the suggested city', () => {
+    const ctx = TestBed.inject(CityContextService);
+    const remember = spyOn(ctx, 'rememberCityName');
+    component.suggestedCity = { id: 'stockholm', name: 'Stockholm', countryCode: 'SE', center: { lat: 59.325, lng: 18.072 } };
+    component.switchToSuggestedCity();
+    expect(cityId$.value).toBe('stockholm');
+    expect(remember).toHaveBeenCalledWith('Stockholm');
+    expect(component.suggestedCity).toBeNull();
   });
 
   it('opens the search sheet and closes it when focusing a place', () => {

@@ -74,8 +74,16 @@ export class CitiesService {
     const next = holdCitiesWhileReloading(this._list(), rows);
     this._list.set(next);
     if (rows.length) writeCachedCities(rows);
-    const match = next.find((c) => c.id === this.cityContext.cityId());
-    if (match?.name) this.cityContext.rememberCityName(match.name);
+    this.syncStoredCityName(this.cityContext.cityId());
   });
+
+  private readonly keepNameWithCity = this.cityContext.cityId$.subscribe((id) => {
+    this.syncStoredCityName(id);
+  });
+
+  private syncStoredCityName(cityId: string): void {
+    const match = this._list().find((c) => c.id === cityId);
+    if (match?.name) this.cityContext.rememberCityName(match.name);
+  }
 }
 

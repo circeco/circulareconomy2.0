@@ -40,10 +40,10 @@ export class PhoneTopBarComponent {
   );
 
   readonly cityLabel = computed(() => {
-    const named = this.cityContext.cityName();
-    if (named) return named;
     const id = this.cityContext.cityId();
-    return this.cities.list().find((c) => c.id === id)?.name || id;
+    const fromList = this.cities.list().find((c) => c.id === id)?.name;
+    if (fromList) return fromList;
+    return this.cityContext.cityName() || id;
   });
 
   openCity(): void {

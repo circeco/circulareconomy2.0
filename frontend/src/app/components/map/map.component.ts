@@ -398,9 +398,10 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
   onLocateControlClick() {
     if (this.locating) return;
-    if (this.hasSessionConsent()) {
+    if (this.hasSessionConsent() && this.geo.useMyLocation()) {
       if (this.lastFix) {
-        this.map.showUserLocation(this.lastFix.lng, this.lastFix.lat, this.lastFix.accuracy, true);
+        const inCity = this.geo.pointInCity(this.lastFix, this.selectedCity);
+        this.map.showUserLocation(this.lastFix.lng, this.lastFix.lat, this.lastFix.accuracy, inCity);
       }
       this.runLocate();
       return;
@@ -423,10 +424,15 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   }
 
   switchToSuggestedCity() {
-    const id = this.suggestedCity?.id;
+    const city = this.suggestedCity;
+    const id = city?.id;
     if (!id) return;
     this.cityContext.setCityId(id);
+    if (city?.name) this.cityContext.rememberCityName(city.name);
     this.dismissLocateStatus();
+    if (this.lastFix) {
+      this.map.showUserLocation(this.lastFix.lng, this.lastFix.lat, this.lastFix.accuracy, true);
+    }
   }
 
   dismissLocateStatus() {
@@ -492,7 +498,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   private applyFix(fix: GeoFix, flyToUser: boolean) {
     const selected = this.selectedCity;
     const inSelected = this.geo.pointInCity(fix, selected);
-    this.map.showUserLocation(fix.lng, fix.lat, fix.accuracy, flyToUser);
+    this.map.showUserLocation(fix.lng, fix.lat, fix.accuracy, flyToUser && inSelected);
 
     if (inSelected) {
       this.geo.setUseMyLocation(true);
