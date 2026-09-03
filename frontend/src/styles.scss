@@ -147,12 +147,25 @@ p {
 }
 
 #red-wood {
-  background: url("/assets/img/red-wood.jpg") center / cover no-repeat;
+  position: relative;
   height: 300px;
   width: 100%;
   overflow: hidden;
   margin: 0;
-  background-attachment: fixed;
+  /* Safari/iOS ignores background-attachment: fixed — use a clipped fixed layer. */
+  background: none;
+  isolation: isolate;
+  clip-path: inset(0);
+  -webkit-clip-path: inset(0);
+
+  &::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: url('/assets/img/red-wood.jpg') center / cover no-repeat;
+  }
 }
 
 
