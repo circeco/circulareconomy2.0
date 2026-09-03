@@ -1,7 +1,8 @@
 import { Injectable, inject, signal } from '@angular/core';
 import {
   Auth, user, signInWithEmailAndPassword, createUserWithEmailAndPassword,
-  signOut, User
+  signOut, User, updateEmail, updatePassword, deleteUser,
+  EmailAuthProvider, reauthenticateWithCredential
 } from '@angular/fire/auth';
 import { setPersistence, browserLocalPersistence, getIdTokenResult, sendPasswordResetEmail } from 'firebase/auth';
 import { Observable, from, firstValueFrom, of } from 'rxjs';
@@ -141,6 +142,32 @@ export class AuthService {
   }
   resetPasswordOnce(email: string) {
     return firstValueFrom(this.resetPassword(email));
+  }
+
+  private async reauth(password: string): Promise<User> {
+    const u = this.auth.currentUser;
+    if (!u?.email) throw new Error('Not signed in');
+    const cred = EmailAuthProvider.credential(u.email, password);
+    await reauthenticateWithCredential(u, cred);
+    return u;
+  }
+
+  async updateEmailOnce(newEmail: string, password: string): Promise<void> {
+    const u = await this.reauth(password);
+    await updateEmail(u, newEmail.trim());
+  }
+
+  async updatePasswordOnce(currentPassword: string, nextPassword: string): Promise<void> {
+    const u = await this.reauth(currentPassword);
+    await updatePassword(u, nextPassword);
+  }
+
+  async deleteAccountOnce(password: string): Promise<void> {
+    const u = await this.reauth(password);
+    this.signedOutIntentionally = true;
+    this.displayUser.set(null);
+    writePersistedDisplayUser(null);
+    await deleteUser(u);
   }
 
   /** Convenience observable that resolves to true when a user is logged in. */

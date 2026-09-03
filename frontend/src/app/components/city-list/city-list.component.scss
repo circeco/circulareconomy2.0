@@ -1,0 +1,68 @@
+@use 'variables' as *;
+
+.city-list {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: var(--tabbar-height, 56px);
+}
+
+.city-list-header {
+  display: flex;
+  align-items: center;
+  min-height: calc(var(--header-offset, 52px) + env(safe-area-inset-top, 0px));
+  padding: env(safe-area-inset-top, 0px) 8px 0;
+  border-bottom: 1px solid #ececec;
+
+  h1 {
+    flex: 1;
+    margin: 0;
+    text-align: center;
+    font-family: $font-bebas;
+    font-size: 22px;
+    font-weight: 400;
+    padding-right: 44px;
+  }
+}
+
+.city-list-back {
+  width: 44px;
+  height: 44px;
+  border: 0;
+  background: transparent;
+  color: $brand-deep;
+  font-size: 32px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.city-list-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+}
+
+.city-list-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 52px;
+  padding: 12px 20px;
+  border: 0;
+  border-bottom: 1px solid #ececec;
+  background: #ffffff;
+  font-size: 17px;
+  color: #222;
+  text-align: left;
+  cursor: pointer;
+}
+
+.city-list-check {
+  color: $brand-deep;
+  font-weight: 700;
+}

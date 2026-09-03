@@ -1,4 +1,71 @@
 <section class="account-shell">
-  <h1>Account</h1>
-  <p>Manage your saved places, events, and notifications here. This area is protected for signed-in users.</p>
+  <div class="profile-hero">
+    <div class="profile-avatar" aria-hidden="true">{{ initials() }}</div>
+    <h1>{{ displayName() }}</h1>
+    <p class="profile-email">{{ email() }}</p>
+  </div>
+
+  <p class="account-notice" *ngIf="notice()">{{ notice() }}</p>
+  <p class="account-error" *ngIf="error()">{{ error() }}</p>
+
+  <ul class="account-list">
+    <li class="account-row location-row">
+      <div>
+        <div class="account-row-title">Use my location</div>
+        <div class="account-row-sub">Show nearby places on the Atlas.</div>
+      </div>
+      <label class="switch">
+        <input
+          type="checkbox"
+          [checked]="geo.useMyLocation()"
+          (change)="toggleLocation(($any($event.target)).checked)"
+        />
+        <span class="slider"></span>
+      </label>
+    </li>
+
+    <li>
+      <button type="button" class="account-row" (click)="openPanel('email')">
+        Change email address
+        <span class="chevron">›</span>
+      </button>
+      <form *ngIf="panel() === 'email'" class="account-panel" (ngSubmit)="saveEmail()">
+        <input type="email" name="newEmail" [(ngModel)]="newEmail" placeholder="New email" required />
+        <input type="password" name="pwEmail" [(ngModel)]="currentPassword" placeholder="Current password" required />
+        <button type="submit" [disabled]="loading()">Save</button>
+      </form>
+    </li>
+
+    <li>
+      <button type="button" class="account-row" (click)="openPanel('password')">
+        Change password
+        <span class="chevron">›</span>
+      </button>
+      <form *ngIf="panel() === 'password'" class="account-panel" (ngSubmit)="savePassword()">
+        <input type="password" name="pwCurrent" [(ngModel)]="currentPassword" placeholder="Current password" required />
+        <input type="password" name="pwNew" [(ngModel)]="newPassword" placeholder="New password" required minlength="6" />
+        <button type="submit" [disabled]="loading()">Save</button>
+      </form>
+    </li>
+
+    <li>
+      <button type="button" class="account-row" (click)="logout()">
+        Sign out
+        <span class="chevron">›</span>
+      </button>
+    </li>
+
+    <li>
+      <button type="button" class="account-row danger" (click)="openPanel('delete')">
+        Delete account
+        <span class="chevron">›</span>
+      </button>
+      <form *ngIf="panel() === 'delete'" class="account-panel" (ngSubmit)="deleteAccount()">
+        <input type="password" name="pwDelete" [(ngModel)]="currentPassword" placeholder="Current password" required />
+        <button type="submit" class="danger" [disabled]="loading()">Delete account</button>
+      </form>
+    </li>
+  </ul>
+
+  <p class="app-version">App version 0.1</p>
 </section>

@@ -1,0 +1,19 @@
+<section class="city-list" aria-label="Choose city">
+  <header class="city-list-header">
+    <button type="button" class="city-list-back" aria-label="Back" (click)="back()">‹</button>
+    <h1>City</h1>
+  </header>
+
+  <ul class="city-list-rows">
+    <li *ngFor="let city of rows()">
+      <button
+        type="button"
+        class="city-list-row"
+        (click)="select(city.id, city.name)"
+      >
+        <span>{{ city.name }}</span>
+        <span *ngIf="city.id === cityContext.cityId()" class="city-list-check" aria-label="Selected">✓</span>
+      </button>
+    </li>
+  </ul>
+</section>

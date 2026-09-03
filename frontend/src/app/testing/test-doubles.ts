@@ -18,6 +18,9 @@ export class AuthServiceStub implements Pick<AuthService, 'user$' | 'displayUser
   signUpOnce = async (_email: string, _password: string) => Promise.resolve({} as any);
   signOutOnce = async () => Promise.resolve();
   resetPasswordOnce = async (_email: string) => Promise.resolve();
+  updateEmailOnce = async (_email: string, _password: string) => Promise.resolve();
+  updatePasswordOnce = async (_current: string, _next: string) => Promise.resolve();
+  deleteAccountOnce = async (_password: string) => Promise.resolve();
 
   isAuthenticated = () => of(false);
   isAdmin = () => of(false);
