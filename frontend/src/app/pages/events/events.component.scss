@@ -459,10 +459,35 @@
 
 :host-context(body.layout-phone) {
   .events-page {
-    padding: calc(var(--header-offset) + 12px) 12px calc(var(--tabbar-height) + 16px);
+    padding: calc(var(--header-offset) + 56px) 12px calc(var(--tabbar-height) + 16px);
   }
 
-  .map-action-tags-row,
+  .map-action-tags-row {
+    display: flex;
+    position: fixed;
+    top: calc(var(--header-offset) + 12px);
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    width: max-content;
+    max-width: calc(100% - 24px);
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 0 4px;
+    box-sizing: border-box;
+    z-index: 4;
+  }
+
+  .map-action-tag-toggle {
+    font-size: 11px;
+    padding: 5px 8px;
+  }
+
+  .events-favorites-toggle {
+    display: none;
+  }
+
   .events-sidebar .filter-section,
   .events-sidebar .category-filters {
     display: none;

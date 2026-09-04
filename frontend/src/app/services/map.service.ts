@@ -174,7 +174,7 @@ export class MapService {
   }
 
   private placeCircleRadius(): number {
-    return this.viewport.isPhone() ? 8 : 5;
+    return this.viewport.isPhone() ? 6 : 5;
   }
 
   private tapPadPx(): number {

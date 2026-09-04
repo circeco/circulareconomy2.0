@@ -23,10 +23,12 @@
   cursor: pointer;
   color: #4a5568;
 
-  &:hover {
-    background: $bg-light;
-    border-color: $brand-deep;
-    color: $brand-deep;
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      background: $bg-light;
+      border-color: $brand-deep;
+      color: $brand-deep;
+    }
   }
 }
 
@@ -63,10 +65,7 @@
   background: transparent;
   cursor: pointer;
   color: #2d3748;
-
-  &:hover:not(.empty):not(.selected):not(:disabled) {
-    background: $bg-light;
-  }
+  -webkit-tap-highlight-color: transparent;
 
   &.empty {
     cursor: default;
@@ -82,24 +81,17 @@
     border: 2px solid $brand-deep;
   }
 
-  &.has-event {
+  /* Deselected event days: full green (must beat sticky :hover on touch). */
+  &.has-event:not(.selected) {
     background: #0c343d;
     border: 2px solid #0c343d;
     color: white;
-
-    &:hover:not(.selected) {
-      color: $brand-deep;
-    }
   }
 
-  &.has-favorite-event {
+  &.has-favorite-event:not(.selected) {
     background: #FF5252;
     border: 2px solid #FF5252;
     color: white;
-
-    &:hover:not(.selected) {
-      color: $brand-deep;
-    }
   }
 
   &.selected {
@@ -110,6 +102,21 @@
     &:nth-child(7n) {
       background: $color-accent;
       color: white;
+    }
+  }
+
+  /* Hover only on real pointers — touch leaves :hover stuck after tap. */
+  @media (hover: hover) and (pointer: fine) {
+    &:hover:not(.empty):not(.selected):not(:disabled):not(.has-event):not(.has-favorite-event) {
+      background: $bg-light;
+    }
+
+    &.has-event:not(.selected):hover {
+      color: $brand-deep;
+    }
+
+    &.has-favorite-event:not(.selected):hover {
+      color: $brand-deep;
     }
   }
 }

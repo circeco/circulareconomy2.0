@@ -509,9 +509,29 @@
     }
   }
 
-  .desktop-cats,
-  .map-action-tags-row {
+  .desktop-cats {
     display: none;
+  }
+
+  .map-action-tags-row {
+    display: flex;
+    top: 12px;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    width: max-content;
+    max-width: calc(100% - 24px);
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 0 4px;
+    box-sizing: border-box;
+    z-index: 4;
+  }
+
+  .map-action-tag-toggle {
+    font-size: 11px;
+    padding: 5px 8px;
   }
 
   .listing-row {
@@ -523,6 +543,9 @@
     align-self: center;
     font-size: 12px;
     padding: 4px 10px;
+    border: 1px solid var(--tag-color, #45818e);
+    background: var(--tag-color, #45818e);
+    color: var(--tag-text-color, #ffffff);
   }
 
   .listing-description {
