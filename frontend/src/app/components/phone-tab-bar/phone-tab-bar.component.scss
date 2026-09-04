@@ -9,7 +9,9 @@
   display: flex;
   justify-content: space-around;
   align-items: stretch;
-  min-height: 56px;
+  box-sizing: border-box;
+  height: calc(56px + env(safe-area-inset-bottom, 0px));
+  min-height: calc(56px + env(safe-area-inset-bottom, 0px));
   padding-bottom: env(safe-area-inset-bottom, 0px);
   background: #ffffff;
   box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
