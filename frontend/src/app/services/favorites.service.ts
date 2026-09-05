@@ -152,7 +152,7 @@ export class FavoritesService {
     if (!place) {
       btn.setAttribute('disabled','true');
       btn.setAttribute('data-tip','Cannot save this place');
-      btn.textContent = '♥';
+      btn.textContent = '♡';
       return;
     }
 
@@ -231,7 +231,7 @@ export class FavoritesService {
   }
   private setHeart(btn: HTMLElement, fav: boolean) {
     btn.setAttribute('aria-pressed', fav ? 'true' : 'false');
-    btn.textContent = '♥';
+    btn.textContent = fav ? '♥' : '♡';
   }
 
   private pushToMapSource() {

@@ -6,17 +6,52 @@
     <form id="signInForm" class="front" [formGroup]="signInForm" (ngSubmit)="doSignIn()">
       <h5 class="mb-3">Sign in</h5>
       <label for="signInEmail">Email</label>
-      <input id="signInEmail" type="email" class="form-control" formControlName="email" required />
+      <div class="email-field">
+        <input
+          id="signInEmail"
+          type="text"
+          inputmode="email"
+          class="form-control"
+          formControlName="email"
+          autocomplete="email"
+          autocapitalize="off"
+          autocorrect="off"
+          spellcheck="false"
+          [class.is-invalid]="fieldInvalid(signInForm, 'email', submittedSignIn())"
+        />
+        <button
+          type="button"
+          class="email-clear"
+          *ngIf="signInForm.controls.email.value"
+          aria-label="Clear email"
+          (click)="clearEmail(signInForm)"
+        >×</button>
+      </div>
+      <div class="field-error" *ngIf="fieldInvalid(signInForm, 'email', submittedSignIn())">
+        {{ fieldError(signInForm, 'email', 'signin') }}
+      </div>
+
       <label for="signInPass">Password</label>
-      <input id="signInPass" type="password" class="form-control" formControlName="password" required />
+      <input
+        id="signInPass"
+        type="password"
+        class="form-control"
+        formControlName="password"
+        autocomplete="current-password"
+        [class.is-invalid]="fieldInvalid(signInForm, 'password', submittedSignIn())"
+      />
+      <div class="field-error" *ngIf="fieldInvalid(signInForm, 'password', submittedSignIn())">
+        {{ fieldError(signInForm, 'password', 'signin') }}
+      </div>
+
       <div class="forgot-row">
         <a href="#" id="forgotPassword" (click)="$event.preventDefault(); doForgotPassword()">Forgot password?</a>
       </div>
-      <div class="error" *ngIf="error()">{{ error() }}</div>
-      <div class="notice" *ngIf="notice()">{{ notice() }}</div>
+      <div class="error" role="alert" aria-live="polite" [class.has-message]="!!error()">{{ error() }}</div>
+      <div class="notice" *ngIf="notice()" role="status" aria-live="polite">{{ notice() }}</div>
       <button id="signInSubmit" class="btn btn-primary btn-sm" [disabled]="loading()">Sign in</button>
       <p>Don’t have an account?
-        <a id="toSignup" href="#" (click)="$event.preventDefault(); flipping.set(true)">Create one</a>
+        <a id="toSignup" href="#" (click)="$event.preventDefault(); showSignUp()">Create one</a>
       </p>
     </form>
 
@@ -24,13 +59,48 @@
     <form id="signUpForm" class="back" [formGroup]="signUpForm" (ngSubmit)="doSignUp()">
       <h5 class="mb-3">Create account</h5>
       <label for="signUpEmail">Email</label>
-      <input id="signUpEmail" type="email" class="form-control" formControlName="email" required />
+      <div class="email-field">
+        <input
+          id="signUpEmail"
+          type="text"
+          inputmode="email"
+          class="form-control"
+          formControlName="email"
+          autocomplete="email"
+          autocapitalize="off"
+          autocorrect="off"
+          spellcheck="false"
+          [class.is-invalid]="fieldInvalid(signUpForm, 'email', submittedSignUp())"
+        />
+        <button
+          type="button"
+          class="email-clear"
+          *ngIf="signUpForm.controls.email.value"
+          aria-label="Clear email"
+          (click)="clearEmail(signUpForm)"
+        >×</button>
+      </div>
+      <div class="field-error" *ngIf="fieldInvalid(signUpForm, 'email', submittedSignUp())">
+        {{ fieldError(signUpForm, 'email', 'signup') }}
+      </div>
+
       <label for="signUpPass">Password</label>
-      <input id="signUpPass" type="password" class="form-control" formControlName="password" required />
-      <div class="error" *ngIf="error()">{{ error() }}</div>
+      <input
+        id="signUpPass"
+        type="password"
+        class="form-control"
+        formControlName="password"
+        autocomplete="new-password"
+        [class.is-invalid]="fieldInvalid(signUpForm, 'password', submittedSignUp())"
+      />
+      <div class="field-error" *ngIf="fieldInvalid(signUpForm, 'password', submittedSignUp())">
+        {{ fieldError(signUpForm, 'password', 'signup') }}
+      </div>
+
+      <div class="error" role="alert" aria-live="polite" [class.has-message]="!!error()">{{ error() }}</div>
       <button id="signUpSubmit" class="btn btn-success btn-sm" [disabled]="loading()">Create account</button>
       <p>Already have an account?
-        <a id="toSignin" href="#" (click)="$event.preventDefault(); flipping.set(false)">Sign in</a>
+        <a id="toSignin" href="#" (click)="$event.preventDefault(); showSignIn()">Sign in</a>
       </p>
     </form>
   </div>

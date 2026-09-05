@@ -182,7 +182,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         this.zone.run(() => {
           const props = this.propsOf(feature as any);
           const content = this.buildPopupContent({ ...(feature as any), properties: props });
-          this.map.openPopup(coords, content);
+          this.map.openPopup(coords, content, props as Record<string, unknown>);
           this.cdr.markForCheck();
         });
       });
@@ -195,32 +195,21 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
         this.listingsReady = false;
         this.cityPlacesReceived = false;
         this.filter.setAllFeatures([]);
+        this.filter.setCityFeatures({ type: 'FeatureCollection', features: [] });
         this.filteredList = [];
+        this.allCityFeatures = [];
         this.map.clearPlaces();
         const stayOnPinnedPlace = !!this.pinnedPlaceCityId && this.pinnedPlaceCityId === cityId;
         if (!stayOnPinnedPlace) this.moveMapToSelectedCity(cityId);
+        // Force a layout pass after the camera jump (esp. phone shell scrollport).
+        setTimeout(() => this.map.resize(), 0);
         this.cdr.markForCheck();
       })
     );
 
     this.subs.push(
       this.featuredPlaces.getGeoJsonForCurrentCity().subscribe((fc) => {
-        this.map.setPlacesData(fc);
-        this.filter.setCityFeatures(fc as any);
-        this.allCityFeatures = (fc?.features || []) as Feature[];
-        this.cityPlacesReceived = true;
-        if (this.pendingFocusPlaceId) {
-          const focused = this.tryFocusPendingPlace();
-          if (!focused) {
-            setTimeout(() => {
-              if (this.pendingFocusPlaceId && !this.tryFocusPendingPlace() && this.allCityFeatures.length) {
-                this.pendingFocusPlaceId = null;
-                this.pinnedPlaceCityId = null;
-                if (this.lastCityCenter) this.map.flyToCity(this.lastCityCenter, 11);
-              }
-            }, 80);
-          }
-        }
+        this.applyCityPlaces(fc);
       })
     );
 
@@ -430,9 +419,14 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.cityContext.setCityId(id);
     if (city?.name) this.cityContext.rememberCityName(city.name);
     this.dismissLocateStatus();
-    if (this.lastFix) {
-      this.map.showUserLocation(this.lastFix.lng, this.lastFix.lat, this.lastFix.accuracy, true);
-    }
+    // After city handlers jump + load catalogue, re-apply GPS in the new city.
+    const fix = this.lastFix;
+    setTimeout(() => {
+      if (!fix || this.cityContext.cityId() !== id) return;
+      this.applyFix(fix, true);
+      this.map.resize();
+      this.cdr.markForCheck();
+    }, 0);
   }
 
   dismissLocateStatus() {
@@ -493,6 +487,39 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     if (typeof lat !== 'number' || typeof lng !== 'number' || !isFinite(lat) || !isFinite(lng)) return;
     this.lastCityCenter = [lng, lat];
     this.map.jumpToCity([lng, lat], 11);
+  }
+
+  /** Paint pins + unlock listings as soon as catalogue data arrives (do not wait for map idle). */
+  private applyCityPlaces(fc: { type: 'FeatureCollection'; features: any[] } | null | undefined): void {
+    const features = (fc?.features || []) as Feature[];
+    this.map.setPlacesData(fc || { type: 'FeatureCollection', features: [] });
+    this.filter.setCityFeatures(fc as any);
+    this.allCityFeatures = features;
+    this.cityPlacesReceived = true;
+    // Listings used to wait for queryRenderedFeatures after moveend — that races city jumps
+    // (idle fires before GeoJSON arrives → empty map/list until the user pans).
+    this.listingsReady = true;
+    this.filter.setAllFeatures(features);
+    this.zone.run(() => {
+      this.cdr.markForCheck();
+      setTimeout(() => {
+        this.map.resize();
+        this.mountListHearts();
+      }, 0);
+    });
+
+    if (this.pendingFocusPlaceId) {
+      const focused = this.tryFocusPendingPlace();
+      if (!focused) {
+        setTimeout(() => {
+          if (this.pendingFocusPlaceId && !this.tryFocusPendingPlace() && this.allCityFeatures.length) {
+            this.pendingFocusPlaceId = null;
+            this.pinnedPlaceCityId = null;
+            if (this.lastCityCenter) this.map.flyToCity(this.lastCityCenter, 11);
+          }
+        }, 80);
+      }
+    }
   }
 
   private applyFix(fix: GeoFix, flyToUser: boolean) {
@@ -609,7 +636,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     const center = feature.geometry.coordinates;
     const content = this.buildPopupContent({ ...feature, properties: props });
     this.map.flyTo(center, 14);
-    this.map.openPopup(center, content);
+    this.map.openPopup(center, content, props as Record<string, unknown>);
   }
 
   propsOf(f: Feature) { return this.filter.enrichForUI(f); }
@@ -808,7 +835,7 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     }
     else {
       this.heartMountQueue.push({ btn, place });
-      btn.textContent = '♥';
+      btn.textContent = '♡';
     }
   }
 

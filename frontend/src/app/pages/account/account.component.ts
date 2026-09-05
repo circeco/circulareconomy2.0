@@ -16,7 +16,7 @@ export class AccountComponent {
   readonly auth = inject(AuthService);
   readonly geo = inject(GeolocationService);
 
-  panel = signal<'email' | 'password' | 'delete' | null>(null);
+  panel = signal<'email' | 'password' | 'delete' | 'logout' | null>(null);
   currentPassword = '';
   newEmail = '';
   newPassword = '';
@@ -40,7 +40,7 @@ export class AccountComponent {
     this.geo.setUseMyLocation(on);
   }
 
-  openPanel(name: 'email' | 'password' | 'delete'): void {
+  openPanel(name: 'email' | 'password' | 'delete' | 'logout'): void {
     this.panel.set(this.panel() === name ? null : name);
     this.error.set('');
     this.notice.set('');

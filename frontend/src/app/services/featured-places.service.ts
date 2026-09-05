@@ -2,7 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Firestore, collection, limit, query, where } from '@angular/fire/firestore';
 import { collectionData } from '@angular/fire/firestore';
-import { catchError, combineLatest, map, Observable, of, switchMap } from 'rxjs';
+import { catchError, combineLatest, map, Observable, of, startWith, switchMap } from 'rxjs';
 
 import { FS_PATHS } from '../data/firestore-paths';
 import { CityContextService } from './city-context.service';
@@ -136,11 +136,18 @@ export class FeaturedPlacesService {
 
   getAllPlaces(): Observable<FeaturedPlace[]> {
     return this.cityContext.cityId$.pipe(
-      switchMap((cityId) =>
-        combineLatest([this.getFirestorePlaces(cityId), this.getStockholmStatic(cityId)]).pipe(
-          map(([remote, fallback]) => this.mergePlaces(remote, fallback))
-        )
-      )
+      switchMap((cityId) => {
+        const fallback$ = this.getStockholmStatic(cityId);
+        // null = Firestore still pending — show fallback immediately when available.
+        const remote$ = this.getFirestorePlaces(cityId).pipe(
+          startWith(null as FeaturedPlace[] | null)
+        );
+        return combineLatest([remote$, fallback$]).pipe(
+          map(([remote, fallback]) =>
+            remote === null ? fallback : this.mergePlaces(remote, fallback)
+          )
+        );
+      })
     );
   }
 

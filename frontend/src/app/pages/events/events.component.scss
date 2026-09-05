@@ -300,7 +300,10 @@
   text-decoration: underline $color-accent 6px;
   -webkit-text-decoration: underline $color-accent 6px;
   text-decoration-color: $color-accent;
-  text-decoration-skip-ink: auto;
+  text-decoration-thickness: 6px;
+  -webkit-text-decoration-skip-ink: none;
+  text-decoration-skip-ink: none;
+  text-decoration-skip: none;
   color: #111;
 }
 

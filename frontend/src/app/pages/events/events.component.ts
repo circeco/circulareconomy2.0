@@ -61,6 +61,7 @@ export class EventsComponent implements AfterViewChecked {
   events = signal<EventItem[]>([]);
   eventDatesForCalendar: Date[] = [];
   readonly cityName = signal('');
+  private lastEventsCityId = '';
 
   readonly favoriteEventDatesForCalendar = computed(() => {
     const favoriteIds = this.eventFavorites.favoriteIds();
@@ -88,6 +89,14 @@ export class EventsComponent implements AfterViewChecked {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(([cityId, cities]) => {
         this.cityName.set(cities.find((c) => c.id === cityId)?.name || '');
+        // New city → clear date filter so we don't show an empty day from the previous city.
+        if (this.lastEventsCityId && this.lastEventsCityId !== cityId) {
+          this.selectedDateTimes.set(new Set());
+          this.selectedEventId.set(null);
+          this.initialCalendarSelection = [];
+          this.initialCalendarViewDate = null;
+        }
+        this.lastEventsCityId = cityId;
       });
 
     combineLatest([this.eventsService.events$, this.route.queryParams])

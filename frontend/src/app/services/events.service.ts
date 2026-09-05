@@ -2,7 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { Firestore, collection, limit, query, where } from '@angular/fire/firestore';
 import { collectionData } from '@angular/fire/firestore';
 import { Observable, of, switchMap } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, map, startWith } from 'rxjs/operators';
 
 import { FS_PATHS } from '../data/firestore-paths';
 import { CityContextService } from './city-context.service';
@@ -45,6 +45,8 @@ export class EventsService {
         ),
         { idField: 'id' }
       ).pipe(
+        // Clear previous city immediately so the UI does not keep stale events while loading.
+        startWith([] as Record<string, unknown>[]),
         map((docs: Record<string, unknown>[]) => {
           return docs.map((d) => this.firestoreDocToEventItem(d)).filter((e): e is EventItem => !!e);
         }),

@@ -1,11 +1,19 @@
 @use 'variables' as *;
 
-.phone-top-bar {
+/* Host is the fixed layer — more reliable than fixed-inside-custom-element on iOS. */
+:host {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  z-index: 4;
+  z-index: 1100;
+  display: block;
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+.phone-top-bar {
   height: var(--header-offset, 52px);
   padding: env(safe-area-inset-top, 0px) 8px 0;
   box-sizing: border-box;

@@ -47,6 +47,7 @@ export class LandingComponent implements AfterViewInit, AfterViewChecked, OnDest
   allEvents: EventItem[] = [];
 
   private onScroll?: () => void;
+  private scrollRoot: HTMLElement | Window | null = null;
   private ghostItems: HTMLElement[] = [];
   private rafId: number | null = null;
   private pending = false;
@@ -101,7 +102,7 @@ export class LandingComponent implements AfterViewInit, AfterViewChecked, OnDest
     this.ghostItems = Array.from(listEl.querySelectorAll('li.ghost')) as HTMLElement[];
 
     const applyState = () => {
-      const scroll = window.scrollY || document.documentElement.scrollTop || 0;
+      const scroll = this.readScrollTop();
       if (scroll < 30) {   // Very top: keep collapsed
         this.ghostItems.forEach((el) => el.classList.add('ghost'));
       } else if (scroll < 250) {    // Middle range: expand
@@ -123,7 +124,8 @@ export class LandingComponent implements AfterViewInit, AfterViewChecked, OnDest
     this.zone.runOutsideAngular(() => {
       const handler = () => scheduleApply();
       this.onScroll = handler;
-      window.addEventListener('scroll', handler, { passive: true });
+      this.scrollRoot = this.getScrollRoot();
+      this.scrollRoot.addEventListener('scroll', handler, { passive: true });
     });
 
     // Ensure correct state on first paint
@@ -158,8 +160,8 @@ export class LandingComponent implements AfterViewInit, AfterViewChecked, OnDest
   }
 
   ngOnDestroy(): void {
-    if (this.onScroll) {
-      window.removeEventListener('scroll', this.onScroll as EventListener);
+    if (this.onScroll && this.scrollRoot) {
+      this.scrollRoot.removeEventListener('scroll', this.onScroll as EventListener);
     }
     if (this.rafId !== null) {
       cancelAnimationFrame(this.rafId);
@@ -180,8 +182,26 @@ export class LandingComponent implements AfterViewInit, AfterViewChecked, OnDest
     const target = document.getElementById('circular_events');
     if (!target) return;
     const headerOffset = 60;
-    const top = window.scrollY + target.getBoundingClientRect().top - headerOffset;
-    window.scrollTo({ top: Math.max(top, 0), behavior: 'smooth' });
+    const root = this.getScrollRoot();
+    if (root instanceof Window) {
+      const top = window.scrollY + target.getBoundingClientRect().top - headerOffset;
+      window.scrollTo({ top: Math.max(top, 0), behavior: 'smooth' });
+      return;
+    }
+    const top = root.scrollTop + target.getBoundingClientRect().top - headerOffset;
+    root.scrollTo({ top: Math.max(top, 0), behavior: 'smooth' });
+  }
+
+  private getScrollRoot(): HTMLElement | Window {
+    return document.querySelector<HTMLElement>('.app-main.phone') || window;
+  }
+
+  private readScrollTop(): number {
+    const root = this.scrollRoot || this.getScrollRoot();
+    if (root instanceof Window) {
+      return window.scrollY || document.documentElement.scrollTop || 0;
+    }
+    return root.scrollTop || 0;
   }
 
   goToMapPage(): void {

@@ -1,11 +1,19 @@
 @use 'variables' as *;
 
-.phone-tab-bar {
+/* Host is the fixed layer — more reliable than fixed-inside-custom-element on iOS. */
+:host {
   position: fixed;
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 4;
+  z-index: 1100;
+  display: block;
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+.phone-tab-bar {
   display: flex;
   justify-content: space-around;
   align-items: stretch;

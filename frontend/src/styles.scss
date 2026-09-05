@@ -26,6 +26,19 @@ body.layout-phone {
   scroll-snap-type: none;
 }
 
+/* Phone shell: only .app-main scrolls so top/tab chrome stay viewport-fixed. */
+html.layout-phone,
+html.layout-phone body {
+  height: 100%;
+  height: 100dvh;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+html.layout-phone body {
+  position: relative;
+}
+
 /* Sections that should align to top */
 body.snap-landing #title_section,
 body.snap-landing #circular_events,

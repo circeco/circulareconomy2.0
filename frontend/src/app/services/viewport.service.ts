@@ -22,6 +22,8 @@ export class ViewportService {
   private apply(isPhone: boolean): void {
     this.isPhone.set(isPhone);
     if (typeof document === 'undefined') return;
+    document.documentElement.classList.toggle('layout-phone', isPhone);
+    document.documentElement.classList.toggle('layout-desktop', !isPhone);
     document.body.classList.toggle('layout-phone', isPhone);
     document.body.classList.toggle('layout-desktop', !isPhone);
   }

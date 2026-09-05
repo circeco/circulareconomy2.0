@@ -113,6 +113,25 @@
     &.danger {
       background: $color-accent;
     }
+
+    &.ghost {
+      background: transparent;
+      color: $brand-deep;
+      border: 1px solid #c5d4d8;
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+  }
+}
+
+.logout-confirm {
+  .confirm-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
   }
 }
 

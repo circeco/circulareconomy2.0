@@ -20,6 +20,7 @@ describe('ViewportService', () => {
   }
 
   afterEach(() => {
+    document.documentElement.classList.remove('layout-phone', 'layout-desktop');
     document.body.classList.remove('layout-phone', 'layout-desktop');
   });
 
@@ -28,6 +29,7 @@ describe('ViewportService', () => {
     const viewport = new ViewportService();
     expect(viewport.isPhone()).toBeTrue();
     expect(document.body.classList.contains('layout-phone')).toBeTrue();
+    expect(document.documentElement.classList.contains('layout-phone')).toBeTrue();
   });
 
   it('treats 1024 and above as desktop layout', () => {
@@ -35,5 +37,6 @@ describe('ViewportService', () => {
     const viewport = new ViewportService();
     expect(viewport.isPhone()).toBeFalse();
     expect(document.body.classList.contains('layout-desktop')).toBeTrue();
+    expect(document.documentElement.classList.contains('layout-desktop')).toBeTrue();
   });
 });

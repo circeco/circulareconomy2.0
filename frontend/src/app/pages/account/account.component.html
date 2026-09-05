@@ -49,10 +49,16 @@
     </li>
 
     <li>
-      <button type="button" class="account-row" (click)="logout()">
+      <button type="button" class="account-row" (click)="openPanel('logout')">
         Sign out
         <span class="chevron">›</span>
       </button>
+      <div *ngIf="panel() === 'logout'" class="account-panel logout-confirm">
+        <div class="confirm-actions">
+          <button type="button" class="ghost" (click)="openPanel('logout')" [disabled]="loading()">Cancel</button>
+          <button type="button" class="danger" (click)="logout()" [disabled]="loading()">Sign out</button>
+        </div>
+      </div>
     </li>
 
     <li>

@@ -33,6 +33,8 @@ export class MapService {
   };
   private pendingPlacesData: { type: 'FeatureCollection'; features: any[] } = this.EMPTY_FC;
   private pendingCityCenter: [number, number] | null = null;
+  /** Props of the place whose popup is open — used to dismiss when filters hide it. */
+  private openPopupProps: Record<string, unknown> | null = null;
 
   constructor(
     private zone: NgZone,
@@ -241,11 +243,13 @@ export class MapService {
   setCategoryFilter(enabled: Set<string>) {
     this.lastCategorySet = new Set(enabled);
     this.applyFilters();
+    this.closePopupIfFilteredOut();
   }
 
   setActionTagFilter(enabled: Set<string>) {
     this.lastActionTagSet = new Set(enabled);
     this.applyFilters();
+    this.closePopupIfFilteredOut();
   }
 
   setFavoritesVisibility(v: boolean) {
@@ -255,6 +259,7 @@ export class MapService {
     }
     this.applyFilters();
     this.applyPaint();
+    this.closePopupIfFilteredOut();
   }
 
   queryRenderedFeatures$(layers: string[] = ['places', 'favorites']): Observable<any[]> {
@@ -361,6 +366,7 @@ export class MapService {
   }
 
   closePopup() {
+    this.openPopupProps = null;
     document.querySelector('.mapboxgl-popup')?.remove();
   }
 
@@ -376,11 +382,19 @@ export class MapService {
     this.pendingPlacesData = next;
     const src = this.getSource('places');
     if (src?.setData) src.setData(next);
+    this.closePopupIfPlaceGone(features);
   }
 
-  openPopup(center: [number, number], content: HTMLElement) {
+  openPopup(center: [number, number], content: HTMLElement, props?: Record<string, unknown> | null) {
     this.closePopup();
-    new mapboxgl.Popup({ closeOnClick: true }).setLngLat(center).setDOMContent(content).addTo(this.map);
+    this.openPopupProps = props ? { ...props } : null;
+    const popup = new mapboxgl.Popup({ closeOnClick: true })
+      .setLngLat(center)
+      .setDOMContent(content)
+      .addTo(this.map);
+    popup.on('close', () => {
+      this.openPopupProps = null;
+    });
   }
 
   resize() { this.map?.resize(); }
@@ -510,6 +524,56 @@ export class MapService {
       this.map.setFilter('places', expr);
     }
     this.applyPaint();
+  }
+
+  /** Drop popup when the open place no longer passes category / action / favorites filters. */
+  private closePopupIfFilteredOut(): void {
+    if (!this.openPopupProps) return;
+    if (!this.placePassesCurrentFilters(this.openPopupProps)) {
+      this.closePopup();
+    }
+  }
+
+  /** Drop popup when the open place is no longer in the loaded catalogue (city switch, etc.). */
+  private closePopupIfPlaceGone(features: any[]): void {
+    if (!this.openPopupProps) return;
+    const openKey = String(this.openPopupProps['PLACE_KEY'] || '');
+    if (!openKey) {
+      this.closePopup();
+      return;
+    }
+    const stillThere = features.some((f) => String(f?.properties?.PLACE_KEY || '') === openKey);
+    if (!stillThere) this.closePopup();
+  }
+
+  private placePassesCurrentFilters(props: Record<string, unknown>): boolean {
+    if (this.lastCategorySet.size) {
+      const categories = Array.isArray(props['CATEGORIES']) ? (props['CATEGORIES'] as string[]) : [];
+      const category = String(props['CATEGORY'] || '');
+      const catOk = Array.from(this.lastCategorySet).some(
+        (cat) => categories.includes(cat) || category === cat
+      );
+      if (!catOk) return false;
+    }
+
+    if (!this.lastActionTagSet.size) return false;
+    if (this.lastActionTagSet.size < this.allActionTags.length) {
+      const tags = [
+        ...(Array.isArray(props['ACTION_TAGS']) ? (props['ACTION_TAGS'] as string[]) : []),
+        ...(Array.isArray(props['actionTags']) ? (props['actionTags'] as string[]) : []),
+      ].map((t) => String(t || '').toLowerCase());
+      const primary = String(props['ACTION_TAG'] || props['actionTag'] || '').toLowerCase();
+      if (primary) tags.push(primary);
+      const tagOk = Array.from(this.lastActionTagSet).some((tag) => tags.includes(tag));
+      if (!tagOk) return false;
+    }
+
+    if (this.favoritesVisible) {
+      const key = String(props['PLACE_KEY'] || '');
+      if (!key || !this.favoriteKeys.has(key)) return false;
+    }
+
+    return true;
   }
 
   private computePlaceKey(props: any, coords?: [number, number], legacyId?: string | number | null) {

@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { of, BehaviorSubject } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 
@@ -132,7 +132,7 @@ describe('MapComponent', () => {
     expect(geo.useMyLocation()).toBeTrue();
   });
 
-  it('does not recenter when GPS is outside the selected city until the user switches', async () => {
+  it('does not recenter when GPS is outside the selected city until the user switches', fakeAsync(async () => {
     const map = TestBed.inject(MapService);
     spyOn(map, 'showUserLocation');
     spyOn(geo, 'locate').and.resolveTo({
@@ -144,8 +144,9 @@ describe('MapComponent', () => {
     expect(component.suggestedCity?.id).toBe('stockholm');
 
     component.switchToSuggestedCity();
+    tick(0);
     expect(map.showUserLocation).toHaveBeenCalledWith(18.072, 59.325, 10, true);
-  });
+  }));
 
   it('clears previous city pins and jumps viewport as soon as cityId changes', () => {
     const map = TestBed.inject(MapService);
