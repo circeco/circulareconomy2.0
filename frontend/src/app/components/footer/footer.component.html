@@ -19,27 +19,59 @@
       <form #f="ngForm" (ngSubmit)="onSubmit(f)">
         <input type="text" name="_gotcha" class="honeypot" tabindex="-1" autocomplete="off" ngModel />
 
-        <input type="text" name="name" id="name" class="form-control" placeholder="Name" required ngModel />
+        <input
+          type="text"
+          name="name"
+          id="name"
+          class="form-control"
+          placeholder="Name"
+          required
+          ngModel
+          [class.is-invalid]="submitted && f.controls['name']?.invalid"
+        />
 
-        <input type="email" name="emailaddress" id="emailaddress" class="form-control" placeholder="Email Address"
-          required ngModel email />
+        <input
+          type="email"
+          name="emailaddress"
+          id="emailaddress"
+          class="form-control"
+          placeholder="Email Address"
+          required
+          ngModel
+          email
+          [class.is-invalid]="submitted && f.controls['emailaddress']?.invalid"
+        />
 
-        <textarea rows="5" name="message" id="message" class="form-control" placeholder="Message" required
-          ngModel></textarea>
+        <textarea
+          rows="5"
+          name="message"
+          id="message"
+          class="form-control"
+          placeholder="Message"
+          required
+          ngModel
+          [class.is-invalid]="submitted && f.controls['message']?.invalid"
+        ></textarea>
 
         <div *ngIf="recaptchaSiteKey" class="recaptcha">
           <div class="g-recaptcha" [attr.data-sitekey]="recaptchaSiteKey"></div>
         </div>
 
         <div class="send_button">
-          <button type="submit" id="send_button" class="btn btn-primary" [disabled]="sending || !f.valid"
-            [class.onclic]="anim.onclic" [class.validate]="anim.validate">
+          <button
+            type="submit"
+            id="send_button"
+            class="btn btn-primary"
+            [disabled]="sending"
+            [class.onclic]="anim.onclic"
+            [class.validate]="anim.validate"
+          >
             {{ sending ? 'Sending…' : 'Send' }}
           </button>
         </div>
 
-        <div class="form-feedback">
-          <div *ngIf="success" class="alert alert-success mt-2" role="status" aria-live="polite">
+        <div class="form-feedback" [class.has-message]="!!success || !!error" aria-live="polite">
+          <div *ngIf="success" class="alert alert-success mt-2" role="status">
             {{ success }}
           </div>
           <div *ngIf="error" class="alert alert-danger mt-2" role="alert">

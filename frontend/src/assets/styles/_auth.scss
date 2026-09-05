@@ -45,7 +45,7 @@
       background: #fff;
       border-radius: 8px;
       padding: .5rem;
-      min-width: 200px;
+      min-width: 260px;
       box-shadow: 0 6px 20px rgba(0, 0, 0, .12);
 
       .dropdown-item {
@@ -63,6 +63,77 @@
       .admin-link {
         color: #0c343d;
         font-weight: 700;
+      }
+
+      .location-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 0.45rem;
+        margin: 0.15rem 0;
+        white-space: normal;
+      }
+
+      .location-toggle-copy {
+        min-width: 0;
+        flex: 1;
+      }
+
+      .location-toggle-title {
+        font-weight: 600;
+        color: #0c343d;
+        font-size: 0.92rem;
+        line-height: 1.2;
+      }
+
+      .location-toggle-sub {
+        margin-top: 2px;
+        font-size: 0.78rem;
+        line-height: 1.25;
+        color: #718096;
+        font-weight: 400;
+      }
+
+      .switch {
+        position: relative;
+        width: 44px;
+        height: 26px;
+        flex-shrink: 0;
+
+        input {
+          opacity: 0;
+          width: 0;
+          height: 0;
+        }
+
+        .slider {
+          position: absolute;
+          inset: 0;
+          background: #ccc;
+          border-radius: 26px;
+          cursor: pointer;
+
+          &::before {
+            content: '';
+            position: absolute;
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            top: 3px;
+            background: #fff;
+            border-radius: 50%;
+            transition: transform 0.15s;
+          }
+        }
+
+        input:checked + .slider {
+          background: $brand-deep;
+        }
+
+        input:checked + .slider::before {
+          transform: translateX(18px);
+        }
       }
     }
 

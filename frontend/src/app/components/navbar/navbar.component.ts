@@ -13,6 +13,7 @@ import { Observable } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 import { SearchService } from '../../services/search.service';
 import { ViewportService } from '../../services/viewport.service';
+import { GeolocationService } from '../../services/geolocation.service';
 
 @Component({
   selector: 'app-navbar',
@@ -40,6 +41,7 @@ export class NavbarComponent implements AfterViewInit, OnDestroy {
   constructor(
     public auth: AuthService,
     public searchService: SearchService,
+    public geo: GeolocationService,
     private zone: NgZone,
     private router: Router,
     private viewport: ViewportService
@@ -242,6 +244,11 @@ export class NavbarComponent implements AfterViewInit, OnDestroy {
   }
 
   openLogin(): void { this.auth.openModal(); }
+
+  toggleLocation(on: boolean): void {
+    this.geo.setUseMyLocation(on);
+  }
+
   async logout(): Promise<void> {
     await this.auth.signOutOnce();
     // Ensure a clean post-logout state and always land on home.

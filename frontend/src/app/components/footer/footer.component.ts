@@ -14,6 +14,7 @@ declare global { interface Window { grecaptcha?: any; } }
 })
 export class FooterComponent implements AfterViewInit {
   sending = false;
+  submitted = false;
   success: string | null = null;
   error: string | null = null;
   recaptchaSiteKey = environment.formspree?.recaptchaSiteKey ?? '';
@@ -33,13 +34,20 @@ export class FooterComponent implements AfterViewInit {
   }
 
   async onSubmit(form: NgForm) {
-    if (!form.valid) return;
+    this.submitted = true;
+    this.success = null;
+    this.error = null;
+
+    if (!form.valid) {
+      form.control.markAllAsTouched();
+      this.error = 'Please fill in your name, email, and message.';
+      return;
+    }
+
     const { name, emailaddress, message, _gotcha } = form.value;
     if (_gotcha) return;
 
     const endpoint = environment.formspree?.endpoint;
-    this.success = null;
-    this.error = null;
     if (!endpoint) {
       this.error = 'Contact form is not configured yet.';
       return;
@@ -95,6 +103,7 @@ export class FooterComponent implements AfterViewInit {
       }, 2250);
 
       this.success = 'Thanks! Your message has been sent.';
+      this.submitted = false;
       form.resetForm();
     } catch (e: any) {
       this.anim.onclic = false;

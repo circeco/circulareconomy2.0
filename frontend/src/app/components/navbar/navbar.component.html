@@ -55,6 +55,20 @@
         <div class="menu">
           <div class="dropdown-item" style="font-weight:600;">Welcome!</div>
           <div class="dropdown-item small text-muted">{{ user.email }}</div>
+          <div class="dropdown-item location-toggle" (click)="$event.stopPropagation()">
+            <div class="location-toggle-copy">
+              <div class="location-toggle-title">Use my location</div>
+              <div class="location-toggle-sub">Show nearby places on the Atlas.</div>
+            </div>
+            <label class="switch">
+              <input
+                type="checkbox"
+                [checked]="geo.useMyLocation()"
+                (change)="toggleLocation(($any($event.target)).checked)"
+              />
+              <span class="slider"></span>
+            </label>
+          </div>
           <ng-container *ngIf="admin$ | async">
             <div class="dropdown-divider" style="height:1px;background:#eee;margin:.25rem 0;"></div>
             <a class="dropdown-item admin-link" routerLink="/admin/review/places">Places review queue</a>
