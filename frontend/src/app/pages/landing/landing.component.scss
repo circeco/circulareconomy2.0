@@ -475,8 +475,11 @@
   h2 { padding-top: 10%;}
 }
 
-.card:hover,
 .card.open { p { visibility: visible; } h4 { visibility: hidden; } }
+
+@media (hover: hover) and (pointer: fine) {
+  .card:hover { p { visibility: visible; } h4 { visibility: hidden; } }
+}
 
 #refuse     { background-color: $brand-deep; }
 #reuse      { background-color: $brand-mid; }
@@ -486,11 +489,11 @@
 #reduce     { background-color: $blue-gray; }
 
 #refuse,
-#reuse {
+#reuse,
+#repair {
   p { color: #ff8a80; }
 }
 
-#repair,
 #reduce,
 #recycle,
 #reporpouse {
@@ -832,8 +835,8 @@
 
   .circactions {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
+    grid-template-columns: 1fr;
+    gap: 12px;
     width: 100%;
     max-width: 100%;
     margin: 0;
@@ -852,7 +855,7 @@
       width: auto !important;
       min-width: 0 !important;
       max-width: none !important;
-      height: clamp(140px, 38vw, 180px) !important;
+      height: clamp(170px, 48vw, 220px) !important;
       min-height: 0;
       max-height: none;
       margin: 0;
@@ -861,7 +864,7 @@
     }
 
     h4 {
-      font-size: 18px !important;
+      font-size: 24px !important;
       top: 38%;
       padding: 6%;
       line-height: 1.1;
@@ -871,9 +874,53 @@
       top: 0;
       height: 90%;
       align-content: center;
-      font-size: 16px !important;
-      line-height: 1.1;
-      letter-spacing: 0.3px;
+      font-size: 20px !important;
+      line-height: 1.25;
+      letter-spacing: 0.2px;
+    }
+
+    @media (min-width: 480px) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+
+      .card,
+      #refuse,
+      #reuse,
+      #repair,
+      #reporpouse,
+      #recycle,
+      #reduce {
+        height: clamp(160px, 36vw, 200px) !important;
+      }
+
+      h4 { font-size: 20px !important; }
+
+      p {
+        font-size: 17px !important;
+        line-height: 1.2;
+      }
+    }
+
+    @media (min-width: 768px) {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+
+      .card,
+      #refuse,
+      #reuse,
+      #repair,
+      #reporpouse,
+      #recycle,
+      #reduce {
+        height: clamp(170px, 28vw, 210px) !important;
+      }
+
+      h4 { font-size: 22px !important; }
+
+      p {
+        font-size: 18px !important;
+        line-height: 1.22;
+      }
     }
   }
 
