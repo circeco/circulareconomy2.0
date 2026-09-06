@@ -46,6 +46,7 @@ import type {
   ReviewQueuePlaceDoc,
 } from '../../data/models';
 import { websiteDisplayLabel } from '../../utils/website-display';
+import { geocodeAddress } from '../../utils/geocode-address';
 
 type ReviewQueuePlaceRow = ReviewQueuePlaceDoc & { id: string };
 type ReviewQueueEventRow = ReviewQueueEventDoc & { id: string };
@@ -426,6 +427,12 @@ export class AdminReviewComponent {
 
   async savePlaceDraft(row: ReviewQueuePlaceRow): Promise<void> {
     if (!this.placeEdit || this.editingPlaceRowId !== row.id) return;
+    const resolved = await this.resolvePlaceEditCoords(row.cityId, this.placeEdit);
+    if (!resolved.ok) {
+      this.lastError.set(resolved.error);
+      return;
+    }
+    this.placeEdit = resolved.form;
     const candidate = this.placeFormToCandidate(this.placeEdit);
     await this.runSingleOp(`${row.id}:save-place`, () =>
       updateDoc(doc(this.fs, FS_PATHS.reviewQueue, row.id), {
@@ -481,7 +488,12 @@ export class AdminReviewComponent {
     const cityId = this.cityContext.cityId();
     let ll = this.normalizeLatLng(c.coords);
     if (!ll) {
-      ll = await this.geocodeFromAddress(cityId, c.address, c.name || '');
+      ll = await geocodeAddress({
+        cityId,
+        address: c.address || '',
+        nameHint: c.name || '',
+        requestedWith: 'circeco-admin-review',
+      });
       if (!ll) {
         this.lastError.set('Could not derive coordinates from address. Please add latitude/longitude.');
         return;
@@ -530,7 +542,30 @@ export class AdminReviewComponent {
   }
 
   async approvePlace(row: ReviewQueuePlaceRow): Promise<void> {
-    const c = this.mergedPlaceCandidate(row);
+    if (this.editingPlaceRowId === row.id && this.placeEdit) {
+      const resolved = await this.resolvePlaceEditCoords(row.cityId, this.placeEdit);
+      if (!resolved.ok) {
+        this.lastError.set(resolved.error);
+        return;
+      }
+      this.placeEdit = resolved.form;
+    }
+    let c = this.mergedPlaceCandidate(row);
+    if (!this.normalizeLatLng(c.coords) && c.address) {
+      const ll = await geocodeAddress({
+        cityId: row.cityId,
+        address: c.address,
+        nameHint: c.name || '',
+        requestedWith: 'circeco-admin-review',
+      });
+      if (ll) {
+        c = { ...c, coords: ll };
+      }
+    }
+    if (!this.normalizeLatLng(c.coords)) {
+      this.lastError.set('Could not derive coordinates from address. Please add latitude/longitude.');
+      return;
+    }
     const reviewedAt = new Date().toISOString();
     await this.runWrite(row.id, async (batch) => {
       const newRef = doc(collection(this.fs, FS_PATHS.places));
@@ -1270,42 +1305,46 @@ export class AdminReviewComponent {
   }
 
   private async geocodeFromAddress(cityId: string, address: string, nameHint: string): Promise<LatLng | null> {
-    const cityLabel = cityId.replace(/[_-]+/g, ' ').trim();
-    const endpoint = 'https://nominatim.openstreetmap.org/search';
-    const queries = [
-      `${nameHint || ''} ${address}, ${cityLabel}`.trim(),
-      `${address}, ${cityLabel}`.trim(),
-      address.trim(),
-    ].filter(Boolean);
-    try {
-      for (const queryText of queries) {
-        const qs = new URLSearchParams({
-          format: 'jsonv2',
-          limit: '1',
-          addressdetails: '0',
-          q: queryText,
-        });
-        const res = await fetch(`${endpoint}?${qs.toString()}`, {
-          headers: {
-            Accept: 'application/json',
-            // Polite identifier for public geocoder usage.
-            'X-Requested-With': 'circeco-admin-review',
-          },
-        });
-        if (!res.ok) continue;
-        const out = (await res.json()) as Array<{ lat?: string; lon?: string }>;
-        const hit = out[0];
-        if (!hit) continue;
-        const lat = Number(hit.lat);
-        const lng = Number(hit.lon);
-        if (!isFinite(lat) || !isFinite(lng)) continue;
-        return { lat, lng };
-      }
-      return null;
-    } catch (e) {
-      console.warn('[admin-review] geocode failed', { cityId, address, nameHint, e });
-      return null;
+    return geocodeAddress({
+      cityId,
+      address,
+      nameHint,
+      requestedWith: 'circeco-admin-review',
+    });
+  }
+
+  /**
+   * On place edit save/approve: derive coords from address; fall back to typed lat/lng.
+   */
+  private async resolvePlaceEditCoords(
+    cityId: string,
+    form: PlaceEditForm
+  ): Promise<{ ok: true; form: PlaceEditForm } | { ok: false; error: string }> {
+    const address = this.normalizeAddressDisplay(form.address);
+    if (!address) {
+      return { ok: false, error: 'Address is required to derive coordinates.' };
     }
+    const geocoded = await geocodeAddress({
+      cityId,
+      address,
+      nameHint: form.name.trim(),
+      requestedWith: 'circeco-admin-review',
+    });
+    if (geocoded) {
+      return {
+        ok: true,
+        form: { ...form, address, latStr: String(geocoded.lat), lngStr: String(geocoded.lng) },
+      };
+    }
+    const lat = parseFloat(String(form.latStr || '').trim());
+    const lng = parseFloat(String(form.lngStr || '').trim());
+    if (isFinite(lat) && isFinite(lng)) {
+      return { ok: true, form: { ...form, address } };
+    }
+    return {
+      ok: false,
+      error: 'Could not derive coordinates from address. Please add latitude/longitude.',
+    };
   }
 
   private haversineMeters(a: LatLng, b: LatLng): number {

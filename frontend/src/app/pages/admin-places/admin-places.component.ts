@@ -14,7 +14,7 @@ import {
 } from 'firebase/firestore';
 
 import { FS_PATHS } from '../../data/firestore-paths';
-import type { PlaceDoc } from '../../data/models';
+import type { LatLng, PlaceDoc } from '../../data/models';
 import { CityContextService } from '../../services/city-context.service';
 import {
   ACTION_TAG_LABELS,
@@ -24,6 +24,7 @@ import {
   SECTOR_CATEGORIES,
   SECTOR_CATEGORY_LABELS,
 } from '../../data/taxonomy';
+import { geocodeAddress } from '../../utils/geocode-address';
 import { websiteDisplayLabel } from '../../utils/website-display';
 
 type PlaceRow = PlaceDoc & { id: string };
@@ -165,28 +166,47 @@ export class AdminPlacesComponent {
     const form = this.editForm();
     if (!form || this.editingId() !== row.id) return;
     await this.runRowOp(row.id, async () => {
-      const lat = Number(form.latStr);
-      const lng = Number(form.lngStr);
+      const name = form.name.trim();
+      const address = form.address.trim();
+      if (!address) {
+        this.error.set('Address is required to derive coordinates.');
+        return;
+      }
+
+      const coords = await this.resolveCoordsFromAddress({
+        cityId: this.cityId(),
+        address,
+        name,
+        latStr: form.latStr,
+        lngStr: form.lngStr,
+      });
+      if (!coords) {
+        this.error.set('Could not derive coordinates from address. Please add latitude/longitude.');
+        return;
+      }
+
+      this.editForm.set({ ...form, latStr: String(coords.lat), lngStr: String(coords.lng) });
+
       const payload: Record<string, unknown> = {
-        name: form.name.trim(),
-        address: form.address.trim(),
+        name,
+        address,
         locationName: form.locationName.trim(),
         website: form.website.trim(),
         websiteLabel: form.websiteLabel.trim(),
         description: form.description.trim(),
         sectorCategories: canonicalizeSectorCategories(form.sectorCategories),
         actionTags: canonicalizeActionTags(form.actionTags),
+        coords,
         status: 'approved',
         updatedAt: serverTimestamp(),
       };
-      if (isFinite(lat) && isFinite(lng)) payload['coords'] = { lat, lng };
       await updateDoc(doc(this.fs, FS_PATHS.places, row.id), payload as any);
       const next = this.rows().map((r) =>
         r.id === row.id
           ? ({
               ...r,
               ...payload,
-              coords: payload['coords'] as PlaceDoc['coords'] | undefined,
+              coords,
               sectorCategories: payload['sectorCategories'] as string[],
               actionTags: payload['actionTags'] as PlaceDoc['actionTags'],
             } as PlaceRow)
@@ -265,6 +285,30 @@ export class AdminPlacesComponent {
   private isPermissionDenied(e: unknown): boolean {
     const msg = e instanceof Error ? e.message : String(e);
     return msg.includes('permission-denied') || msg.includes('Missing or insufficient permissions');
+  }
+
+  /**
+   * Prefer geocoding from the edited address; fall back to explicit lat/lng if geocode fails.
+   */
+  private async resolveCoordsFromAddress(args: {
+    cityId: string;
+    address: string;
+    name: string;
+    latStr: string;
+    lngStr: string;
+  }): Promise<LatLng | null> {
+    const geocoded = await geocodeAddress({
+      cityId: args.cityId,
+      address: args.address,
+      nameHint: args.name,
+      requestedWith: 'circeco-admin-places',
+    });
+    if (geocoded) return geocoded;
+
+    const lat = Number(String(args.latStr || '').trim());
+    const lng = Number(String(args.lngStr || '').trim());
+    if (isFinite(lat) && isFinite(lng)) return { lat, lng };
+    return null;
   }
 }
 
