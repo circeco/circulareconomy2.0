@@ -237,7 +237,7 @@
       rel="noopener noreferrer"
       (click)="$event.stopPropagation()"
     >
-      {{ websiteDisplayLabel(place.web) }}
+      {{ websiteDisplayLabel(place.web, place.webLabel) }}
     </a>
 
     <div class="sector-icons" *ngIf="sectorIconsFor(place.categories).length">

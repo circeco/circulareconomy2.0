@@ -103,7 +103,8 @@ Optional:
 
 - `locationName`: string (venue/shop name variant)
 - `coords`: `{ lat: number; lng: number }`
-- `website`: string
+- `website`: string (absolute URL used as the href)
+- `websiteLabel`: string (optional link text shown to users; when empty, UI shows a short host like `www.example.com/`)
 - `description`: string
 - `sectorCategories`: string[]
 - `actionTags`: string[]

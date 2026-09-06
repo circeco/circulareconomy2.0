@@ -26,6 +26,7 @@ import {
   SECTOR_CATEGORY_LABELS,
   canonicalizeSectorCategories,
 } from '../../data/taxonomy';
+import { websiteDisplayLabel as formatWebsiteDisplayLabel } from '../../utils/website-display';
 
 @Component({
   selector: 'landing-page',
@@ -262,25 +263,8 @@ export class LandingComponent implements AfterViewInit, AfterViewChecked, OnDest
     return '';
   }
 
-  websiteDisplayLabel(url: string | undefined | null): string {
-    const raw = String(url || '').trim();
-    if (!raw) return '';
-    try {
-      const parsed = new URL(raw.includes('://') ? raw : `https://${raw}`);
-      let host = parsed.hostname.toLowerCase();
-      if (!host.startsWith('www.')) host = `www.${host}`;
-      return `${host}/`;
-    } catch {
-      const host = raw
-        .replace(/^https?:\/\//i, '')
-        .replace(/^\/\//, '')
-        .split('/')[0]
-        .split('?')[0]
-        .split('#')[0]
-        .toLowerCase();
-      if (!host) return raw;
-      return `${host.startsWith('www.') ? host : `www.${host}`}/`;
-    }
+  websiteDisplayLabel(url: string | undefined | null, label?: string | undefined | null): string {
+    return formatWebsiteDisplayLabel(url, label);
   }
 
   isDescriptionExpanded(id: string): boolean {

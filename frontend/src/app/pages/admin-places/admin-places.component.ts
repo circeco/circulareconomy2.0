@@ -24,6 +24,7 @@ import {
   SECTOR_CATEGORIES,
   SECTOR_CATEGORY_LABELS,
 } from '../../data/taxonomy';
+import { websiteDisplayLabel } from '../../utils/website-display';
 
 type PlaceRow = PlaceDoc & { id: string };
 
@@ -32,6 +33,7 @@ interface PlaceEditForm {
   address: string;
   locationName: string;
   website: string;
+  websiteLabel: string;
   description: string;
   sectorCategories: string[];
   actionTags: string[];
@@ -64,7 +66,7 @@ export class AdminPlacesComponent {
     const q = this.searchText().trim().toLowerCase();
     return this.rows().filter((r) => {
       if (!q) return true;
-      const hay = `${r.name || ''} ${r.address || ''} ${r.website || ''} ${r.description || ''}`.toLowerCase();
+      const hay = `${r.name || ''} ${r.address || ''} ${r.website || ''} ${r.websiteLabel || ''} ${r.description || ''}`.toLowerCase();
       return hay.includes(q);
     });
   });
@@ -141,12 +143,17 @@ export class AdminPlacesComponent {
       address: row.address || '',
       locationName: row.locationName || '',
       website: row.website || '',
+      websiteLabel: row.websiteLabel || '',
       description: row.description || '',
       sectorCategories: canonicalizeSectorCategories(this.showList(row.sectorCategories)),
       actionTags: canonicalizeActionTags(this.showList(row.actionTags)),
       latStr: lat != null && isFinite(lat) ? String(lat) : '',
       lngStr: lng != null && isFinite(lng) ? String(lng) : '',
     });
+  }
+
+  linkDisplayLabel(website?: string, websiteLabel?: string): string {
+    return websiteDisplayLabel(website, websiteLabel);
   }
 
   closeEdit(): void {
@@ -165,6 +172,7 @@ export class AdminPlacesComponent {
         address: form.address.trim(),
         locationName: form.locationName.trim(),
         website: form.website.trim(),
+        websiteLabel: form.websiteLabel.trim(),
         description: form.description.trim(),
         sectorCategories: canonicalizeSectorCategories(form.sectorCategories),
         actionTags: canonicalizeActionTags(form.actionTags),

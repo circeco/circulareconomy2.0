@@ -33,6 +33,7 @@ import {
   SECTOR_CATEGORY_LABELS,
   SectorCategory,
 } from '../../data/taxonomy';
+import { websiteDisplayLabel } from '../../utils/website-display';
 
 @Component({
   selector: 'atlas-map',
@@ -689,14 +690,16 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     if (props.ADDRESS_LINE1 || props.ADDRESS) {
       const a = document.createElement('p'); a.className = 'address'; a.textContent = props.ADDRESS_LINE1 || props.ADDRESS || ''; el.appendChild(a);
     }
-    const rawWeb = (props.WEB || '').replace(/^https?:\/\//i, ''); const href = this.normalizeWebHref(rawWeb);
+    const rawWeb = (props.WEB || '').replace(/^https?:\/\//i, '');
+    const href = this.normalizeWebHref(rawWeb);
     if (href) {
       const a = document.createElement('a');
       a.className = 'website-link';
       a.target = '_blank';
       a.rel = 'noopener';
       a.href = href;
-      a.textContent = rawWeb;
+      a.title = props.WEB || href;
+      a.textContent = websiteDisplayLabel(props.WEB || href, props.WEB_LABEL);
       el.appendChild(a);
     }
 

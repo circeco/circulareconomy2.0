@@ -288,7 +288,8 @@
             <label class="field full"><span class="field-label">Name</span><input type="text" [(ngModel)]="pf.name" name="new-pl-name" /></label>
             <label class="field full"><span class="field-label">Address</span><input type="text" [(ngModel)]="pf.address" name="new-pl-addr" /></label>
             <label class="field full"><span class="field-label">Location name (optional)</span><input type="text" [(ngModel)]="pf.locationName" name="new-pl-ln" /></label>
-            <label class="field full"><span class="field-label">Website</span><input type="url" [(ngModel)]="pf.website" name="new-pl-web" /></label>
+            <label class="field full"><span class="field-label">Website URL</span><input type="url" [(ngModel)]="pf.website" name="new-pl-web" placeholder="https://…" /></label>
+            <label class="field full"><span class="field-label">Link text</span><input type="text" [(ngModel)]="pf.websiteLabel" name="new-pl-web-label" placeholder="Leave blank for www.example.com/" /></label>
             <label class="field full"><span class="field-label">Description</span><textarea [(ngModel)]="pf.description" name="new-pl-desc" rows="2"></textarea></label>
             <label class="field"><span class="field-label">Latitude</span><input type="text" [(ngModel)]="pf.latStr" name="new-pl-lat" placeholder="optional" /></label>
             <label class="field"><span class="field-label">Longitude</span><input type="text" [(ngModel)]="pf.lngStr" name="new-pl-lng" placeholder="optional" /></label>
@@ -332,10 +333,11 @@
                 *ngIf="row.candidate.website"
                 class="place-website"
                 [href]="row.candidate.website"
+                [attr.title]="row.candidate.website"
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                {{ row.candidate.website }}
+                {{ placeLinkLabel(row.candidate.website, row.candidate.websiteLabel) }}
               </a>
 
               <div class="place-tags">
@@ -403,7 +405,8 @@
               <label class="field full"><span class="field-label">Name</span><input type="text" [(ngModel)]="pf.name" name="pl-name-{{ row.id }}" /></label>
               <label class="field full"><span class="field-label">Address</span><input type="text" [(ngModel)]="pf.address" name="pl-addr-{{ row.id }}" /></label>
               <label class="field full"><span class="field-label">Location name (optional)</span><input type="text" [(ngModel)]="pf.locationName" name="pl-ln-{{ row.id }}" /></label>
-              <label class="field full"><span class="field-label">Website</span><input type="url" [(ngModel)]="pf.website" name="pl-web-{{ row.id }}" /></label>
+              <label class="field full"><span class="field-label">Website URL</span><input type="url" [(ngModel)]="pf.website" name="pl-web-{{ row.id }}" placeholder="https://…" /></label>
+              <label class="field full"><span class="field-label">Link text</span><input type="text" [(ngModel)]="pf.websiteLabel" name="pl-web-label-{{ row.id }}" placeholder="Leave blank for www.example.com/" /></label>
               <label class="field full"><span class="field-label">Description</span><textarea [(ngModel)]="pf.description" name="pl-desc-{{ row.id }}" rows="2"></textarea></label>
               <label class="field"><span class="field-label">Latitude</span><input type="text" [(ngModel)]="pf.latStr" name="pl-lat-{{ row.id }}" placeholder="optional" /></label>
               <label class="field"><span class="field-label">Longitude</span><input type="text" [(ngModel)]="pf.lngStr" name="pl-lng-{{ row.id }}" placeholder="optional" /></label>

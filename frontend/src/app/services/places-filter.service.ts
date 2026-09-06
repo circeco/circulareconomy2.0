@@ -9,6 +9,8 @@ export interface PlaceProps {
   DESCRIPTION?: string; STORE_TYPE?: string;
   CATEGORY?: string; CATEGORIES?: string[];
   WEB?: string;
+  /** Optional user-facing link text for WEB. */
+  WEB_LABEL?: string;
   PLACE_KEY?: string;
   LEGACY_ID?: string | number | null;
   distanceKm?: number;

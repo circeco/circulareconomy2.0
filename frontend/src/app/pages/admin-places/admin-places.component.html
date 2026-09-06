@@ -24,7 +24,7 @@
         <div>
           <div class="name">{{ row.name || '(missing name)' }}</div>
           <div class="meta">{{ row.address || '(missing address)' }}</div>
-          <a class="meta-link" *ngIf="row.website" [href]="row.website" target="_blank" rel="noopener noreferrer">{{ row.website }}</a>
+          <a class="meta-link" *ngIf="row.website" [href]="row.website" [attr.title]="row.website" target="_blank" rel="noopener noreferrer">{{ linkDisplayLabel(row.website, row.websiteLabel) }}</a>
           <div class="meta" *ngIf="row.description">{{ row.description }}</div>
           <div class="chips" *ngIf="showList(row.actionTags).length > 0">
             <span class="chip-label">Action tags:</span>
@@ -46,7 +46,8 @@
           <label><span>Name</span><input type="text" [(ngModel)]="f.name" /></label>
           <label><span>Address</span><input type="text" [(ngModel)]="f.address" /></label>
           <label><span>Location Name</span><input type="text" [(ngModel)]="f.locationName" /></label>
-          <label><span>Website</span><input type="url" [(ngModel)]="f.website" /></label>
+          <label><span>Website URL</span><input type="url" [(ngModel)]="f.website" placeholder="https://…" /></label>
+          <label><span>Link text</span><input type="text" [(ngModel)]="f.websiteLabel" placeholder="Leave blank for www.example.com/" /></label>
           <label class="full"><span>Description</span><textarea rows="2" [(ngModel)]="f.description"></textarea></label>
           <label><span>Latitude</span><input type="text" [(ngModel)]="f.latStr" /></label>
           <label><span>Longitude</span><input type="text" [(ngModel)]="f.lngStr" /></label>

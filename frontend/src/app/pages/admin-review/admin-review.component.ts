@@ -45,6 +45,7 @@ import type {
   ReviewQueueEventDoc,
   ReviewQueuePlaceDoc,
 } from '../../data/models';
+import { websiteDisplayLabel } from '../../utils/website-display';
 
 type ReviewQueuePlaceRow = ReviewQueuePlaceDoc & { id: string };
 type ReviewQueueEventRow = ReviewQueueEventDoc & { id: string };
@@ -157,6 +158,7 @@ export interface PlaceEditForm {
   address: string;
   description: string;
   website: string;
+  websiteLabel: string;
   locationName: string;
   sectorCategories: string[];
   actionTags: string[];
@@ -341,6 +343,7 @@ export class AdminReviewComponent {
       locationName: '',
       description: '',
       website: '',
+      websiteLabel: '',
       sectorCategories: [],
       actionTags: [],
     });
@@ -509,6 +512,7 @@ export class AdminReviewComponent {
         locationName: c.locationName ?? '',
         ...this.coordsField(c.coords),
         website: c.website ?? '',
+        websiteLabel: c.websiteLabel ?? '',
         description: c.description ?? '',
         sectorCategories: c.sectorCategories ?? [],
         actionTags: (c.actionTags ?? []) as string[],
@@ -537,6 +541,7 @@ export class AdminReviewComponent {
         locationName: c.locationName ?? '',
         ...this.coordsField(c.coords),
         website: c.website ?? '',
+        websiteLabel: c.websiteLabel ?? '',
         description: c.description ?? '',
         sectorCategories: c.sectorCategories ?? [],
         actionTags: (c.actionTags ?? []) as string[],
@@ -860,6 +865,7 @@ export class AdminReviewComponent {
       address: c.address ?? '',
       description: c.description ?? '',
       website: c.website ?? '',
+      websiteLabel: c.websiteLabel ?? '',
       locationName: c.locationName ?? '',
       sectorCategories: canonicalizeSectorCategories((c.sectorCategories ?? []) as string[]),
       actionTags: canonicalizeActionTags((c.actionTags ?? []) as string[]),
@@ -1183,6 +1189,7 @@ export class AdminReviewComponent {
       address: this.normalizeAddressDisplay(f.address),
       description: f.description.trim(),
       website: f.website.trim(),
+      websiteLabel: f.websiteLabel.trim(),
       locationName: f.locationName.trim(),
       sectorCategories: canonicalizeSectorCategories(f.sectorCategories),
       actionTags: canonicalizeActionTags(f.actionTags) as PlaceCandidate['actionTags'],
@@ -1191,6 +1198,10 @@ export class AdminReviewComponent {
       base.coords = { lat, lng };
     }
     return base;
+  }
+
+  placeLinkLabel(website?: string, websiteLabel?: string): string {
+    return websiteDisplayLabel(website, websiteLabel);
   }
 
   displayActionTags(values: string[] | undefined): string[] {
@@ -1375,6 +1386,7 @@ export class AdminReviewComponent {
           locationName: candidate.locationName ?? '',
           ...this.coordsField(candidate.coords),
           website: candidate.website ?? '',
+          websiteLabel: candidate.websiteLabel ?? '',
           description: candidate.description ?? '',
           sectorCategories: candidate.sectorCategories ?? [],
           actionTags: (candidate.actionTags ?? []) as string[],
