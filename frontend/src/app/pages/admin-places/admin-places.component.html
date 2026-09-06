@@ -49,8 +49,8 @@
           <label><span>Website URL</span><input type="url" [(ngModel)]="f.website" placeholder="https://…" /></label>
           <label><span>Link text</span><input type="text" [(ngModel)]="f.websiteLabel" placeholder="Leave blank for www.example.com/" /></label>
           <label class="full"><span>Description</span><textarea rows="2" [(ngModel)]="f.description"></textarea></label>
-          <label><span>Latitude</span><input type="text" [(ngModel)]="f.latStr" /></label>
-          <label><span>Longitude</span><input type="text" [(ngModel)]="f.lngStr" /></label>
+          <label><span>Latitude</span><input type="text" [(ngModel)]="f.latStr" placeholder="auto from address" /></label>
+          <label><span>Longitude</span><input type="text" [(ngModel)]="f.lngStr" placeholder="auto from address" /></label>
           <div class="full">
             <span>Sector Categories</span>
             <div class="chips">

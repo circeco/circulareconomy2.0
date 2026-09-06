@@ -291,8 +291,8 @@
             <label class="field full"><span class="field-label">Website URL</span><input type="url" [(ngModel)]="pf.website" name="new-pl-web" placeholder="https://…" /></label>
             <label class="field full"><span class="field-label">Link text</span><input type="text" [(ngModel)]="pf.websiteLabel" name="new-pl-web-label" placeholder="Leave blank for www.example.com/" /></label>
             <label class="field full"><span class="field-label">Description</span><textarea [(ngModel)]="pf.description" name="new-pl-desc" rows="2"></textarea></label>
-            <label class="field"><span class="field-label">Latitude</span><input type="text" [(ngModel)]="pf.latStr" name="new-pl-lat" placeholder="optional" /></label>
-            <label class="field"><span class="field-label">Longitude</span><input type="text" [(ngModel)]="pf.lngStr" name="new-pl-lng" placeholder="optional" /></label>
+            <label class="field"><span class="field-label">Latitude</span><input type="text" [(ngModel)]="pf.latStr" name="new-pl-lat" placeholder="auto from address" /></label>
+            <label class="field"><span class="field-label">Longitude</span><input type="text" [(ngModel)]="pf.lngStr" name="new-pl-lng" placeholder="auto from address" /></label>
             <div class="field full">
               <span class="field-label">Sector categories</span>
               <div class="tag-list">
@@ -408,8 +408,8 @@
               <label class="field full"><span class="field-label">Website URL</span><input type="url" [(ngModel)]="pf.website" name="pl-web-{{ row.id }}" placeholder="https://…" /></label>
               <label class="field full"><span class="field-label">Link text</span><input type="text" [(ngModel)]="pf.websiteLabel" name="pl-web-label-{{ row.id }}" placeholder="Leave blank for www.example.com/" /></label>
               <label class="field full"><span class="field-label">Description</span><textarea [(ngModel)]="pf.description" name="pl-desc-{{ row.id }}" rows="2"></textarea></label>
-              <label class="field"><span class="field-label">Latitude</span><input type="text" [(ngModel)]="pf.latStr" name="pl-lat-{{ row.id }}" placeholder="optional" /></label>
-              <label class="field"><span class="field-label">Longitude</span><input type="text" [(ngModel)]="pf.lngStr" name="pl-lng-{{ row.id }}" placeholder="optional" /></label>
+              <label class="field"><span class="field-label">Latitude</span><input type="text" [(ngModel)]="pf.latStr" name="pl-lat-{{ row.id }}" placeholder="auto from address" /></label>
+              <label class="field"><span class="field-label">Longitude</span><input type="text" [(ngModel)]="pf.lngStr" name="pl-lng-{{ row.id }}" placeholder="auto from address" /></label>
               <div class="field full">
                 <span class="field-label">Sector categories</span>
                 <div class="tag-list">
