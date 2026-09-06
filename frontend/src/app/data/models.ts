@@ -43,7 +43,10 @@ export type PlaceDoc = {
   address: string;
   locationName?: string;
   coords?: LatLng;
+  /** Absolute public URL (href). */
   website?: string;
+  /** Optional text shown for the website link; empty → short host label. */
+  websiteLabel?: string;
   description?: string;
   sectorCategories?: string[];
   actionTags?: ActionTag[];

@@ -22,6 +22,8 @@ export interface FeaturedPlace {
   categories?: string[];
   actionTags?: string[];
   web?: string;
+  /** Optional text shown for the website link. */
+  webLabel?: string;
   coords?: { lng: number; lat: number };
 }
 
@@ -122,6 +124,7 @@ export class FeaturedPlacesService {
         categories: normalizedCategories.length ? normalizedCategories : this.toAtlasCategories(rawCategories),
         actionTags,
         web: String(p['WEB'] ?? ''),
+        webLabel: String(p['WEB_LABEL'] ?? '').trim(),
       };
       if (Array.isArray(coords) && coords.length >= 2 && typeof coords[0] === 'number' && typeof coords[1] === 'number') {
         place.coords = { lng: coords[0], lat: coords[1] };
@@ -171,6 +174,7 @@ export class FeaturedPlacesService {
               ACTION_TAGS: p.actionTags?.length ? p.actionTags : [],
               ACTION_TAG: p.actionTags?.[0] || '',
               WEB: p.web || '',
+              WEB_LABEL: p.webLabel || '',
             },
           })),
       }))
@@ -209,6 +213,7 @@ export class FeaturedPlacesService {
             categories: atlasCategories,
             actionTags,
             web: typeof d['website'] === 'string' ? d['website'] : '',
+            webLabel: typeof d['websiteLabel'] === 'string' ? d['websiteLabel'].trim() : '',
             coords:
               lat != null && lng != null && isFinite(lat) && isFinite(lng)
                 ? { lat, lng }
@@ -276,6 +281,7 @@ export class FeaturedPlacesService {
       storeType: base.storeType || incoming.storeType,
       label: base.label || incoming.label,
       web: base.web || incoming.web,
+      webLabel: base.webLabel || incoming.webLabel,
       actionTags: mergedActionTags.length ? mergedActionTags : (base.actionTags || incoming.actionTags || []),
       categories: mergedCategories.length ? mergedCategories : (base.categories || incoming.categories),
       category:
