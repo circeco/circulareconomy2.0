@@ -1,6 +1,14 @@
 <section class="catalog-shell">
   <header class="catalog-header">
     <h1>Place Catalogue</h1>
+    <button
+      type="button"
+      class="add-btn"
+      [disabled]="isBusy('manual:add-place')"
+      (click)="openCreate()"
+    >
+      Add place
+    </button>
   </header>
 
   <section class="toolbar">
@@ -16,6 +24,48 @@
 
   <p *ngIf="error() as err" class="error" role="alert">{{ err }}</p>
   <p *ngIf="loading()">Loading places…</p>
+
+  <div class="create-panel" *ngIf="creating() && createForm() as f">
+    <div class="create-title">New place ({{ cityId() }})</div>
+    <div class="editor">
+      <div class="grid">
+        <label><span>Name</span><input type="text" [(ngModel)]="f.name" name="new-pl-name" /></label>
+        <label><span>Address</span><input type="text" [(ngModel)]="f.address" name="new-pl-addr" /></label>
+        <label><span>Location Name</span><input type="text" [(ngModel)]="f.locationName" name="new-pl-ln" /></label>
+        <label><span>Website URL</span><input type="url" [(ngModel)]="f.website" name="new-pl-web" placeholder="https://…" /></label>
+        <label><span>Link text</span><input type="text" [(ngModel)]="f.websiteLabel" name="new-pl-web-label" placeholder="Leave blank for www.example.com/" /></label>
+        <label class="full"><span>Description</span><textarea rows="2" [(ngModel)]="f.description" name="new-pl-desc"></textarea></label>
+        <label><span>Latitude</span><input type="text" [(ngModel)]="f.latStr" name="new-pl-lat" placeholder="auto from address" /></label>
+        <label><span>Longitude</span><input type="text" [(ngModel)]="f.lngStr" name="new-pl-lng" placeholder="auto from address" /></label>
+        <div class="full">
+          <span>Sector Categories</span>
+          <div class="chips">
+            <label class="chip option-chip" *ngFor="let c of sectorOptions">
+              <input type="checkbox"
+                     [checked]="isSelected(f.sectorCategories, c)"
+                     (change)="f.sectorCategories = toggleSelection(f.sectorCategories, c, $any($event.target).checked)" />
+              {{ sectorLabel(c) }}
+            </label>
+          </div>
+        </div>
+        <div class="full">
+          <span>Action Tags</span>
+          <div class="chips">
+            <label class="chip option-chip" *ngFor="let t of actionTagOptions">
+              <input type="checkbox"
+                     [checked]="isSelected(f.actionTags, t)"
+                     (change)="f.actionTags = toggleSelection(f.actionTags, t, $any($event.target).checked)" />
+              {{ actionTagLabel(t) }}
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="actions">
+        <button type="button" [disabled]="isBusy('manual:add-place')" (click)="createPlace()">Create place</button>
+        <button type="button" [disabled]="isBusy('manual:add-place')" (click)="cancelCreate()">Cancel</button>
+      </div>
+    </div>
+  </div>
 
   <ul class="rows" *ngIf="!loading()">
     <li class="empty" *ngIf="filteredRows().length === 0">No places for this city and filter.</li>
@@ -82,4 +132,3 @@
     </li>
   </ul>
 </section>
-

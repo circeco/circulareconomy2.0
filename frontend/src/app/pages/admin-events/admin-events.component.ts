@@ -62,6 +62,8 @@ export class AdminEventsComponent {
   readonly busyIds = signal<Set<string>>(new Set());
   readonly editingId = signal<string | null>(null);
   readonly editForm = signal<EventEditForm | null>(null);
+  readonly creating = signal(false);
+  readonly createForm = signal<EventEditForm | null>(null);
 
   readonly filteredRows = computed(() => {
     const q = this.searchText().trim().toLowerCase();
@@ -92,8 +94,8 @@ export class AdminEventsComponent {
 
   async refresh(): Promise<void> {
     this.rows.set([]);
-    this.editingId.set(null);
-    this.editForm.set(null);
+    this.closeEdit();
+    this.cancelCreate();
     await this.loadRows();
   }
 
@@ -136,6 +138,55 @@ export class AdminEventsComponent {
     }
   }
 
+  openCreate(): void {
+    this.closeEdit();
+    this.creating.set(true);
+    this.createForm.set(this.emptyForm());
+  }
+
+  cancelCreate(): void {
+    this.creating.set(false);
+    this.createForm.set(null);
+  }
+
+  async createEvent(): Promise<void> {
+    const form = this.createForm();
+    if (!this.creating() || !form) return;
+    const title = form.title.trim();
+    const date = form.startDate.trim();
+    const address = form.address.trim();
+    if (!title || !date || !address) {
+      this.error.set('Event requires title, date, and address.');
+      return;
+    }
+    await this.runRowOp('manual:add-event', async () => {
+      const newRef = doc(collection(this.fs, FS_PATHS.events));
+      const timeDisplay = this.formatTimeDisplayRange(form.time, form.endTime);
+      const reviewedAt = new Date().toISOString();
+      const payload: EventDoc = {
+        cityId: this.cityId(),
+        title,
+        startDate: date,
+        endDate: date,
+        locationText: address,
+        address,
+        website: this.normalizeWebsiteUrl(form.website.trim()),
+        description: form.description.trim(),
+        timeDisplay,
+        sectorCategories: canonicalizeSectorCategories(form.sectorCategories),
+        actionTags: canonicalizeActionTags(form.actionTags),
+        sourceRefs: [],
+        status: 'approved',
+        review: { reviewedAt },
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      };
+      await setDoc(newRef, payload as any);
+      this.rows.set([{ id: newRef.id, ...payload }, ...this.rows()]);
+      this.cancelCreate();
+    });
+  }
+
   async duplicate(row: EventRow): Promise<void> {
     await this.runRowOp(`${row.id}:duplicate`, async () => {
       const newRef = doc(collection(this.fs, FS_PATHS.events));
@@ -169,6 +220,7 @@ export class AdminEventsComponent {
   }
 
   openEdit(row: EventRow): void {
+    this.cancelCreate();
     const date = row.startDate || '';
     const { time, endTime } = this.parseTimeDisplayRange(row.timeDisplay || '');
     this.editingId.set(row.id);
@@ -204,7 +256,7 @@ export class AdminEventsComponent {
         endDate: date,
         locationText: address,
         address,
-        website: form.website.trim(),
+        website: this.normalizeWebsiteUrl(form.website.trim()),
         description: form.description.trim(),
         timeDisplay,
         sectorCategories: canonicalizeSectorCategories(form.sectorCategories),
@@ -347,6 +399,29 @@ export class AdminEventsComponent {
       return `${stem} (copy ${n})`;
     }
     return `${t} (copy)`;
+  }
+
+  private emptyForm(): EventEditForm {
+    const today = new Date().toISOString().slice(0, 10);
+    return {
+      title: '',
+      startDate: today,
+      endDate: today,
+      address: '',
+      website: '',
+      description: '',
+      time: '',
+      endTime: '',
+      sectorCategories: [],
+      actionTags: [],
+    };
+  }
+
+  private normalizeWebsiteUrl(raw: string): string {
+    const w = String(raw || '').trim();
+    if (!w) return '';
+    if (/^https?:\/\//i.test(w)) return w;
+    return `https://${w.replace(/^\/\//, '')}`;
   }
 
   private compareEventRowsByDate(a: EventRow, b: EventRow): number {
