@@ -1,8 +1,7 @@
 import { inject, Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { Firestore, collection, limit, query, where } from '@angular/fire/firestore';
 import { collectionData } from '@angular/fire/firestore';
-import { catchError, combineLatest, map, Observable, of, startWith, switchMap } from 'rxjs';
+import { catchError, map, Observable, of, switchMap } from 'rxjs';
 
 import { FS_PATHS } from '../data/firestore-paths';
 import { CityContextService } from './city-context.service';
@@ -31,11 +30,7 @@ export interface FeaturedPlace {
 export class FeaturedPlacesService {
   private fs = inject(Firestore);
   private cityContext = inject(CityContextService);
-  private readonly DATA_URL = 'assets/data/circular_places.geojson';
-  private cached: FeaturedPlace[] | null = null;
   private unknownActionTagsLogged = false;
-
-  constructor(private http: HttpClient) {}
 
   private readonly ATLAS_ACTION_TAGS = ['refuse', 'reuse', 'repair', 'repurpose', 'recycle', 'reduce'] as const;
 
@@ -98,60 +93,13 @@ export class FeaturedPlacesService {
     return Array.from(out);
   }
 
-  private parsePlaces(features: unknown[]): FeaturedPlace[] {
-    return features.map((f: unknown) => {
-      const feat = f as { id?: string; properties?: Record<string, unknown>; geometry?: { coordinates?: number[] } };
-      const p = (feat.properties ?? {}) as Record<string, unknown>;
-      const coords = feat.geometry?.coordinates;
-      const rawCategories = Array.isArray(p['CATEGORIES']) ? (p['CATEGORIES'] as string[]) : [];
-      const normalizedCategories = canonicalizeSectorCategories([
-        ...rawCategories,
-        String(p['CATEGORY'] ?? ''),
-      ]);
-      const actionTags = this.normalizeActionTags(
-        p['ACTION_TAGS'] ?? p['actionTags'] ?? [],
-        [p['STORE_TYPE'], p['CATEGORY'], ...(Array.isArray(p['CATEGORIES']) ? p['CATEGORIES'] : [])],
-        String(feat.id ?? p['STORE_NAME'] ?? p['NAME'] ?? '')
-      );
-      const place: FeaturedPlace = {
-        id: String(feat.id ?? p['id'] ?? ''),
-        name: String(p['STORE_NAME'] ?? p['NAME'] ?? 'Unknown'),
-        address: String(p['ADDRESS_LINE1'] ?? p['ADDRESS'] ?? ''),
-        description: String(p['DESCRIPTION'] ?? ''),
-        storeType: String(p['STORE_TYPE'] ?? ''),
-        label: String(p['LABEL'] ?? ''),
-        category: normalizedCategories[0] || this.primaryAtlasCategory(this.toAtlasCategories(rawCategories)),
-        categories: normalizedCategories.length ? normalizedCategories : this.toAtlasCategories(rawCategories),
-        actionTags,
-        web: String(p['WEB'] ?? ''),
-        webLabel: String(p['WEB_LABEL'] ?? '').trim(),
-      };
-      if (Array.isArray(coords) && coords.length >= 2 && typeof coords[0] === 'number' && typeof coords[1] === 'number') {
-        place.coords = { lng: coords[0], lat: coords[1] };
-      }
-      return place;
-    });
-  }
-
   getFeaturedPlaces(): Observable<FeaturedPlace[]> {
     return this.getAllPlaces().pipe(map((places) => places.slice(0, 4)));
   }
 
+  /** Approved catalogue places for the current city only (no static GeoJSON merge). */
   getAllPlaces(): Observable<FeaturedPlace[]> {
-    return this.cityContext.cityId$.pipe(
-      switchMap((cityId) => {
-        const fallback$ = this.getStockholmStatic(cityId);
-        // null = Firestore still pending — show fallback immediately when available.
-        const remote$ = this.getFirestorePlaces(cityId).pipe(
-          startWith(null as FeaturedPlace[] | null)
-        );
-        return combineLatest([remote$, fallback$]).pipe(
-          map(([remote, fallback]) =>
-            remote === null ? fallback : this.mergePlaces(remote, fallback)
-          )
-        );
-      })
-    );
+    return this.cityContext.cityId$.pipe(switchMap((cityId) => this.getFirestorePlaces(cityId)));
   }
 
   getGeoJsonForCurrentCity(): Observable<{ type: 'FeatureCollection'; features: any[] }> {
@@ -187,7 +135,7 @@ export class FeaturedPlacesService {
         collection(this.fs, FS_PATHS.places),
         where('status', '==', 'approved'),
         where('cityId', '==', cityId),
-        limit(200)
+        limit(500)
       ),
       { idField: 'id' }
     ).pipe(
@@ -223,82 +171,5 @@ export class FeaturedPlacesService {
       ),
       catchError(() => of([]))
     );
-  }
-
-  private getStockholmStatic(cityId: string): Observable<FeaturedPlace[]> {
-    if (cityId !== 'stockholm') return of([]);
-    if (this.cached) return of(this.cached);
-    return this.http.get<any>(this.DATA_URL).pipe(
-      map((fc) => {
-        const features = fc?.features ?? [];
-        this.cached = this.parsePlaces(features);
-        return this.cached;
-      })
-    );
-  }
-
-  private mergePlaces(remote: FeaturedPlace[], fallback: FeaturedPlace[]): FeaturedPlace[] {
-    const byKey = new Map<string, FeaturedPlace>();
-    for (const p of [...remote, ...fallback]) {
-      const key = `${p.name.toLowerCase().trim()}|${this.canonicalAddressKey(p.address)}`;
-      const prev = byKey.get(key);
-      if (!prev) {
-        byKey.set(key, p);
-      } else {
-        byKey.set(key, this.mergePlaceRecords(prev, p));
-      }
-    }
-    return Array.from(byKey.values());
-  }
-
-  private mergePlaceRecords(base: FeaturedPlace, incoming: FeaturedPlace): FeaturedPlace {
-    const mergedCategories = canonicalizeSectorCategories([
-      ...(base.categories || []),
-      base.category || '',
-      ...(incoming.categories || []),
-      incoming.category || '',
-    ]);
-
-    const mergedActionTags = Array.from(
-      new Set(
-        [...(base.actionTags || []), ...(incoming.actionTags || [])]
-          .map((tag) => canonicalizeActionTag(String(tag || '')) || String(tag || '').trim().toLowerCase())
-          .filter(Boolean)
-      )
-    );
-
-    const baseCoordsOk =
-      !!base.coords && isFinite(base.coords.lat) && isFinite(base.coords.lng);
-    const incomingCoordsOk =
-      !!incoming.coords && isFinite(incoming.coords.lat) && isFinite(incoming.coords.lng);
-
-    return {
-      ...base,
-      id: base.id || incoming.id,
-      name: base.name || incoming.name,
-      address: base.address || incoming.address,
-      description: base.description || incoming.description,
-      storeType: base.storeType || incoming.storeType,
-      label: base.label || incoming.label,
-      web: base.web || incoming.web,
-      webLabel: base.webLabel || incoming.webLabel,
-      actionTags: mergedActionTags.length ? mergedActionTags : (base.actionTags || incoming.actionTags || []),
-      categories: mergedCategories.length ? mergedCategories : (base.categories || incoming.categories),
-      category:
-        mergedCategories[0] ||
-        base.category ||
-        incoming.category ||
-        this.primaryAtlasCategory([]),
-      coords: baseCoordsOk
-        ? base.coords
-        : (incomingCoordsOk ? incoming.coords : base.coords || incoming.coords),
-    };
-  }
-
-  private canonicalAddressKey(v: string): string {
-    const raw = String(v || '').toLowerCase().replace(/[.,;:]+/g, ' ').replace(/\s+/g, ' ').trim();
-    if (!raw) return '';
-    const m = raw.match(/^(\d+[a-z]?)\s+(.+)$/i);
-    return m ? `${m[2]} ${m[1]}`.trim().replace(/\s+/g, ' ') : raw;
   }
 }

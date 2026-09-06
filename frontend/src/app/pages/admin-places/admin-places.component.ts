@@ -189,15 +189,18 @@ export class AdminPlacesComponent {
       return;
     }
     await this.runRowOp(CREATE_BUSY_ID, async () => {
-      let coords = this.parseCoords(form.latStr, form.lngStr);
+      const coords = await this.resolveCoordsFromAddress({
+        cityId: this.cityId(),
+        address,
+        name,
+        latStr: form.latStr,
+        lngStr: form.lngStr,
+      });
       if (!coords) {
-        coords = await this.geocodeFromAddress(this.cityId(), address, name);
-        if (!coords) {
-          this.error.set('Could not derive coordinates from address. Please add latitude/longitude.');
-          return;
-        }
-        this.createForm.set({ ...form, latStr: String(coords.lat), lngStr: String(coords.lng) });
+        this.error.set('Could not derive coordinates from address. Please add latitude/longitude.');
+        return;
       }
+      this.createForm.set({ ...form, latStr: String(coords.lat), lngStr: String(coords.lng) });
       if (this.hasExactDuplicate(name, address)) {
         this.error.set('This place already exists (same name and address).');
         return;
@@ -362,13 +365,6 @@ export class AdminPlacesComponent {
     };
   }
 
-  private parseCoords(latStr: string, lngStr: string): LatLng | null {
-    const lat = Number(String(latStr || '').trim());
-    const lng = Number(String(lngStr || '').trim());
-    if (!isFinite(lat) || !isFinite(lng)) return null;
-    return { lat, lng };
-  }
-
   private normalizeWebsiteUrl(raw: string): string {
     const w = String(raw || '').trim();
     if (!w) return '';
@@ -394,22 +390,13 @@ export class AdminPlacesComponent {
     );
   }
 
-  private async geocodeFromAddress(cityId: string, address: string, nameHint: string): Promise<LatLng | null> {
-    return geocodeAddress({
-      cityId,
-      address,
-      nameHint,
-      requestedWith: 'circeco-admin-places',
-    });
-  }
-
   private isPermissionDenied(e: unknown): boolean {
     const msg = e instanceof Error ? e.message : String(e);
     return msg.includes('permission-denied') || msg.includes('Missing or insufficient permissions');
   }
 
   /**
-   * Prefer geocoding from the edited address; fall back to explicit lat/lng if geocode fails.
+   * Prefer geocoding from the address; fall back to explicit lat/lng if geocode fails.
    */
   private async resolveCoordsFromAddress(args: {
     cityId: string;
