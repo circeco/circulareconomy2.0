@@ -1,6 +1,14 @@
 <section class="catalog-shell">
   <header class="catalog-header">
     <h1>Event Catalogue</h1>
+    <button
+      type="button"
+      class="add-btn"
+      [disabled]="isBusy('manual:add-event')"
+      (click)="openCreate()"
+    >
+      Add event
+    </button>
   </header>
 
   <section class="toolbar">
@@ -16,6 +24,47 @@
 
   <p *ngIf="error() as err" class="error" role="alert">{{ err }}</p>
   <p *ngIf="loading()">Loading events…</p>
+
+  <div class="create-panel" *ngIf="creating() && createForm() as f">
+    <div class="create-title">New event ({{ cityId() }})</div>
+    <div class="editor">
+      <div class="grid">
+        <label class="full"><span>Title</span><input type="text" [(ngModel)]="f.title" name="new-ev-title" /></label>
+        <label><span>Date</span><input type="date" [(ngModel)]="f.startDate" (ngModelChange)="f.endDate = f.startDate" name="new-ev-date" /></label>
+        <label><span>Start</span><input type="time" [(ngModel)]="f.time" name="new-ev-time" /></label>
+        <label><span>End</span><input type="time" [(ngModel)]="f.endTime" name="new-ev-end" /></label>
+        <label class="full"><span>Address</span><input type="text" [(ngModel)]="f.address" name="new-ev-addr" placeholder="street, number, city (for map)" /></label>
+        <label class="full"><span>Website</span><input type="url" [(ngModel)]="f.website" name="new-ev-web" placeholder="https://…" /></label>
+        <label class="full"><span>Description</span><textarea rows="2" [(ngModel)]="f.description" name="new-ev-desc"></textarea></label>
+        <div class="full">
+          <span>Action Tags</span>
+          <div class="chips">
+            <label class="chip option-chip" *ngFor="let t of actionTagOptions">
+              <input type="checkbox"
+                     [checked]="isSelected(f.actionTags, t)"
+                     (change)="f.actionTags = toggleSelection(f.actionTags, t, $any($event.target).checked)" />
+              {{ actionTagLabel(t) }}
+            </label>
+          </div>
+        </div>
+        <div class="full">
+          <span>Sector Categories</span>
+          <div class="chips">
+            <label class="chip option-chip" *ngFor="let c of sectorOptions">
+              <input type="checkbox"
+                     [checked]="isSelected(f.sectorCategories, c)"
+                     (change)="f.sectorCategories = toggleSelection(f.sectorCategories, c, $any($event.target).checked)" />
+              {{ sectorLabel(c) }}
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="actions">
+        <button type="button" [disabled]="isBusy('manual:add-event')" (click)="createEvent()">Create event</button>
+        <button type="button" [disabled]="isBusy('manual:add-event')" (click)="cancelCreate()">Cancel</button>
+      </div>
+    </div>
+  </div>
 
   <ul class="rows" *ngIf="!loading()">
     <li class="empty" *ngIf="filteredRows().length === 0">No events for this city and filter.</li>

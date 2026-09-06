@@ -9,6 +9,7 @@ import {
   getDocs,
   query,
   serverTimestamp,
+  setDoc,
   updateDoc,
   where,
 } from 'firebase/firestore';
@@ -42,6 +43,8 @@ interface PlaceEditForm {
   lngStr: string;
 }
 
+const CREATE_BUSY_ID = 'manual:add-place';
+
 @Component({
   selector: 'admin-places',
   standalone: true,
@@ -62,6 +65,8 @@ export class AdminPlacesComponent {
   readonly busyIds = signal<Set<string>>(new Set());
   readonly editingId = signal<string | null>(null);
   readonly editForm = signal<PlaceEditForm | null>(null);
+  readonly creating = signal(false);
+  readonly createForm = signal<PlaceEditForm | null>(null);
 
   readonly filteredRows = computed(() => {
     const q = this.searchText().trim().toLowerCase();
@@ -91,8 +96,8 @@ export class AdminPlacesComponent {
 
   async refresh(): Promise<void> {
     this.rows.set([]);
-    this.editingId.set(null);
-    this.editForm.set(null);
+    this.closeEdit();
+    this.cancelCreate();
     await this.loadRows();
   }
 
@@ -135,7 +140,19 @@ export class AdminPlacesComponent {
     }
   }
 
+  openCreate(): void {
+    this.closeEdit();
+    this.creating.set(true);
+    this.createForm.set(this.emptyForm());
+  }
+
+  cancelCreate(): void {
+    this.creating.set(false);
+    this.createForm.set(null);
+  }
+
   openEdit(row: PlaceRow): void {
+    this.cancelCreate();
     this.editingId.set(row.id);
     const lat = row.coords?.lat;
     const lng = row.coords?.lng;
@@ -160,6 +177,54 @@ export class AdminPlacesComponent {
   closeEdit(): void {
     this.editingId.set(null);
     this.editForm.set(null);
+  }
+
+  async createPlace(): Promise<void> {
+    const form = this.createForm();
+    if (!this.creating() || !form) return;
+    const name = form.name.trim();
+    const address = form.address.trim();
+    if (!name || !address) {
+      this.error.set('Place requires name and address.');
+      return;
+    }
+    await this.runRowOp(CREATE_BUSY_ID, async () => {
+      let coords = this.parseCoords(form.latStr, form.lngStr);
+      if (!coords) {
+        coords = await this.geocodeFromAddress(this.cityId(), address, name);
+        if (!coords) {
+          this.error.set('Could not derive coordinates from address. Please add latitude/longitude.');
+          return;
+        }
+        this.createForm.set({ ...form, latStr: String(coords.lat), lngStr: String(coords.lng) });
+      }
+      if (this.hasExactDuplicate(name, address)) {
+        this.error.set('This place already exists (same name and address).');
+        return;
+      }
+      const reviewedAt = new Date().toISOString();
+      const newRef = doc(collection(this.fs, FS_PATHS.places));
+      const payload: PlaceDoc = {
+        cityId: this.cityId(),
+        name,
+        address,
+        locationName: form.locationName.trim(),
+        coords,
+        website: this.normalizeWebsiteUrl(form.website.trim()),
+        websiteLabel: form.websiteLabel.trim(),
+        description: form.description.trim(),
+        sectorCategories: canonicalizeSectorCategories(form.sectorCategories),
+        actionTags: canonicalizeActionTags(form.actionTags),
+        sourceRefs: [],
+        status: 'approved',
+        review: { reviewedAt },
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      };
+      await setDoc(newRef, payload as any);
+      this.rows.set([{ id: newRef.id, ...payload }, ...this.rows()]);
+      this.cancelCreate();
+    });
   }
 
   async saveEdit(row: PlaceRow): Promise<void> {
@@ -191,7 +256,7 @@ export class AdminPlacesComponent {
         name,
         address,
         locationName: form.locationName.trim(),
-        website: form.website.trim(),
+        website: this.normalizeWebsiteUrl(form.website.trim()),
         websiteLabel: form.websiteLabel.trim(),
         description: form.description.trim(),
         sectorCategories: canonicalizeSectorCategories(form.sectorCategories),
@@ -282,6 +347,62 @@ export class AdminPlacesComponent {
     return current;
   }
 
+  private emptyForm(): PlaceEditForm {
+    return {
+      name: '',
+      address: '',
+      locationName: '',
+      website: '',
+      websiteLabel: '',
+      description: '',
+      sectorCategories: [],
+      actionTags: [],
+      latStr: '',
+      lngStr: '',
+    };
+  }
+
+  private parseCoords(latStr: string, lngStr: string): LatLng | null {
+    const lat = Number(String(latStr || '').trim());
+    const lng = Number(String(lngStr || '').trim());
+    if (!isFinite(lat) || !isFinite(lng)) return null;
+    return { lat, lng };
+  }
+
+  private normalizeWebsiteUrl(raw: string): string {
+    const w = String(raw || '').trim();
+    if (!w) return '';
+    if (/^https?:\/\//i.test(w)) return w;
+    return `https://${w.replace(/^\/\//, '')}`;
+  }
+
+  private normalizeText(v: string): string {
+    return String(v || '')
+      .toLowerCase()
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, ' ')
+      .trim()
+      .replace(/\s+/g, ' ');
+  }
+
+  private hasExactDuplicate(name: string, address: string): boolean {
+    const nameNorm = this.normalizeText(name);
+    const addrNorm = this.normalizeText(address);
+    return this.rows().some(
+      (r) => this.normalizeText(r.name || '') === nameNorm && this.normalizeText(r.address || '') === addrNorm
+    );
+  }
+
+  private async geocodeFromAddress(cityId: string, address: string, nameHint: string): Promise<LatLng | null> {
+    return geocodeAddress({
+      cityId,
+      address,
+      nameHint,
+      requestedWith: 'circeco-admin-places',
+    });
+  }
+
   private isPermissionDenied(e: unknown): boolean {
     const msg = e instanceof Error ? e.message : String(e);
     return msg.includes('permission-denied') || msg.includes('Missing or insufficient permissions');
@@ -311,4 +432,3 @@ export class AdminPlacesComponent {
     return null;
   }
 }
-
