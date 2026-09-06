@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 /**
  * Seeds Firestore with:
- * - `cities/{cityId}` for Stockholm, Milan, Turin, Uppsala
+ * - `cities/{cityId}` for Stockholm, Uppsala, Malmö, Göteborg, Lund, Milan, Turin
  * - sample `reviewQueue/*` candidates (place + event)
  *
  * Designed to be:
@@ -12,6 +12,7 @@
  * - Emulator: FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 npm run seed:firestore
  * - Real project: uses secrets/firebase-adminsdk.json (see secrets/README.md)
  *   or GOOGLE_APPLICATION_CREDENTIALS
+ * - Flags: `--dry-run` (log only), `--cities-only` (skip reviewQueue samples)
  */
 
 const path = require('path');
@@ -50,7 +51,15 @@ function dayIso(d) {
   return dt.toISOString().slice(0, 10);
 }
 
+function parseArgs(argv) {
+  return {
+    dryRun: argv.includes('--dry-run'),
+    citiesOnly: argv.includes('--cities-only'),
+  };
+}
+
 async function main() {
+  const args = parseArgs(process.argv.slice(2));
   initAdminApp();
   const db = getFirestore();
 
@@ -68,6 +77,30 @@ async function main() {
       name: 'Uppsala',
       countryCode: 'SE',
       center: { lat: 59.8586, lng: 17.6389 },
+      timezone: 'Europe/Stockholm',
+      enabled: true,
+    },
+    {
+      id: 'malmo',
+      name: 'Malmö',
+      countryCode: 'SE',
+      center: { lat: 55.605, lng: 13.0038 },
+      timezone: 'Europe/Stockholm',
+      enabled: true,
+    },
+    {
+      id: 'goteborg',
+      name: 'Göteborg',
+      countryCode: 'SE',
+      center: { lat: 57.7089, lng: 11.9746 },
+      timezone: 'Europe/Stockholm',
+      enabled: true,
+    },
+    {
+      id: 'lund',
+      name: 'Lund',
+      countryCode: 'SE',
+      center: { lat: 55.7047, lng: 13.191 },
       timezone: 'Europe/Stockholm',
       enabled: true,
     },
@@ -91,23 +124,38 @@ async function main() {
 
   console.log(`[seed] projectId=${PROJECT_ID}`);
   console.log(`[seed] FIRESTORE_EMULATOR_HOST=${process.env.FIRESTORE_EMULATOR_HOST || '(not set)'}`);
+  console.log(`[seed] dryRun=${args.dryRun} citiesOnly=${args.citiesOnly}`);
 
   // --- cities ---
   for (const c of cities) {
-    await db.collection('cities').doc(c.id).set(
-      {
+    const payload = {
+      name: c.name,
+      countryCode: c.countryCode,
+      center: c.center,
+      timezone: c.timezone,
+      enabled: c.enabled,
+      updatedAt: FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
+    };
+    if (args.dryRun) {
+      console.log(`[seed] dry-run would upsert cities/${c.id}`, {
         name: c.name,
         countryCode: c.countryCode,
         center: c.center,
         timezone: c.timezone,
         enabled: c.enabled,
-        updatedAt: FieldValue.serverTimestamp(),
-        createdAt: FieldValue.serverTimestamp(),
-      },
-      { merge: true }
-    );
+      });
+      continue;
+    }
+    await db.collection('cities').doc(c.id).set(payload, { merge: true });
   }
-  console.log(`[seed] upserted ${cities.length} cities`);
+  console.log(`[seed] upserted ${cities.length} cities${args.dryRun ? ' (dry-run)' : ''}`);
+
+  if (args.citiesOnly) {
+    console.log('[seed] skipping reviewQueue samples (--cities-only)');
+    console.log('[seed] done');
+    return;
+  }
 
   // --- sample reviewQueue candidates ---
   const today = new Date();
@@ -164,6 +212,15 @@ async function main() {
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
     });
+  }
+
+  if (args.dryRun) {
+    console.log(`[seed] dry-run would upsert ${samples.length} reviewQueue samples`);
+    for (const s of samples) {
+      console.log(`[seed] dry-run reviewQueue/${s.id} kind=${s.kind} cityId=${s.cityId}`);
+    }
+    console.log('[seed] done');
+    return;
   }
 
   const batch = db.batch();

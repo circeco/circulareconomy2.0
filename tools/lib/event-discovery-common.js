@@ -89,6 +89,9 @@ const CITY_EXTRA_KEYWORDS = {
   ],
   turin: ['ripara', 'usato', 'usati', 'scambio', 'baratto', 'antiquariato'],
   uppsala: ['återbruk', 'aterbruk', 'loppis', 'laga', 'reparera', 'bytfest'],
+  malmo: ['återbruk', 'aterbruk', 'loppis', 'laga', 'reparera', 'bytfest', 'second hand'],
+  goteborg: ['återbruk', 'aterbruk', 'loppis', 'laga', 'reparera', 'bytfest', 'second hand'],
+  lund: ['återbruk', 'aterbruk', 'loppis', 'laga', 'reparera', 'bytfest'],
 };
 
 /** Domains that flooded the Milan queue with non-circular listings. */

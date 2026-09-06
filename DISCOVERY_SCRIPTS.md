@@ -139,7 +139,7 @@ Extraction guardrails (adjacent to learning): circular signal preferably in **ti
 
 ### What it does
 
-- Reads **`cities/{cityId}.center`** from Firestore (fallback centers exist for `stockholm`, `uppsala`, `milan`, `turin`).
+- Reads **`cities/{cityId}.center`** from Firestore (fallback centers exist for `stockholm`, `uppsala`, `malmo`, `goteborg`, `lund`, `milan`, `turin`).
 - Builds **two** **Overpass** queries around that point (default **9 km** radius).
 - Maps OSM tags into our **`candidate`** shape (name, address, coords, inferred `actionTags` / `sectorCategories`).
 - Writes **`reviewQueue`** with `status: needs_review`, `kind: place`, stable doc id `osm_{cityId}_{node|way}_{osmId}` (**merge** = safe to re-run).

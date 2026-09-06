@@ -47,7 +47,15 @@ function canonicalizeSectors(inputs) {
   return out;
 }
 
-const CITY_LABEL = { milan: 'Milan', stockholm: 'Stockholm', turin: 'Turin', uppsala: 'Uppsala' };
+const CITY_LABEL = {
+  milan: 'Milan',
+  stockholm: 'Stockholm',
+  turin: 'Turin',
+  uppsala: 'Uppsala',
+  malmo: 'Malmö',
+  goteborg: 'Göteborg',
+  lund: 'Lund',
+};
 
 const OVERRIDES = {
   osm_milan_node_11230010248: {

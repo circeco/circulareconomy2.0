@@ -38,12 +38,19 @@ const OVERPASS_USER_AGENT =
 const FALLBACK_CENTERS = {
   stockholm: { lat: 59.325, lng: 18.072 },
   uppsala: { lat: 59.8586, lng: 17.6389 },
+  malmo: { lat: 55.605, lng: 13.0038 },
+  goteborg: { lat: 57.7089, lng: 11.9746 },
+  lund: { lat: 55.7047, lng: 13.191 },
   milan: { lat: 45.4642, lng: 9.19 },
   turin: { lat: 45.0703, lng: 7.6869 },
 };
 const CITY_ALIASES = {
   torino: 'turin',
   milano: 'milan',
+  malmö: 'malmo',
+  malmoe: 'malmo',
+  gothenburg: 'goteborg',
+  göteborg: 'goteborg',
 };
 
 function initAdminApp() {

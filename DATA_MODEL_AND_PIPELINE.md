@@ -87,9 +87,12 @@ Recommended:
 Seed targets:
 
 - Stockholm (existing)
+- Uppsala
+- Malmö
+- Göteborg
+- Lund
 - Milan
 - Turin
-- Uppsala
 
 ### `places/{placeId}`
 

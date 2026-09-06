@@ -31,7 +31,14 @@ const {
 } = require('./lib/event-discovery-common');
 
 const PROJECT_ID = process.env.FIREBASE_PROJECT_ID || 'circeco-bf511';
-const CITY_ALIASES = { torino: 'turin', milano: 'milan' };
+const CITY_ALIASES = {
+  torino: 'turin',
+  milano: 'milan',
+  malmö: 'malmo',
+  malmoe: 'malmo',
+  gothenburg: 'goteborg',
+  göteborg: 'goteborg',
+};
 const USER_AGENT = 'circeco-discovery-events-agent/1.0 (+https://github.com/circeco/circulareconomy2.0)';
 const MIN_CONFIDENCE_AFTER_MEMORY = 0.52;
 
@@ -69,6 +76,28 @@ const DEFAULT_CITY_QUERIES = {
     'återbruk Uppsala',
     'bytfest Uppsala',
   ],
+  malmo: [
+    'repair cafe Malmö',
+    'repair café Malmö',
+    'loppis Malmö evenemang',
+    'återbruk Malmö',
+    'bytfest Malmö',
+    'circular economy event Malmö',
+  ],
+  goteborg: [
+    'repair cafe Göteborg',
+    'repair café Göteborg',
+    'loppis Göteborg evenemang',
+    'återbruk Göteborg',
+    'bytfest Göteborg',
+    'circular economy event Gothenburg',
+  ],
+  lund: [
+    'repair cafe Lund',
+    'loppis Lund evenemang',
+    'återbruk Lund',
+    'bytfest Lund',
+  ],
 };
 
 /**
@@ -91,6 +120,9 @@ const DEFAULT_CITY_SEED_URLS = {
   ],
   turin: ['https://www.repaircafe.org/en/visit/'],
   uppsala: ['https://www.repaircafe.org/en/visit/'],
+  malmo: ['https://www.repaircafe.org/en/visit/'],
+  goteborg: ['https://www.repaircafe.org/en/visit/'],
+  lund: ['https://www.repaircafe.org/en/visit/'],
 };
 
 const MONTHS = {

@@ -25,7 +25,14 @@ const { getFirestore, FieldValue } = require('firebase-admin/firestore');
 const { createEventMemoryLookup } = require('./lib/event-discovery-common');
 
 const PROJECT_ID = process.env.FIREBASE_PROJECT_ID || 'circeco-bf511';
-const CITY_ALIASES = { torino: 'turin', milano: 'milan' };
+const CITY_ALIASES = {
+  torino: 'turin',
+  milano: 'milan',
+  malmö: 'malmo',
+  malmoe: 'malmo',
+  gothenburg: 'goteborg',
+  göteborg: 'goteborg',
+};
 
 const DEFAULT_CIRCULAR_KEYWORDS = [
   'second hand',
