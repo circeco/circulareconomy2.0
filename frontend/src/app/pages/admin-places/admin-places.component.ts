@@ -285,8 +285,36 @@ export class AdminPlacesComponent {
     });
   }
 
+  async duplicate(row: PlaceRow): Promise<void> {
+    await this.runRowOp(`${row.id}:duplicate`, async () => {
+      const newRef = doc(collection(this.fs, FS_PATHS.places));
+      const copyName = this.nextCopyName(row.name || 'Place');
+      const reviewedAt = new Date().toISOString();
+      const payload: PlaceDoc = {
+        cityId: row.cityId || this.cityId(),
+        name: copyName,
+        address: String(row.address || '').trim(),
+        locationName: String(row.locationName || '').trim(),
+        website: String(row.website || '').trim(),
+        websiteLabel: String(row.websiteLabel || '').trim(),
+        description: String(row.description || '').trim(),
+        sectorCategories: canonicalizeSectorCategories(this.showList(row.sectorCategories)),
+        actionTags: canonicalizeActionTags(this.showList(row.actionTags)),
+        sourceRefs: Array.isArray(row.sourceRefs) ? [...row.sourceRefs] : [],
+        status: 'approved',
+        review: { reviewedAt },
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      };
+      if (row.coords) payload.coords = row.coords;
+
+      await setDoc(newRef, payload as any);
+      this.rows.set([{ id: newRef.id, ...payload }, ...this.rows()]);
+    });
+  }
+
   async remove(row: PlaceRow): Promise<void> {
-    const ok = window.confirm(`Delete place "${row.name}"? This cannot be undone.`);
+    const ok = window.confirm(`Remove place "${row.name}"? This cannot be undone.`);
     if (!ok) return;
     await this.runRowOp(row.id, async () => {
       await deleteDoc(doc(this.fs, FS_PATHS.places, row.id));
@@ -388,6 +416,17 @@ export class AdminPlacesComponent {
     return this.rows().some(
       (r) => this.normalizeText(r.name || '') === nameNorm && this.normalizeText(r.address || '') === addrNorm
     );
+  }
+
+  private nextCopyName(name: string): string {
+    const t = String(name || '').trim() || 'Place';
+    if (/\(copy(?:\s+\d+)?\)$/i.test(t)) {
+      const m = t.match(/^(.*)\(copy(?:\s+(\d+))?\)$/i);
+      const stem = (m?.[1] || t).trim();
+      const n = Number(m?.[2] || 1) + 1;
+      return `${stem} (copy ${n})`;
+    }
+    return `${t} (copy)`;
   }
 
   private isPermissionDenied(e: unknown): boolean {

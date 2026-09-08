@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -46,6 +46,7 @@ import type {
   ReviewQueuePlaceDoc,
 } from '../../data/models';
 import { websiteDisplayLabel } from '../../utils/website-display';
+import { formatPlaceAddressDisplay } from '../../utils/place-address-display';
 import { geocodeAddress } from '../../utils/geocode-address';
 
 type ReviewQueuePlaceRow = ReviewQueuePlaceDoc & { id: string };
@@ -184,6 +185,25 @@ export class AdminReviewComponent {
   readonly eventQueue$: Observable<ReviewQueueEventRow[]>;
   readonly eventGroups$: Observable<EventReviewGroup[]>;
   readonly placeRows = signal<ReviewQueuePlaceRow[]>([]);
+  readonly eventGroups = signal<EventReviewGroup[]>([]);
+  readonly queuesLoaded = signal(false);
+  readonly searchText = signal('');
+
+  readonly filteredPlaceRows = computed(() => {
+    const q = this.searchText().trim().toLowerCase();
+    return this.placeRows().filter((row) => {
+      if (!q) return true;
+      return this.placeSearchHay(row).includes(q);
+    });
+  });
+
+  readonly filteredEventGroups = computed(() => {
+    const q = this.searchText().trim().toLowerCase();
+    return this.eventGroups().filter((group) => {
+      if (!q) return true;
+      return this.eventSearchHay(group).includes(q);
+    });
+  });
 
   readonly busyIds = signal<Set<string>>(new Set());
   readonly lastError = signal<string | null>(null);
@@ -221,6 +241,9 @@ export class AdminReviewComponent {
     const queue$ = this.cityContext.cityId$.pipe(
       distinctUntilChanged(),
       switchMap((cityId) => {
+        this.queuesLoaded.set(false);
+        this.placeRows.set([]);
+        this.eventGroups.set([]);
         const q = query(col, where('status', '==', 'needs_review'), where('cityId', '==', cityId), limit(300));
         return collectionData(q, { idField: 'id' }).pipe(
           map((docs: Record<string, unknown>[]) => {
@@ -231,10 +254,14 @@ export class AdminReviewComponent {
             const events = sorted.filter((d) => d['kind'] === 'event') as unknown as ReviewQueueEventRow[];
             return { places, events };
           }),
-          tap(() => this.lastError.set(null)),
+          tap(() => {
+            this.lastError.set(null);
+            this.queuesLoaded.set(true);
+          }),
           catchError((err: unknown) => {
             const msg = err instanceof Error ? err.message : String(err);
             this.lastError.set(msg);
+            this.queuesLoaded.set(true);
             return of({ places: [] as ReviewQueuePlaceRow[], events: [] as ReviewQueueEventRow[] });
           })
         );
@@ -245,6 +272,55 @@ export class AdminReviewComponent {
     this.eventQueue$ = queue$.pipe(map((x) => x.events));
     this.eventGroups$ = this.eventQueue$.pipe(map((rows) => this.groupEventRows(rows)));
     this.placeQueue$.subscribe((rows) => this.placeRows.set(rows));
+    this.eventGroups$.subscribe((groups) => this.eventGroups.set(groups));
+  }
+
+  setSearchText(value: string): void {
+    this.searchText.set(value || '');
+  }
+
+  emptyPlacesMessage(): string {
+    if (this.searchText().trim()) return 'No places match this search.';
+    return 'No places waiting for review.';
+  }
+
+  emptyEventsMessage(): string {
+    if (this.searchText().trim()) return 'No events match this search.';
+    return 'No events waiting for review.';
+  }
+
+  private placeSearchHay(row: ReviewQueuePlaceRow): string {
+    const c = row.candidate || {};
+    return [
+      c.name,
+      c.locationName,
+      c.address,
+      c.website,
+      c.websiteLabel,
+      c.description,
+      ...(c.actionTags ?? []),
+      ...(c.sectorCategories ?? []),
+    ]
+      .join(' ')
+      .toLowerCase();
+  }
+
+  private eventSearchHay(group: EventReviewGroup): string {
+    const c = group.candidate || {};
+    return [
+      c.title,
+      c.address,
+      c.locationName,
+      c.locationText,
+      c.description,
+      c.website,
+      this.eventSourceUrl(group),
+      ...(group.dates ?? []),
+      ...(c.actionTags ?? []),
+      ...(c.sectorCategories ?? []),
+    ]
+      .join(' ')
+      .toLowerCase();
   }
 
   showPlacesPanel(): boolean {
@@ -801,6 +877,31 @@ export class AdminReviewComponent {
   }
 
   /**
+   * Clone this place review card into a new needs_review item (original stays).
+   * Name gets a "(copy)" suffix so it shows as a separate card.
+   */
+  async duplicatePlace(row: ReviewQueuePlaceRow): Promise<void> {
+    const base = this.mergedPlaceCandidate(row);
+    const copyName = this.nextCopyTitle(base.name || 'Place');
+    await this.runWrite(`${row.id}:duplicate`, async (batch) => {
+      const newRef = doc(collection(this.fs, FS_PATHS.reviewQueue));
+      batch.set(newRef, {
+        kind: 'place',
+        cityId: row.cityId,
+        status: 'needs_review',
+        confidence: row.confidence,
+        candidate: {
+          ...base,
+          name: copyName,
+        },
+        evidence: Array.isArray(row.evidence) ? [...row.evidence] : [],
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+    });
+  }
+
+  /**
    * Drop from the review queue without writing review memory / learning signals.
    * Uses `superseded` (same as editor date removal) so discovery is not taught a reject.
    */
@@ -814,6 +915,18 @@ export class AdminReviewComponent {
       }
     });
     this.closeEditorsForRow(group.id);
+  }
+
+  /** Drop place from the review queue without teaching discovery a reject. */
+  async removePlace(row: ReviewQueuePlaceRow): Promise<void> {
+    await this.runWrite(`${row.id}:remove`, async (batch) => {
+      batch.update(doc(this.fs, FS_PATHS.reviewQueue, row.id), {
+        status: 'superseded',
+        updatedAt: serverTimestamp(),
+      });
+    });
+    this.clearRejectSimilar(row.id);
+    this.closeEditorsForRow(row.id);
   }
 
   private nextCopyTitle(title: string): string {
@@ -897,7 +1010,7 @@ export class AdminReviewComponent {
     const lng = c.coords?.lng;
     return {
       name: c.name ?? '',
-      address: c.address ?? '',
+      address: formatPlaceAddressDisplay(c.address ?? '', this.cityContext.cityId()),
       description: c.description ?? '',
       website: c.website ?? '',
       websiteLabel: c.websiteLabel ?? '',
@@ -1221,7 +1334,7 @@ export class AdminReviewComponent {
     const lng = parseFloat(f.lngStr.trim());
     const base: Partial<PlaceCandidate> = {
       name: f.name.trim(),
-      address: this.normalizeAddressDisplay(f.address),
+      address: formatPlaceAddressDisplay(f.address, this.cityContext.cityId()),
       description: f.description.trim(),
       website: f.website.trim(),
       websiteLabel: f.websiteLabel.trim(),
@@ -1235,8 +1348,12 @@ export class AdminReviewComponent {
     return base;
   }
 
+  placeAddressDisplay(address?: string): string {
+    return formatPlaceAddressDisplay(address, this.cityContext.cityId()) || '(missing address)';
+  }
+
   placeLinkLabel(website?: string, websiteLabel?: string): string {
-    return websiteDisplayLabel(website, websiteLabel);
+    return websiteDisplayLabel(website, websiteLabel).replace(/^www\./i, '');
   }
 
   displayActionTags(values: string[] | undefined): string[] {
@@ -1320,7 +1437,7 @@ export class AdminReviewComponent {
     cityId: string,
     form: PlaceEditForm
   ): Promise<{ ok: true; form: PlaceEditForm } | { ok: false; error: string }> {
-    const address = this.normalizeAddressDisplay(form.address);
+    const address = formatPlaceAddressDisplay(form.address, cityId);
     if (!address) {
       return { ok: false, error: 'Address is required to derive coordinates.' };
     }

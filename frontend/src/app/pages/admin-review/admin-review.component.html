@@ -8,6 +8,15 @@
     <section class="review-panel places-panel" *ngIf="showEventsPanel()">
       <div class="panel-title-row">
         <h2>Events (needs review)</h2>
+        <label class="search">
+          <span class="search-label">Search</span>
+          <input
+            type="text"
+            [ngModel]="searchText()"
+            (ngModelChange)="setSearchText($event)"
+            placeholder="title, address, website..."
+          />
+        </label>
         <button
           type="button"
           class="btn btn-add"
@@ -97,9 +106,9 @@
           </div>
         </div>
       </div>
-      <ul *ngIf="eventGroups$ | async as groups; else loadingEvents" class="review-list">
-        <li *ngIf="groups.length === 0" class="empty">No events waiting for review.</li>
-        <li *ngFor="let group of groups" class="row row-event">
+      <ul *ngIf="queuesLoaded(); else loadingEvents" class="review-list">
+        <li *ngIf="filteredEventGroups().length === 0" class="empty">{{ emptyEventsMessage() }}</li>
+        <li *ngFor="let group of filteredEventGroups()" class="row row-event">
           <div class="place-layout">
             <div class="row-main place-main event-main">
               <div class="title place-title">{{ group.candidate.title }}</div>
@@ -270,6 +279,15 @@
     <section class="review-panel" *ngIf="showPlacesPanel()">
       <div class="panel-title-row">
         <h2>Places (needs review)</h2>
+        <label class="search">
+          <span class="search-label">Search</span>
+          <input
+            type="text"
+            [ngModel]="searchText()"
+            (ngModelChange)="setSearchText($event)"
+            placeholder="name, address, website..."
+          />
+        </label>
         <button
           type="button"
           class="btn btn-add"
@@ -289,7 +307,7 @@
             <label class="field full"><span class="field-label">Address</span><input type="text" [(ngModel)]="pf.address" name="new-pl-addr" /></label>
             <label class="field full"><span class="field-label">Location name (optional)</span><input type="text" [(ngModel)]="pf.locationName" name="new-pl-ln" /></label>
             <label class="field full"><span class="field-label">Website URL</span><input type="url" [(ngModel)]="pf.website" name="new-pl-web" placeholder="https://…" /></label>
-            <label class="field full"><span class="field-label">Link text</span><input type="text" [(ngModel)]="pf.websiteLabel" name="new-pl-web-label" placeholder="Leave blank for www.example.com/" /></label>
+            <label class="field full"><span class="field-label">Link text</span><input type="text" [(ngModel)]="pf.websiteLabel" name="new-pl-web-label" placeholder="Leave blank for example.com/" /></label>
             <label class="field full"><span class="field-label">Description</span><textarea [(ngModel)]="pf.description" name="new-pl-desc" rows="2"></textarea></label>
             <label class="field"><span class="field-label">Latitude</span><input type="text" [(ngModel)]="pf.latStr" name="new-pl-lat" placeholder="auto from address" /></label>
             <label class="field"><span class="field-label">Longitude</span><input type="text" [(ngModel)]="pf.lngStr" name="new-pl-lng" placeholder="auto from address" /></label>
@@ -322,13 +340,14 @@
           </div>
         </div>
       </div>
-      <ul *ngIf="placeQueue$ | async as rows; else loadingPlaces" class="review-list">
-        <li *ngIf="rows.length === 0" class="empty">No places waiting for review.</li>
-        <li *ngFor="let row of rows" class="row row-place">
+      <ul *ngIf="queuesLoaded(); else loadingPlaces" class="review-list">
+        <li *ngIf="filteredPlaceRows().length === 0" class="empty">{{ emptyPlacesMessage() }}</li>
+        <li *ngFor="let row of filteredPlaceRows()" class="row row-place">
           <div class="place-layout">
             <div class="row-main place-main">
               <div class="title place-title">{{ row.candidate.name || '(missing name)' }}</div>
-              <div class="sub place-address">{{ row.candidate.address || '(missing address)' }}</div>
+              <div class="sub place-address">{{ placeAddressDisplay(row.candidate.address) }}</div>
+              <div class="place-description" *ngIf="row.candidate.description">{{ row.candidate.description }}</div>
               <a
                 *ngIf="row.candidate.website"
                 class="place-website"
@@ -360,22 +379,52 @@
             </div>
 
             <div class="row-actions place-actions">
-              <button
-                type="button"
-                class="btn btn-approve"
-                [disabled]="isBusy(row.id) || isBusy(row.id + ':save-place')"
-                (click)="approvePlace(row)"
-              >
-                Approve
-              </button>
-              <button
-                type="button"
-                class="btn btn-reject"
-                [disabled]="isBusy(row.id) || isBusy(row.id + ':save-place')"
-                (click)="rejectPlace(row)"
-              >
-                Reject
-              </button>
+              <div class="action-group action-group-primary">
+                <button
+                  type="button"
+                  class="btn btn-approve"
+                  [disabled]="isBusy(row.id) || isBusy(row.id + ':save-place') || isBusy(row.id + ':duplicate') || isBusy(row.id + ':remove')"
+                  (click)="approvePlace(row)"
+                >
+                  Approve
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-reject"
+                  [disabled]="isBusy(row.id) || isBusy(row.id + ':save-place') || isBusy(row.id + ':duplicate') || isBusy(row.id + ':remove')"
+                  (click)="rejectPlace(row)"
+                >
+                  Reject
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-edit"
+                  [disabled]="isBusy(row.id) || isBusy(row.id + ':save-place') || isBusy(row.id + ':duplicate') || isBusy(row.id + ':remove')"
+                  (click)="togglePlaceEdit(row)"
+                >
+                  {{ editingPlaceRowId === row.id ? 'Close editor' : 'Edit details' }}
+                </button>
+              </div>
+              <div class="action-group action-group-secondary">
+                <button
+                  type="button"
+                  class="btn btn-duplicate"
+                  [disabled]="isBusy(row.id) || isBusy(row.id + ':save-place') || isBusy(row.id + ':duplicate') || isBusy(row.id + ':remove')"
+                  (click)="duplicatePlace(row)"
+                  title="Create a copy of this review card"
+                >
+                  Duplicate
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-remove"
+                  [disabled]="isBusy(row.id) || isBusy(row.id + ':save-place') || isBusy(row.id + ':duplicate') || isBusy(row.id + ':remove')"
+                  (click)="removePlace(row)"
+                  title="Remove from queue without teaching discovery"
+                >
+                  Remove
+                </button>
+              </div>
               <label
                 class="bulk-reject"
                 *ngIf="similarPlaceCount(row) > 1"
@@ -384,19 +433,11 @@
                 <input
                   type="checkbox"
                   [checked]="isRejectSimilarEnabled(row.id)"
-                  [disabled]="isBusy(row.id) || isBusy(row.id + ':save-place')"
+                  [disabled]="isBusy(row.id) || isBusy(row.id + ':save-place') || isBusy(row.id + ':duplicate') || isBusy(row.id + ':remove')"
                   (change)="setRejectSimilar(row.id, $any($event.target).checked)"
                 />
                 Reject all {{ similarPlaceCount(row) }} similar places
               </label>
-              <button
-                type="button"
-                class="btn btn-edit"
-                [disabled]="isBusy(row.id) || isBusy(row.id + ':save-place')"
-                (click)="togglePlaceEdit(row)"
-              >
-                {{ editingPlaceRowId === row.id ? 'Close editor' : 'Edit details' }}
-              </button>
             </div>
           </div>
 
@@ -406,7 +447,7 @@
               <label class="field full"><span class="field-label">Address</span><input type="text" [(ngModel)]="pf.address" name="pl-addr-{{ row.id }}" /></label>
               <label class="field full"><span class="field-label">Location name (optional)</span><input type="text" [(ngModel)]="pf.locationName" name="pl-ln-{{ row.id }}" /></label>
               <label class="field full"><span class="field-label">Website URL</span><input type="url" [(ngModel)]="pf.website" name="pl-web-{{ row.id }}" placeholder="https://…" /></label>
-              <label class="field full"><span class="field-label">Link text</span><input type="text" [(ngModel)]="pf.websiteLabel" name="pl-web-label-{{ row.id }}" placeholder="Leave blank for www.example.com/" /></label>
+              <label class="field full"><span class="field-label">Link text</span><input type="text" [(ngModel)]="pf.websiteLabel" name="pl-web-label-{{ row.id }}" placeholder="Leave blank for example.com/" /></label>
               <label class="field full"><span class="field-label">Description</span><textarea [(ngModel)]="pf.description" name="pl-desc-{{ row.id }}" rows="2"></textarea></label>
               <label class="field"><span class="field-label">Latitude</span><input type="text" [(ngModel)]="pf.latStr" name="pl-lat-{{ row.id }}" placeholder="auto from address" /></label>
               <label class="field"><span class="field-label">Longitude</span><input type="text" [(ngModel)]="pf.lngStr" name="pl-lng-{{ row.id }}" placeholder="auto from address" /></label>
