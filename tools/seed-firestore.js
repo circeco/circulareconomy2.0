@@ -2,6 +2,7 @@
 /**
  * Seeds Firestore with:
  * - `cities/{cityId}` for Stockholm, Uppsala, Malmö, Göteborg, Lund, Milan, Turin
+ *   (only Stockholm and Milan are enabled in the UI for now)
  * - sample `reviewQueue/*` candidates (place + event)
  *
  * Designed to be:
@@ -78,7 +79,7 @@ async function main() {
       countryCode: 'SE',
       center: { lat: 59.8586, lng: 17.6389 },
       timezone: 'Europe/Stockholm',
-      enabled: true,
+      enabled: false,
     },
     {
       id: 'malmo',
@@ -86,7 +87,7 @@ async function main() {
       countryCode: 'SE',
       center: { lat: 55.605, lng: 13.0038 },
       timezone: 'Europe/Stockholm',
-      enabled: true,
+      enabled: false,
     },
     {
       id: 'goteborg',
@@ -94,7 +95,7 @@ async function main() {
       countryCode: 'SE',
       center: { lat: 57.7089, lng: 11.9746 },
       timezone: 'Europe/Stockholm',
-      enabled: true,
+      enabled: false,
     },
     {
       id: 'lund',
@@ -102,7 +103,7 @@ async function main() {
       countryCode: 'SE',
       center: { lat: 55.7047, lng: 13.191 },
       timezone: 'Europe/Stockholm',
-      enabled: true,
+      enabled: false,
     },
     {
       id: 'milan',
@@ -118,7 +119,7 @@ async function main() {
       countryCode: 'IT',
       center: { lat: 45.0703, lng: 7.6869 },
       timezone: 'Europe/Rome',
-      enabled: true,
+      enabled: false,
     },
   ];
 

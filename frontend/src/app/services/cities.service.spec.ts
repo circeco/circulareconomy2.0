@@ -2,6 +2,7 @@ import {
   holdCitiesWhileReloading,
   readCachedCities,
   writeCachedCities,
+  fallbackLiveCity,
   CITIES_CACHE_LS_KEY,
   type CityItem,
 } from './cities.service';
@@ -46,5 +47,26 @@ describe('cities cache persistence', () => {
 
   it('returns empty when nothing has been cached', () => {
     expect(readCachedCities()).toEqual([]);
+  });
+});
+
+describe('fallbackLiveCity', () => {
+  const stockholm: CityItem = { id: 'stockholm', name: 'Stockholm' } as CityItem;
+  const milan: CityItem = { id: 'milan', name: 'Milan' } as CityItem;
+
+  it('keeps a live current city', () => {
+    expect(fallbackLiveCity([milan, stockholm], 'milan')?.id).toBe('milan');
+  });
+
+  it('falls back to Stockholm when the current city is paused', () => {
+    expect(fallbackLiveCity([milan, stockholm], 'uppsala')?.id).toBe('stockholm');
+  });
+
+  it('uses the first live city if Stockholm is not in the list', () => {
+    expect(fallbackLiveCity([milan], 'turin')?.id).toBe('milan');
+  });
+
+  it('returns null when no cities are live', () => {
+    expect(fallbackLiveCity([], 'stockholm')).toBeNull();
   });
 });

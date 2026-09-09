@@ -238,6 +238,98 @@ function isBlockedHost(hostOrUrl, blockedDomains) {
   return (blockedDomains || []).some((d) => host === d || host.endsWith(`.${d}`));
 }
 
+/**
+ * City + neighbourhood lexicon for event geography.
+ * A source can still be circular-relevant (learn from the link) even when an
+ * individual event belongs to another city — those rows must not enter this city's queue.
+ */
+const CITY_AREA_LEXICON = {
+  milan: {
+    names: ['milan', 'milano'],
+    areas: [
+      'bovisa', 'dergano', 'isola', 'navigli', 'cordusio', 'lambrate', 'loreto',
+      'porta genova', 'porta romana', 'citta studi', 'santeria', 'spirit de milan',
+      'spazio profumo', 'martinitt', 'piazzale lagosta', 'via pitteri', 'via armorari',
+      'via cantu', 'via binda', 'bovisasca', 'piazza alfieri', 'nuovo armenia',
+      'via livigno', 'department 184', 'viale toscana',
+      'duomo', 'brera', 'mecenate', 'forlanini', 'certosa', 'sempione',
+      'arco della pace', 'montenapoleone', 'centro storico', 'via varesina',
+      'via mecenate', 'via mercanti', 'alzaia naviglio', 'via valenza',
+      'via luigi nono', 'darsena',
+    ],
+  },
+  stockholm: {
+    names: ['stockholm'],
+    areas: ['sodermalm', 'vasastan', 'ostermalm', 'kungsholmen', 'bromma', 'vartahamnen', 'soder'],
+  },
+  turin: { names: ['turin', 'torino'], areas: [] },
+  uppsala: { names: ['uppsala'], areas: [] },
+  malmo: { names: ['malmo'], areas: [] },
+  goteborg: { names: ['goteborg', 'gothenburg'], areas: [] },
+  lund: { names: ['lund'], areas: [] },
+};
+
+/** Places that are not a Circeco city id but must not be filed under Milan/Stockholm/etc. */
+const FOREIGN_PLACE_HINTS = [
+  'venezia', 'venice', 'forte marghera', 'mestre',
+  'roma', 'rome', 'trastevere',
+  'verona', 'veronetta',
+  'parma',
+  'firenze', 'florence',
+  'bologna', 'napoli', 'naples', 'genova', 'genoa', 'padova', 'padua',
+  'bergamo', 'brescia',
+];
+
+function phraseInHay(hayNorm, phrase) {
+  const p = normalizeText(phrase);
+  if (!p || !hayNorm) return false;
+  return ` ${hayNorm} `.includes(` ${p} `);
+}
+
+function cityLexiconHits(hayNorm, cityId) {
+  const lex = CITY_AREA_LEXICON[String(cityId || '').toLowerCase()];
+  if (!lex) return { name: '', area: '' };
+  const name = (lex.names || []).find((n) => phraseInHay(hayNorm, n)) || '';
+  const area = (lex.areas || []).find((a) => phraseInHay(hayNorm, a)) || '';
+  return { name, area };
+}
+
+/**
+ * Decide whether a candidate belongs to the discovery city's area.
+ * Wrong-city events are skipped for this queue; they are not treated as non-circular.
+ *
+ * @returns {{ ok: boolean, reason: string, matched?: string }}
+ */
+function matchEventGeography(cityId, parts) {
+  const id = String(cityId || '').toLowerCase();
+  const hayNorm = normalizeText(
+    [parts?.title, parts?.description, parts?.locationText, parts?.address, parts?.locationName]
+      .map((x) => String(x || ''))
+      .join(' ')
+  );
+  if (!hayNorm) return { ok: true, reason: 'unspecified' };
+
+  const self = cityLexiconHits(hayNorm, id);
+  const selfHit = self.name || self.area;
+
+  let otherHit = '';
+  for (const otherId of Object.keys(CITY_AREA_LEXICON)) {
+    if (otherId === id) continue;
+    const hit = cityLexiconHits(hayNorm, otherId);
+    otherHit = hit.name || hit.area;
+    if (otherHit) break;
+  }
+  if (!otherHit) {
+    otherHit = FOREIGN_PLACE_HINTS.find((h) => phraseInHay(hayNorm, h)) || '';
+  }
+
+  if (otherHit && !selfHit) {
+    return { ok: false, reason: 'wrong_city', matched: otherHit };
+  }
+  if (selfHit) return { ok: true, reason: 'city_or_area', matched: selfHit };
+  return { ok: true, reason: 'unspecified' };
+}
+
 function circularSignals(title, description, keywords) {
   const text = `${title || ''} ${description || ''}`.toLowerCase();
   const matchedKeywords = [];
@@ -463,4 +555,6 @@ module.exports = {
   inferActionTags,
   confidenceForEvent,
   createEventMemoryLookup,
+  CITY_AREA_LEXICON,
+  matchEventGeography,
 };

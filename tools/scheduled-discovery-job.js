@@ -155,7 +155,7 @@ function runCityPlaceDiscovery(cityId, args) {
 function runCityEventDiscovery(cityId, args) {
   const shared = [`--city=${cityId}`, `--limit=${args.limit}`, `--max-past-days=${args.eventMaxPastDays}`];
   if (args.dryRun) shared.push('--dry-run');
-  const agentArgs = [...shared, '--max-queries=6', '--max-pages=16'];
+  const agentArgs = [...shared, '--max-queries=6', '--max-pages=22'];
   // Primary: web search agent. Bonus: configured RSS/Atom/ICS feeds when present.
   return Promise.all([
     runNodeScript('discover-events-agent.js', agentArgs),

@@ -21,6 +21,20 @@ const REJECT_ONLY_RETENTION_DAYS = Math.max(30, parseInt(process.env.REVIEW_MEMO
 const MEMORY_SOFT_PENALTY_NAME_GEO = 0.14;
 const MEMORY_SOFT_PENALTY_NAME = 0.08;
 const MIN_CONFIDENCE_AFTER_MEMORY = 0.52;
+const APPROVAL_BOOST_NAME_BRANCH = 0.1;
+const APPROVAL_BOOST_KEYWORD = 0.04;
+const APPROVAL_BOOST_KEYWORD_CAP = 0.08;
+const APPROVAL_BOOST_TAG = 0.03;
+const APPROVAL_BOOST_TAG_CAP = 0.06;
+const APPROVAL_BOOST_CAP = 0.18;
+const PLACE_KEYWORD_STOP = new Set([
+  'the', 'and', 'for', 'with', 'from', 'this', 'that', 'are', 'was', 'were', 'have', 'has',
+  'dell', 'della', 'delle', 'degli', 'una', 'uno', 'per', 'con', 'che', 'non', 'come',
+  'och', 'att', 'som', 'det', 'den', 'ett', 'med', 'pa', 'av',
+  'viale', 'piazza', 'piazzale', 'corso', 'largo', 'vicolo', 'strada', 'galleria',
+  'milan', 'milano', 'turin', 'torino', 'stockholm', 'uppsala', 'malmo', 'goteborg', 'lund',
+  'shop', 'store', 'place', 'street', 'road', 'libro', 'libri',
+]);
 
 /** Try mirrors if the public endpoint is overloaded or blocked. Override with OVERPASS_URL. */
 const DEFAULT_OVERPASS_MIRRORS = [
@@ -508,6 +522,8 @@ async function loadApprovedPlacesIndex(db, cityId) {
   const snap = await db.collection('places').where('cityId', '==', cityId).get();
   const byPlaceKey = new Set();
   const byName = new Map();
+  const keywordCounts = new Map();
+  const addressTokens = new Set();
   let total = 0;
 
   for (const d of snap.docs) {
@@ -527,9 +543,22 @@ async function loadApprovedPlacesIndex(db, cityId) {
     };
     if (!byName.has(name)) byName.set(name, []);
     byName.get(name).push(entry);
+    for (const tok of normalizeText(p.address || '').split(' ')) {
+      if (tok.length >= 4) addressTokens.add(tok);
+    }
+    for (const kw of extractPlaceLearningKeywords(`${p.name || ''} ${p.description || ''}`)) {
+      keywordCounts.set(kw, (keywordCounts.get(kw) || 0) + 1);
+    }
   }
 
-  return { total, byPlaceKey, byName };
+  const keywords = [];
+  for (const [kw, count] of keywordCounts.entries()) {
+    if (addressTokens.has(kw)) continue;
+    if (count / Math.max(1, total) >= 0.5) continue;
+    keywords.push(kw);
+  }
+
+  return { total, byPlaceKey, byName, keywords };
 }
 
 async function loadReviewedQueueDocIds(db, cityId) {
@@ -587,10 +616,69 @@ function isExpiredRejectOnlyMemory(docData, nowMs) {
   return reviewedAt + maxAgeMs <= nowMs;
 }
 
+function extractPlaceLearningKeywords(text, limit = 8) {
+  const raw = normalizeText(text || '');
+  if (!raw) return [];
+  const out = [];
+  for (const token of raw.split(' ')) {
+    if (token.length < 4 || PLACE_KEYWORD_STOP.has(token)) continue;
+    if (!out.includes(token)) out.push(token);
+    if (out.length >= limit) break;
+  }
+  return out;
+}
+
+function hasApproveBias(docData) {
+  const approvedCount = Number(docData.approvedCount || 0);
+  const rejectedCount = Number(docData.rejectedCount || 0);
+  return approvedCount > rejectedCount && approvedCount > 0;
+}
+
 function hasRejectBias(docData) {
   const approvedCount = Number(docData.approvedCount || 0);
   const rejectedCount = Number(docData.rejectedCount || 0);
   return rejectedCount > approvedCount && rejectedCount > 0;
+}
+
+function approvalSignalOverlapBoost(candidate, signals) {
+  if (!signals || typeof signals !== 'object') return { boost: 0, reasons: [] };
+  let boost = 0;
+  const reasons = [];
+  const learnedKw = Array.isArray(signals.keywords) ? signals.keywords : [];
+  const text = `${candidate.name || ''} ${candidate.description || ''}`.toLowerCase();
+  const kwOverlap = learnedKw.filter((k) => k && text.includes(String(k).toLowerCase())).length;
+  if (kwOverlap > 0) {
+    boost += Math.min(APPROVAL_BOOST_KEYWORD_CAP, kwOverlap * APPROVAL_BOOST_KEYWORD);
+    reasons.push('memory:name:keywords');
+  }
+  const candTags = new Set((candidate.actionTags || []).map((t) => String(t).toLowerCase()));
+  const learnedTags = Array.isArray(signals.actionTags) ? signals.actionTags : [];
+  const tagOverlap = learnedTags.filter((t) => candTags.has(String(t).toLowerCase())).length;
+  if (tagOverlap > 0) {
+    boost += Math.min(APPROVAL_BOOST_TAG_CAP, tagOverlap * APPROVAL_BOOST_TAG);
+    reasons.push('memory:name:tags');
+  }
+  return { boost, reasons };
+}
+
+function catalogueApprovalBoost(index, candidate) {
+  let boost = 0;
+  const reasons = [];
+  const name = normalizeText(candidate.name || '');
+  if (name && index.byName.has(name)) {
+    boost += APPROVAL_BOOST_NAME_BRANCH;
+    reasons.push('approved:name-branch');
+  }
+  const text = `${candidate.name || ''} ${candidate.description || ''}`.toLowerCase();
+  let overlap = 0;
+  for (const kw of index.keywords || []) {
+    if (kw && text.includes(kw)) overlap += 1;
+  }
+  if (overlap > 0) {
+    boost += Math.min(APPROVAL_BOOST_KEYWORD_CAP, overlap * APPROVAL_BOOST_KEYWORD);
+    reasons.push('approved:keywords');
+  }
+  return { boost: Math.min(APPROVAL_BOOST_CAP, boost), reasons };
 }
 
 async function compactExpiredRejectedMemory(db, maxDeletes = 250) {
@@ -639,21 +727,22 @@ function createMemoryLookup(db, cityId, nowMs) {
     async assess(candidate) {
       const nameNorm = normalizeText(candidate.name || '');
       const addressNorm = normalizeAddressText(candidate.address || '');
-      if (!nameNorm) return { hardDuplicate: false, penalty: 0, reasons: [] };
+      if (!nameNorm) return { hardDuplicate: false, penalty: 0, boost: 0, reasons: [] };
       const memRef = db.collection('reviewMemory').doc(reviewMemoryDocId(cityId, candidate));
       const mem = await getCached(memoryById, memRef);
       if (mem && !isExpiredRejectOnlyMemory(mem, nowMs)) {
         const exactKey = placeKey(cityId, nameNorm, addressNorm);
         if (String(mem.fingerprint || '') === fingerprintForPlace(cityId, candidate.name || '', candidate.address || '')) {
-          return { hardDuplicate: true, penalty: 0, reasons: ['memory:fingerprint'] };
+          return { hardDuplicate: true, penalty: 0, boost: 0, reasons: ['memory:fingerprint'] };
         }
         if (String(mem.placeKey || '') === exactKey) {
-          return { hardDuplicate: true, penalty: 0, reasons: ['memory:placeKey'] };
+          return { hardDuplicate: true, penalty: 0, boost: 0, reasons: ['memory:placeKey'] };
         }
       }
 
       const reasons = [];
       let penalty = 0;
+      let boost = 0;
       const bucket = geoBucket(candidate.coords);
       if (bucket) {
         const geoRef = db
@@ -661,19 +750,38 @@ function createMemoryLookup(db, cityId, nowMs) {
           .doc(reviewMemoryNameGeoIndexDocId(cityId, nameNorm, bucket));
         const geo = await getCached(nameGeoById, geoRef);
         if (geo && !isExpiredRejectOnlyMemory(geo, nowMs)) {
-          penalty += hasRejectBias(geo) ? MEMORY_SOFT_PENALTY_NAME_GEO : MEMORY_SOFT_PENALTY_NAME_GEO * 0.4;
-          reasons.push('memory:name+geo');
+          if (hasRejectBias(geo)) {
+            penalty += MEMORY_SOFT_PENALTY_NAME_GEO;
+            reasons.push('memory:name+geo');
+          } else if (!hasApproveBias(geo)) {
+            penalty += MEMORY_SOFT_PENALTY_NAME_GEO * 0.4;
+            reasons.push('memory:name+geo');
+          }
         }
       }
 
       const nameRef = db.collection('reviewMemoryNameIndex').doc(reviewMemoryNameIndexDocId(cityId, nameNorm));
       const byName = await getCached(nameById, nameRef);
       if (byName && !isExpiredRejectOnlyMemory(byName, nowMs)) {
-        penalty += hasRejectBias(byName) ? MEMORY_SOFT_PENALTY_NAME : MEMORY_SOFT_PENALTY_NAME * 0.4;
-        reasons.push('memory:name');
+        if (hasRejectBias(byName)) {
+          penalty += MEMORY_SOFT_PENALTY_NAME;
+          reasons.push('memory:name');
+        } else if (hasApproveBias(byName)) {
+          const overlap = approvalSignalOverlapBoost(candidate, byName.approvalSignals);
+          boost += overlap.boost;
+          reasons.push('memory:name:approve', ...overlap.reasons);
+        } else {
+          penalty += MEMORY_SOFT_PENALTY_NAME * 0.4;
+          reasons.push('memory:name');
+        }
       }
 
-      return { hardDuplicate: false, penalty: Math.min(0.24, penalty), reasons };
+      return {
+        hardDuplicate: false,
+        penalty: Math.min(0.24, penalty),
+        boost: Math.min(APPROVAL_BOOST_CAP, boost),
+        reasons,
+      };
     },
     stats() {
       return {
@@ -745,6 +853,7 @@ async function main() {
   let skippedAsMemoryHard = 0;
   let penalizedByMemory = 0;
   let skippedAsMemoryLowConfidence = 0;
+  let boostedByApproval = 0;
 
   for (const el of elements) {
     if (el.type !== 'node' && el.type !== 'way') continue;
@@ -774,7 +883,8 @@ async function main() {
       continue;
     }
     const website = String(tags.website || tags.contact_website || tags['contact:website'] || '').trim();
-    const candidateForDupes = { name, address, coords, website };
+    const actionTags = inferActionTags(tags, name, description);
+    const candidateForDupes = { name, address, coords, website, description, actionTags };
     const memorySignal = await memoryLookup.assess(candidateForDupes);
     if (memorySignal.hardDuplicate) {
       skippedAsMemoryHard++;
@@ -784,6 +894,7 @@ async function main() {
       skippedAsDuplicate++;
       continue;
     }
+    const catalogueBoost = catalogueApprovalBoost(approvedIndex, candidateForDupes);
     const evidenceUrl = osmUrl(el);
     const snippet = [
       tags.shop ? `shop=${tags.shop}` : '',
@@ -793,13 +904,29 @@ async function main() {
       .filter(Boolean)
       .join(' · ');
 
+    let confidence = confidenceFromTags(tags);
+    const memoryReasons = [...(memorySignal.reasons || []), ...catalogueBoost.reasons];
+    if (memorySignal.penalty > 0) {
+      confidence = Math.max(0.05, confidence - memorySignal.penalty);
+      penalizedByMemory++;
+    }
+    const approvalBoost = Math.min(APPROVAL_BOOST_CAP, (memorySignal.boost || 0) + catalogueBoost.boost);
+    if (approvalBoost > 0) {
+      confidence = Math.min(0.95, confidence + approvalBoost);
+      boostedByApproval++;
+    }
+    if (confidence < MIN_CONFIDENCE_AFTER_MEMORY && memorySignal.penalty > 0 && approvalBoost <= 0) {
+      skippedAsMemoryLowConfidence++;
+      continue;
+    }
+
     candidates.push({
       docId,
       payload: {
         kind: 'place',
         cityId: city,
         status: 'needs_review',
-        confidence: confidenceFromTags(tags),
+        confidence,
         candidate: {
           name,
           address,
@@ -807,7 +934,7 @@ async function main() {
           website,
           coords,
           sectorCategories: inferSector(tags),
-          actionTags: inferActionTags(tags, name, description),
+          actionTags,
         },
         evidence: [
           {
@@ -817,21 +944,11 @@ async function main() {
           },
         ],
         matchCandidates: [],
+        ...(memoryReasons.length ? { memorySignals: memoryReasons } : {}),
         updatedAt: FieldValue.serverTimestamp(),
         createdAt: FieldValue.serverTimestamp(),
       },
     });
-
-    if (memorySignal.penalty > 0) {
-      const item = candidates[candidates.length - 1];
-      item.payload.confidence = Math.max(0.05, item.payload.confidence - memorySignal.penalty);
-      item.payload.memorySignals = memorySignal.reasons;
-      penalizedByMemory++;
-      if (item.payload.confidence < MIN_CONFIDENCE_AFTER_MEMORY) {
-        candidates.pop();
-        skippedAsMemoryLowConfidence++;
-      }
-    }
   }
 
   // Dedupe by doc id, sort by confidence, cap limit
@@ -846,6 +963,7 @@ async function main() {
       `${skippedAsMemoryHard} hard memory skips; ` +
       `${skippedAsMemoryLowConfidence} soft-memory confidence skips; ` +
       `${penalizedByMemory} soft-memory penalties; ` +
+      `${boostedByApproval} approval boosts; ` +
       `${skippedAsDuplicate} duplicates vs approved skipped; ` +
       `memory compaction deleted ${compacted}; ` +
       `memory rollup city=${city} indexed=${memoryRollup.indexedCount} approved=${memoryRollup.approvedCount} rejected=${memoryRollup.rejectedCount}; ` +
@@ -855,7 +973,10 @@ async function main() {
 
   if (dryRun) {
     for (const c of capped.slice(0, 20)) {
-      console.log(`  [dry-run] ${c.docId} ${c.payload.candidate.name} (${c.payload.confidence.toFixed(2)})`);
+      const signals = Array.isArray(c.payload.memorySignals) && c.payload.memorySignals.length
+        ? ` [${c.payload.memorySignals.join(', ')}]`
+        : '';
+      console.log(`  [dry-run] ${c.docId} ${c.payload.candidate.name} (${c.payload.confidence.toFixed(2)})${signals}`);
     }
     if (capped.length > 20) console.log(`  … ${capped.length - 20} more`);
     return;

@@ -22,7 +22,7 @@ const path = require('path');
 const { readFileSync, existsSync } = require('fs');
 const { initializeApp, cert, getApps } = require('firebase-admin/app');
 const { getFirestore, FieldValue } = require('firebase-admin/firestore');
-const { createEventMemoryLookup } = require('./lib/event-discovery-common');
+const { createEventMemoryLookup, matchEventGeography } = require('./lib/event-discovery-common');
 
 const PROJECT_ID = process.env.FIREBASE_PROJECT_ID || 'circeco-bf511';
 const CITY_ALIASES = {
@@ -549,6 +549,7 @@ async function main() {
   let failedFeeds = 0;
   let skippedMemoryHard = 0;
   let skippedMemorySoft = 0;
+  let skippedWrongCity = 0;
   let memoryPenalties = 0;
 
   for (const feed of feeds) {
@@ -565,6 +566,14 @@ async function main() {
           if (cityHint.includes('milano') || cityHint.includes('milan')) locationText = 'Milan';
         }
         if (!locationText) { skippedMissingLocation++; continue; }
+
+        const geo = matchEventGeography(args.city, {
+          title: raw.title,
+          description: raw.description,
+          locationText,
+          address: raw.address,
+        });
+        if (!geo.ok) { skippedWrongCity++; continue; }
 
         const key = eventKey(args.city, raw.title, raw.startDate, locationText);
         if (approvedKeys.has(key)) { skippedApprovedExisting++; continue; }
@@ -643,7 +652,7 @@ async function main() {
     `[discover-events] fetched ${fetchedRaw} raw entries, ${byDocId.size} candidates after filters (` +
     `${skippedPast} past skipped; ${skippedReviewed} reviewed queue skipped; ${skippedApprovedExisting} existing approved skipped; ` +
     `${skippedRunDuplicates} run duplicates skipped; ${skippedMissingLocation} missing location skipped; ${skippedNotCircular} non-circular skipped; ` +
-    `${skippedMemoryHard} hard memory skips; ${skippedMemorySoft} soft-memory confidence skips; ${memoryPenalties} soft-memory penalties; ` +
+    `${skippedMemoryHard} hard memory skips; ${skippedMemorySoft} soft-memory confidence skips; ${skippedWrongCity} wrong-city skipped; ${memoryPenalties} soft-memory penalties; ` +
     `${failedFeeds} feeds failed); writing ${sorted.length} (limit ${args.limit})`
   );
 

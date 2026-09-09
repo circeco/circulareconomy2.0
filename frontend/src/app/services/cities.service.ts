@@ -47,6 +47,14 @@ export function writeCachedCities(rows: CityItem[]): void {
   } catch {}
 }
 
+/** Keep the current city if it is live; otherwise Stockholm, then the first live city. */
+export function fallbackLiveCity(enabled: CityItem[], currentId: string): CityItem | null {
+  if (!enabled.length) return null;
+  const current = enabled.find((c) => c.id === currentId);
+  if (current) return current;
+  return enabled.find((c) => c.id === 'stockholm') ?? enabled[0];
+}
+
 @Injectable({ providedIn: 'root' })
 export class CitiesService {
   private fs = inject(Firestore);
@@ -60,7 +68,7 @@ export class CitiesService {
   ).pipe(
     map((docs) => {
       const all = docs as unknown as CityItem[];
-      const enabled = all.filter((c) => (c as any)?.enabled !== false);
+      const enabled = all.filter((c) => c.enabled !== false);
       return [...enabled].sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
     }),
     catchError((err) => {
@@ -74,6 +82,7 @@ export class CitiesService {
     const next = holdCitiesWhileReloading(this._list(), rows);
     this._list.set(next);
     if (rows.length) writeCachedCities(rows);
+    this.leaveDisabledCity(rows);
     this.syncStoredCityName(this.cityContext.cityId());
   });
 
@@ -84,6 +93,14 @@ export class CitiesService {
   private syncStoredCityName(cityId: string): void {
     const match = this._list().find((c) => c.id === cityId);
     if (match?.name) this.cityContext.rememberCityName(match.name);
+  }
+
+  /** If the stored city was paused, land on Stockholm (or the first live city). */
+  private leaveDisabledCity(enabled: CityItem[]): void {
+    const next = fallbackLiveCity(enabled, this.cityContext.cityId());
+    if (!next || next.id === this.cityContext.cityId()) return;
+    this.cityContext.setCityId(next.id);
+    if (next.name) this.cityContext.rememberCityName(next.name);
   }
 }
 

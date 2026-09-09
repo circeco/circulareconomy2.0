@@ -1,13 +1,10 @@
 <section class="review-shell">
-  <header class="review-header">
-    <h1>{{ pageTitle() }}</h1>
-    <p *ngIf="lastError() as err" class="review-error" role="alert">{{ err }}</p>
-  </header>
+  <p *ngIf="lastError() as err" class="review-error" role="alert">{{ err }}</p>
 
   <div class="review-grid" [class.single-panel]="isSinglePanelMode()">
     <section class="review-panel places-panel" *ngIf="showEventsPanel()">
       <div class="panel-title-row">
-        <h2>Events (needs review)</h2>
+        <h2>Events review queue</h2>
         <label class="search">
           <span class="search-label">Search</span>
           <input
@@ -278,7 +275,7 @@
 
     <section class="review-panel" *ngIf="showPlacesPanel()">
       <div class="panel-title-row">
-        <h2>Places (needs review)</h2>
+        <h2>Places review queue</h2>
         <label class="search">
           <span class="search-label">Search</span>
           <input

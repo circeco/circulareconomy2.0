@@ -82,6 +82,11 @@ interface NameIndexDelta {
   lastDecision: DecisionType;
   lastReviewedAt: string;
   expiresAt: string | null;
+  approvalSignals?: {
+    actionTags: string[];
+    sectorCategories: string[];
+    keywords: string[];
+  } | null;
 }
 
 interface NameGeoIndexDelta {
@@ -335,13 +340,6 @@ export class AdminReviewComponent {
 
   isSinglePanelMode(): boolean {
     return this.showPlacesPanel() !== this.showEventsPanel();
-  }
-
-  pageTitle(): string {
-    const kind = this.reviewKind();
-    if (kind === 'places') return 'Places Review Queue';
-    if (kind === 'events') return 'Events Review Queue';
-    return 'Review Queue';
   }
 
   toggleEventEdit(group: EventReviewGroup): void {
@@ -1662,20 +1660,24 @@ export class AdminReviewComponent {
         );
       }
       for (const delta of nameIndexDeltas.values()) {
+        const namePayload: Record<string, unknown> = {
+          cityId: delta.cityId,
+          nameNorm: delta.nameNorm,
+          keyType: 'name',
+          lastDecision: delta.lastDecision,
+          lastReviewedAt: delta.lastReviewedAt,
+          approvedCount: increment(delta.approvedInc),
+          rejectedCount: increment(delta.rejectedInc),
+          expiresAt: delta.expiresAt ?? deleteField(),
+          updatedAt: serverTimestamp(),
+          createdAt: serverTimestamp(),
+        };
+        if (delta.approvalSignals) {
+          namePayload['approvalSignals'] = delta.approvalSignals;
+        }
         batch.set(
           doc(this.fs, FS_PATHS.reviewMemoryNameIndex, delta.docId),
-          {
-            cityId: delta.cityId,
-            nameNorm: delta.nameNorm,
-            keyType: 'name',
-            lastDecision: delta.lastDecision,
-            lastReviewedAt: delta.lastReviewedAt,
-            approvedCount: increment(delta.approvedInc),
-            rejectedCount: increment(delta.rejectedInc),
-            expiresAt: delta.expiresAt ?? deleteField(),
-            updatedAt: serverTimestamp(),
-            createdAt: serverTimestamp(),
-          },
+          namePayload,
           { merge: true }
         );
       }
@@ -2050,12 +2052,16 @@ export class AdminReviewComponent {
       lastDecision: decision,
       lastReviewedAt: reviewedAtIso,
       expiresAt,
+      approvalSignals: null,
     };
     nameDelta.approvedInc += approvedInc;
     nameDelta.rejectedInc += rejectedInc;
     nameDelta.lastDecision = decision;
     nameDelta.lastReviewedAt = reviewedAtIso;
     nameDelta.expiresAt = decision === 'approved' ? null : expiresAt;
+    if (decision === 'approved') {
+      nameDelta.approvalSignals = this.buildPlaceApprovalSignals(candidate);
+    }
     nameIndexDeltas.set(nameDocId, nameDelta);
 
     const bucket = this.geoBucket(candidate.coords);
@@ -2123,6 +2129,9 @@ export class AdminReviewComponent {
       updatedAt: serverTimestamp(),
       createdAt: serverTimestamp(),
     };
+    if (decision === 'approved') {
+      payload['approvalSignals'] = this.buildPlaceApprovalSignals(candidate);
+    }
     if (decision === 'rejected') {
       payload['rejectionSignals'] = {
         actionTags: (candidate.actionTags ?? []) as string[],
@@ -2130,6 +2139,27 @@ export class AdminReviewComponent {
       };
     }
     return payload;
+  }
+
+  private buildPlaceApprovalSignals(candidate: Partial<PlaceCandidate>): {
+    actionTags: string[];
+    sectorCategories: string[];
+    keywords: string[];
+  } {
+    const placeStops = new Set([
+      'viale', 'piazza', 'piazzale', 'corso', 'largo', 'vicolo', 'strada', 'galleria',
+      'milan', 'milano', 'turin', 'torino', 'stockholm', 'uppsala', 'malmo', 'goteborg', 'lund',
+      'shop', 'store', 'place', 'street', 'road', 'libro', 'libri',
+    ]);
+    const keywords = this.extractLearningKeywords(
+      `${candidate.name || ''} ${candidate.description || ''}`,
+      8
+    ).filter((k) => !placeStops.has(k));
+    return {
+      actionTags: (candidate.actionTags ?? []).map(String).slice(0, 6),
+      sectorCategories: (candidate.sectorCategories ?? []).map(String).slice(0, 6),
+      keywords,
+    };
   }
 
   private reviewMemoryDocId(cityId: string, candidate: Partial<PlaceCandidate>): string {

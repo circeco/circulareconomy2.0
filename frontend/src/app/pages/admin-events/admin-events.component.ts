@@ -12,11 +12,22 @@ import {
   setDoc,
   updateDoc,
   where,
+  writeBatch,
 } from 'firebase/firestore';
 
 import { FS_PATHS } from '../../data/firestore-paths';
 import type { EventDoc } from '../../data/models';
-import { formatEventDateLabel } from '../../data/event-recurrence';
+import {
+  DEFAULT_RECURRENCE_WINDOW_MONTHS,
+  expandRecurrenceDates,
+  formatEventDateLabel,
+  inferRecurrenceFromDates,
+  recurrenceLabel,
+  weekdayNameFromIso,
+  weekdayShortFromIso,
+  type EventRecurrence,
+  type EventRecurrenceFrequency,
+} from '../../data/event-recurrence';
 import { CityContextService } from '../../services/city-context.service';
 import {
   ACTION_TAG_LABELS,
@@ -29,15 +40,21 @@ import {
 
 type EventRow = EventDoc & { id: string };
 
+type EventOccurrenceRow = {
+  date: string;
+  time: string;
+  endTime: string;
+  recurrenceFrequency: EventRecurrenceFrequency;
+  until: string;
+};
+
 interface EventEditForm {
   title: string;
-  startDate: string;
-  endDate: string;
   address: string;
   website: string;
   description: string;
-  time: string;
-  endTime: string;
+  recurrenceWindowMonths: number;
+  occurrenceRows: EventOccurrenceRow[];
   sectorCategories: string[];
   actionTags: string[];
 }
@@ -64,6 +81,13 @@ export class AdminEventsComponent {
   readonly editForm = signal<EventEditForm | null>(null);
   readonly creating = signal(false);
   readonly createForm = signal<EventEditForm | null>(null);
+  readonly recurrenceOptions: { value: EventRecurrenceFrequency; label: string }[] = [
+    { value: 'none', label: 'Does not repeat' },
+    { value: 'weekly', label: 'Every week' },
+    { value: 'monthly', label: 'Every month (same day)' },
+    { value: 'monthly_nth', label: 'Every month (same weekday)' },
+  ];
+  readonly recurrenceWindowMonths = DEFAULT_RECURRENCE_WINDOW_MONTHS;
 
   readonly filteredRows = computed(() => {
     const q = this.searchText().trim().toLowerCase();
@@ -153,36 +177,36 @@ export class AdminEventsComponent {
     const form = this.createForm();
     if (!this.creating() || !form) return;
     const title = form.title.trim();
-    const date = form.startDate.trim();
-    const address = form.address.trim();
-    if (!title || !date || !address) {
-      this.error.set('Event requires title, date, and address.');
+    const address = this.normalizeAddressDisplay(form.address);
+    const occurrences = this.resolveOccurrencesFromForm(form);
+    if (!title || !occurrences.length || !address) {
+      this.error.set('Event requires title, at least one date, and address.');
       return;
     }
     await this.runRowOp('manual:add-event', async () => {
-      const newRef = doc(collection(this.fs, FS_PATHS.events));
-      const timeDisplay = this.formatTimeDisplayRange(form.time, form.endTime);
+      const shared = this.formToSharedFields(form, address);
+      const seriesId =
+        occurrences.length > 1 || shared.recurrence.frequency !== 'none' ? this.newSeriesId() : '';
       const reviewedAt = new Date().toISOString();
-      const payload: EventDoc = {
-        cityId: this.cityId(),
-        title,
-        startDate: date,
-        endDate: date,
-        locationText: address,
-        address,
-        website: this.normalizeWebsiteUrl(form.website.trim()),
-        description: form.description.trim(),
-        timeDisplay,
-        sectorCategories: canonicalizeSectorCategories(form.sectorCategories),
-        actionTags: canonicalizeActionTags(form.actionTags),
-        sourceRefs: [],
-        status: 'approved',
-        review: { reviewedAt },
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      };
-      await setDoc(newRef, payload as any);
-      this.rows.set([{ id: newRef.id, ...payload }, ...this.rows()]);
+      const batch = writeBatch(this.fs);
+      const added: EventRow[] = [];
+      for (const occ of occurrences) {
+        const newRef = doc(collection(this.fs, FS_PATHS.events));
+        const payload = this.buildEventPayload({
+          cityId: this.cityId(),
+          title,
+          address,
+          shared,
+          startDate: occ.date,
+          timeDisplay: occ.time || shared.timeDisplay,
+          seriesId,
+          reviewedAt,
+        });
+        batch.set(newRef, payload as Record<string, unknown>);
+        added.push({ id: newRef.id, ...payload });
+      }
+      await batch.commit();
+      this.rows.set([...added, ...this.rows()]);
       this.cancelCreate();
     });
   }
@@ -221,21 +245,8 @@ export class AdminEventsComponent {
 
   openEdit(row: EventRow): void {
     this.cancelCreate();
-    const date = row.startDate || '';
-    const { time, endTime } = this.parseTimeDisplayRange(row.timeDisplay || '');
     this.editingId.set(row.id);
-    this.editForm.set({
-      title: row.title || '',
-      startDate: date,
-      endDate: date,
-      address: String(row.address || row.locationText || '').trim(),
-      website: row.website || '',
-      description: row.description || '',
-      time,
-      endTime,
-      sectorCategories: canonicalizeSectorCategories(this.showList(row.sectorCategories)),
-      actionTags: canonicalizeActionTags(this.showList(row.actionTags)),
-    });
+    this.editForm.set(this.buildEventForm(row));
   }
 
   closeEdit(): void {
@@ -246,37 +257,63 @@ export class AdminEventsComponent {
   async saveEdit(row: EventRow): Promise<void> {
     const form = this.editForm();
     if (!form || this.editingId() !== row.id) return;
+    const title = form.title.trim();
+    const address = this.normalizeAddressDisplay(form.address);
+    const occurrences = this.resolveOccurrencesFromForm(form);
+    if (!title || !occurrences.length || !address) {
+      this.error.set('Event requires title, at least one date, and address.');
+      return;
+    }
     await this.runRowOp(row.id, async () => {
-      const date = form.startDate.trim();
-      const address = form.address.trim();
-      const timeDisplay = this.formatTimeDisplayRange(form.time, form.endTime);
-      const payload: Record<string, unknown> = {
-        title: form.title.trim(),
-        startDate: date,
-        endDate: date,
-        locationText: address,
+      const shared = this.formToSharedFields(form, address);
+      const primary = occurrences[0];
+      const seriesId =
+        row.seriesId ||
+        (occurrences.length > 1 || shared.recurrence.frequency !== 'none' ? this.newSeriesId() : '');
+      const reviewedAt = new Date().toISOString();
+      const primaryPayload = this.buildEventPayload({
+        cityId: row.cityId || this.cityId(),
+        title,
         address,
-        website: this.normalizeWebsiteUrl(form.website.trim()),
-        description: form.description.trim(),
-        timeDisplay,
-        sectorCategories: canonicalizeSectorCategories(form.sectorCategories),
-        actionTags: canonicalizeActionTags(form.actionTags),
-        status: 'approved',
-        updatedAt: serverTimestamp(),
-      };
-      await updateDoc(doc(this.fs, FS_PATHS.events, row.id), payload as any);
-      this.rows.set(
-        this.rows().map((r) =>
-          r.id === row.id
-            ? ({
-                ...r,
-                ...payload,
-                sectorCategories: payload['sectorCategories'] as string[],
-                actionTags: payload['actionTags'] as EventDoc['actionTags'],
-              } as EventRow)
-            : r
-        )
+        shared,
+        startDate: primary.date,
+        timeDisplay: primary.time || shared.timeDisplay,
+        seriesId,
+        reviewedAt,
+        keepCreatedAt: true,
+      });
+      const updatePayload: Record<string, unknown> = { ...primaryPayload };
+      delete updatePayload['createdAt'];
+      await updateDoc(doc(this.fs, FS_PATHS.events, row.id), updatePayload as any);
+
+      const extras: EventRow[] = [];
+      const existingKeys = new Set(
+        this.rows().map((r) => `${String(r.title || '').trim().toLowerCase()}|${String(r.startDate || '').trim()}`)
       );
+      existingKeys.delete(`${String(row.title || '').trim().toLowerCase()}|${String(row.startDate || '').trim()}`);
+      existingKeys.add(`${title.toLowerCase()}|${primary.date}`);
+
+      for (const occ of occurrences.slice(1)) {
+        const key = `${title.toLowerCase()}|${occ.date}`;
+        if (existingKeys.has(key)) continue;
+        existingKeys.add(key);
+        const newRef = doc(collection(this.fs, FS_PATHS.events));
+        const payload = this.buildEventPayload({
+          cityId: row.cityId || this.cityId(),
+          title,
+          address,
+          shared,
+          startDate: occ.date,
+          timeDisplay: occ.time || shared.timeDisplay,
+          seriesId,
+          reviewedAt,
+        });
+        await setDoc(newRef, payload as Record<string, unknown>);
+        extras.push({ id: newRef.id, ...payload });
+      }
+
+      const updatedCurrent: EventRow = { ...row, ...primaryPayload, id: row.id };
+      this.rows.set([updatedCurrent, ...extras, ...this.rows().filter((r) => r.id !== row.id)]);
       this.closeEdit();
     });
   }
@@ -337,7 +374,9 @@ export class AdminEventsComponent {
     if (!date) return '(missing date)';
     const label = formatEventDateLabel(date);
     const time = this.formatTimeDisplayRangeFromRaw(row.timeDisplay || '');
-    return time ? `${label} · ${time}` : label;
+    const rec = recurrenceLabel(row.recurrence, date);
+    const head = time ? `${label} · ${time}` : label;
+    return rec ? `${head} · ${rec}` : head;
   }
 
   eventAddressLine(row: EventRow): string {
@@ -354,6 +393,77 @@ export class AdminEventsComponent {
     if (checked && idx === -1) current.push(id);
     if (!checked && idx !== -1) current.splice(idx, 1);
     return current;
+  }
+
+  addOccurrenceRow(form: EventEditForm): void {
+    form.occurrenceRows = [
+      ...form.occurrenceRows,
+      { date: '', time: '', endTime: '', recurrenceFrequency: 'none', until: '' },
+    ];
+  }
+
+  removeOccurrenceRow(form: EventEditForm, index: number): void {
+    if (form.occurrenceRows.length <= 1) return;
+    form.occurrenceRows = form.occurrenceRows.filter((_, i) => i !== index);
+  }
+
+  weekdayLabel(iso: string): string {
+    return weekdayShortFromIso(iso);
+  }
+
+  recurrenceOptionLabel(value: EventRecurrenceFrequency, dateIso: string): string {
+    switch (value) {
+      case 'none':
+        return 'Does not repeat';
+      case 'weekly': {
+        const day = weekdayNameFromIso(dateIso);
+        return day ? `Every ${day}` : 'Every week';
+      }
+      case 'monthly':
+        return 'Every month (same day)';
+      case 'monthly_nth': {
+        const day = weekdayNameFromIso(dateIso);
+        if (!day) return 'Every month (same weekday)';
+        return recurrenceLabel({ frequency: 'monthly_nth' }, dateIso) || `Every ${day} of the month`;
+      }
+      default: {
+        const _exhaustive: never = value;
+        return _exhaustive;
+      }
+    }
+  }
+
+  previewOccurrenceCount(form: EventEditForm | null): number {
+    if (!form) return 0;
+    return this.resolveOccurrencesFromForm(form).length;
+  }
+
+  resolveOccurrencesFromForm(form: EventEditForm): Array<{ date: string; time: string }> {
+    const out: Array<{ date: string; time: string }> = [];
+    const windowMonths = Number(form.recurrenceWindowMonths) || DEFAULT_RECURRENCE_WINDOW_MONTHS;
+    for (const row of form.occurrenceRows || []) {
+      const date = String(row.date || '').trim();
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
+      const time = this.formatTimeDisplayRange(row.time || '', row.endTime || '');
+      const freq = row.recurrenceFrequency || 'none';
+      if (freq === 'none') {
+        out.push({ date, time });
+        continue;
+      }
+      const expanded = expandRecurrenceDates(date, {
+        frequency: freq,
+        windowMonths,
+        until: String(row.until || '').trim() || undefined,
+      });
+      for (const d of expanded) out.push({ date: d, time });
+    }
+    const seen = new Set<string>();
+    return out.filter((o) => {
+      const key = `${o.date}|${o.time}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
   }
 
   private parseTimeDisplayRange(raw: string): { time: string; endTime: string } {
@@ -402,19 +512,155 @@ export class AdminEventsComponent {
   }
 
   private emptyForm(): EventEditForm {
-    const today = new Date().toISOString().slice(0, 10);
-    return {
+    return this.buildEventForm({
       title: '',
-      startDate: today,
-      endDate: today,
+      startDate: new Date().toISOString().slice(0, 10),
       address: '',
       website: '',
       description: '',
-      time: '',
-      endTime: '',
+      timeDisplay: '',
       sectorCategories: [],
       actionTags: [],
+      recurrence: { frequency: 'none', windowMonths: DEFAULT_RECURRENCE_WINDOW_MONTHS },
+    });
+  }
+
+  private buildEventForm(row: Partial<EventRow>): EventEditForm {
+    const dates = [...new Set([String(row.startDate || '').trim()].filter(Boolean))].sort();
+    const storedFreq = row.recurrence?.frequency;
+    let inferred: EventRecurrenceFrequency = 'none';
+    if (storedFreq === 'none') {
+      inferred = 'none';
+    } else if (storedFreq === 'weekly' || storedFreq === 'monthly' || storedFreq === 'monthly_nth') {
+      inferred = storedFreq;
+    } else {
+      inferred = inferRecurrenceFromDates(dates) || 'none';
+    }
+    const { time, endTime } = this.parseTimeDisplayRange(row.timeDisplay || '');
+    const until = row.recurrence?.until ?? '';
+    const occurrenceRows: EventOccurrenceRow[] = (dates.length ? dates : ['']).map((date, index) => ({
+      date,
+      time,
+      endTime,
+      recurrenceFrequency: index === 0 ? inferred : 'none',
+      until: index === 0 ? until : '',
+    }));
+    if (!occurrenceRows.length) {
+      occurrenceRows.push({
+        date: new Date().toISOString().slice(0, 10),
+        time: '',
+        endTime: '',
+        recurrenceFrequency: 'none',
+        until: '',
+      });
+    }
+    return {
+      title: row.title || '',
+      address: String(row.address || row.locationText || '').trim(),
+      website: row.website || '',
+      description: row.description || '',
+      recurrenceWindowMonths: row.recurrence?.windowMonths ?? DEFAULT_RECURRENCE_WINDOW_MONTHS,
+      occurrenceRows,
+      sectorCategories: canonicalizeSectorCategories(this.showList(row.sectorCategories)),
+      actionTags: canonicalizeActionTags(this.showList(row.actionTags)),
     };
+  }
+
+  private formToSharedFields(form: EventEditForm, address: string): {
+    website: string;
+    description: string;
+    timeDisplay: string;
+    sectorCategories: string[];
+    actionTags: EventDoc['actionTags'];
+    recurrence: EventRecurrence;
+    sourceRefs: EventDoc['sourceRefs'];
+  } {
+    const rows = (form.occurrenceRows || []).filter((r) => /^\d{4}-\d{2}-\d{2}$/.test(String(r.date || '').trim()));
+    const primary = rows[0] || form.occurrenceRows[0];
+    const recurringRow = rows.find((r) => r.recurrenceFrequency && r.recurrenceFrequency !== 'none');
+    const website = this.normalizeWebsiteUrl(form.website.trim());
+    return {
+      website,
+      description: form.description.trim(),
+      timeDisplay: this.formatTimeDisplayRange(primary?.time || '', primary?.endTime || ''),
+      sectorCategories: canonicalizeSectorCategories(form.sectorCategories),
+      actionTags: canonicalizeActionTags(form.actionTags),
+      recurrence: this.firestoreRecurrence(
+        recurringRow?.recurrenceFrequency || 'none',
+        Number(form.recurrenceWindowMonths) || DEFAULT_RECURRENCE_WINDOW_MONTHS,
+        recurringRow?.until
+      ),
+      sourceRefs: website
+        ? [{ sourceType: 'website', url: website, retrievedAt: new Date().toISOString() }]
+        : [],
+    };
+  }
+
+  private buildEventPayload(args: {
+    cityId: string;
+    title: string;
+    address: string;
+    shared: ReturnType<AdminEventsComponent['formToSharedFields']>;
+    startDate: string;
+    timeDisplay: string;
+    seriesId: string;
+    reviewedAt: string;
+    keepCreatedAt?: boolean;
+  }): EventDoc {
+    const payload: EventDoc = {
+      cityId: args.cityId,
+      title: args.title,
+      startDate: args.startDate,
+      endDate: args.startDate,
+      locationText: args.address,
+      address: args.address,
+      website: args.shared.website,
+      description: args.shared.description,
+      timeDisplay: args.timeDisplay,
+      sectorCategories: args.shared.sectorCategories,
+      actionTags: args.shared.actionTags,
+      sourceRefs: args.shared.sourceRefs,
+      recurrence: args.shared.recurrence,
+      status: 'approved',
+      review: { reviewedAt: args.reviewedAt },
+      updatedAt: serverTimestamp(),
+    };
+    if (!args.keepCreatedAt) payload.createdAt = serverTimestamp();
+    if (args.seriesId) payload.seriesId = args.seriesId;
+    return payload;
+  }
+
+  private firestoreRecurrence(
+    frequency: EventRecurrenceFrequency | string | undefined,
+    windowMonths?: number,
+    until?: string
+  ): EventRecurrence {
+    const freq = (frequency || 'none') as EventRecurrenceFrequency;
+    const recurrence: EventRecurrence = {
+      frequency: freq,
+      windowMonths: Number(windowMonths) || DEFAULT_RECURRENCE_WINDOW_MONTHS,
+    };
+    const untilDay = String(until || '').trim();
+    if (untilDay) recurrence.until = untilDay;
+    return recurrence;
+  }
+
+  private newSeriesId(): string {
+    return `series_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+  }
+
+  private normalizeAddressDisplay(v: unknown): string {
+    const raw = String(v || '')
+      .replace(/\s+/g, ' ')
+      .replace(/\s+,/g, ',')
+      .trim();
+    if (!raw) return '';
+    const parts = raw.split(',').map((p) => p.trim()).filter(Boolean);
+    if (!parts.length) return '';
+    const first = parts[0];
+    const m = first.match(/^(\d+[a-zA-Z]?)\s+(.+)$/);
+    if (m) parts[0] = `${m[2]} ${m[1]}`.trim().replace(/\s+/g, ' ');
+    return parts.join(', ');
   }
 
   private normalizeWebsiteUrl(raw: string): string {

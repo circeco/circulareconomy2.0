@@ -1,59 +1,101 @@
 <section class="catalog-shell">
-  <header class="catalog-header">
-    <h1>Event Catalogue</h1>
-    <button
-      type="button"
-      class="add-btn"
-      [disabled]="isBusy('manual:add-event')"
-      (click)="openCreate()"
-    >
-      Add event
-    </button>
-  </header>
+  <p *ngIf="error() as err" class="catalog-error" role="alert">{{ err }}</p>
 
-  <section class="toolbar">
-    <label class="search">
-      <span>Search</span>
-      <input type="text" [ngModel]="searchText()" (ngModelChange)="setSearchText($event)" placeholder="title, address, website..." />
-    </label>
-    <div class="toolbar-action">
-      <span class="toolbar-label-spacer" aria-hidden="true">Action</span>
-      <button type="button" class="refresh-btn" (click)="refresh()" [disabled]="loading()">Refresh</button>
+  <section class="catalog-panel">
+    <div class="panel-title-row">
+      <h1>Event Catalogue</h1>
+      <label class="search">
+        <span class="search-label">Search</span>
+        <input
+          type="text"
+          [ngModel]="searchText()"
+          (ngModelChange)="setSearchText($event)"
+          placeholder="title, address, website..."
+        />
+      </label>
+      <button
+        type="button"
+        class="btn-add"
+        [disabled]="isBusy('manual:add-event')"
+        (click)="openCreate()"
+      >
+        Add event
+      </button>
     </div>
-  </section>
 
-  <p *ngIf="error() as err" class="error" role="alert">{{ err }}</p>
-  <p *ngIf="loading()">Loading events…</p>
+    <p *ngIf="loading()" class="loading">Loading events…</p>
 
-  <div class="create-panel" *ngIf="creating() && createForm() as f">
+    <div class="create-panel" *ngIf="creating() && createForm() as f">
     <div class="create-title">New event ({{ cityId() }})</div>
     <div class="editor">
       <div class="grid">
         <label class="full"><span>Title</span><input type="text" [(ngModel)]="f.title" name="new-ev-title" /></label>
-        <label><span>Date</span><input type="date" [(ngModel)]="f.startDate" (ngModelChange)="f.endDate = f.startDate" name="new-ev-date" /></label>
-        <label><span>Start</span><input type="time" [(ngModel)]="f.time" name="new-ev-time" /></label>
-        <label><span>End</span><input type="time" [(ngModel)]="f.endTime" name="new-ev-end" /></label>
+        <div class="full occurrence-dates">
+          <span>Dates</span>
+          <div class="date-schedule-head" aria-hidden="true">
+            <span></span>
+            <span>Date</span>
+            <span>Repeats</span>
+            <span>Until</span>
+            <span>Start</span>
+            <span>End</span>
+            <span></span>
+          </div>
+          <div class="date-schedule-row" *ngFor="let occ of f.occurrenceRows; let i = index">
+            <span class="weekday-chip">{{ weekdayLabel(occ.date) || '—' }}</span>
+            <input type="date" [(ngModel)]="occ.date" name="new-ev-date-{{ i }}" aria-label="Date" />
+            <select [(ngModel)]="occ.recurrenceFrequency" name="new-ev-rec-{{ i }}" aria-label="Repeats">
+              <option *ngFor="let opt of recurrenceOptions" [ngValue]="opt.value">{{ recurrenceOptionLabel(opt.value, occ.date) }}</option>
+            </select>
+            <div class="until-slot" [class.is-empty]="occ.recurrenceFrequency === 'none'">
+              <input
+                type="date"
+                [(ngModel)]="occ.until"
+                name="new-ev-until-{{ i }}"
+                aria-label="Until"
+                title="Until"
+                [disabled]="occ.recurrenceFrequency === 'none'"
+              />
+            </div>
+            <input type="time" [(ngModel)]="occ.time" name="new-ev-time-{{ i }}" aria-label="Start time" />
+            <input type="time" [(ngModel)]="occ.endTime" name="new-ev-end-{{ i }}" aria-label="End time" />
+            <button
+              type="button"
+              class="btn-date-remove"
+              [disabled]="f.occurrenceRows.length <= 1"
+              (click)="removeOccurrenceRow(f, i)"
+            >
+              Remove
+            </button>
+          </div>
+          <button type="button" class="btn-date-add" (click)="addOccurrenceRow(f)">Add date</button>
+          <p class="field-hint">Publish preview: {{ previewOccurrenceCount(f) }} occurrence(s).</p>
+        </div>
         <label class="full"><span>Address</span><input type="text" [(ngModel)]="f.address" name="new-ev-addr" placeholder="street, number, city (for map)" /></label>
-        <label class="full"><span>Website</span><input type="url" [(ngModel)]="f.website" name="new-ev-web" placeholder="https://…" /></label>
         <label class="full"><span>Description</span><textarea rows="2" [(ngModel)]="f.description" name="new-ev-desc"></textarea></label>
+        <label class="full"><span>Source link</span><input type="url" [(ngModel)]="f.website" name="new-ev-web" placeholder="https://…" /></label>
         <div class="full">
-          <span>Action Tags</span>
+          <span>Action tags</span>
           <div class="chips">
             <label class="chip option-chip" *ngFor="let t of actionTagOptions">
-              <input type="checkbox"
-                     [checked]="isSelected(f.actionTags, t)"
-                     (change)="f.actionTags = toggleSelection(f.actionTags, t, $any($event.target).checked)" />
+              <input
+                type="checkbox"
+                [checked]="isSelected(f.actionTags, t)"
+                (change)="f.actionTags = toggleSelection(f.actionTags, t, $any($event.target).checked)"
+              />
               {{ actionTagLabel(t) }}
             </label>
           </div>
         </div>
         <div class="full">
-          <span>Sector Categories</span>
+          <span>Sector categories</span>
           <div class="chips">
             <label class="chip option-chip" *ngFor="let c of sectorOptions">
-              <input type="checkbox"
-                     [checked]="isSelected(f.sectorCategories, c)"
-                     (change)="f.sectorCategories = toggleSelection(f.sectorCategories, c, $any($event.target).checked)" />
+              <input
+                type="checkbox"
+                [checked]="isSelected(f.sectorCategories, c)"
+                (change)="f.sectorCategories = toggleSelection(f.sectorCategories, c, $any($event.target).checked)"
+              />
               {{ sectorLabel(c) }}
             </label>
           </div>
@@ -101,41 +143,84 @@
 
       <div class="editor" *ngIf="editingId() === row.id && editForm() as f">
         <div class="grid">
-          <label class="full"><span>Title</span><input type="text" [(ngModel)]="f.title" /></label>
-          <label><span>Date</span><input type="date" [(ngModel)]="f.startDate" (ngModelChange)="f.endDate = f.startDate" /></label>
-          <label><span>Start</span><input type="time" [(ngModel)]="f.time" /></label>
-          <label><span>End</span><input type="time" [(ngModel)]="f.endTime" /></label>
-          <label class="full"><span>Address</span><input type="text" [(ngModel)]="f.address" placeholder="street, number, city (for map)" /></label>
-          <label class="full"><span>Website</span><input type="url" [(ngModel)]="f.website" /></label>
-          <label class="full"><span>Description</span><textarea rows="2" [(ngModel)]="f.description"></textarea></label>
+          <label class="full"><span>Title</span><input type="text" [(ngModel)]="f.title" name="ev-title-{{ row.id }}" /></label>
+          <div class="full occurrence-dates">
+            <span>Dates</span>
+            <div class="date-schedule-head" aria-hidden="true">
+              <span></span>
+              <span>Date</span>
+              <span>Repeats</span>
+              <span>Until</span>
+              <span>Start</span>
+              <span>End</span>
+              <span></span>
+            </div>
+            <div class="date-schedule-row" *ngFor="let occ of f.occurrenceRows; let i = index">
+              <span class="weekday-chip">{{ weekdayLabel(occ.date) || '—' }}</span>
+              <input type="date" [(ngModel)]="occ.date" name="ev-date-{{ row.id }}-{{ i }}" aria-label="Date" />
+              <select [(ngModel)]="occ.recurrenceFrequency" name="ev-rec-{{ row.id }}-{{ i }}" aria-label="Repeats">
+                <option *ngFor="let opt of recurrenceOptions" [ngValue]="opt.value">{{ recurrenceOptionLabel(opt.value, occ.date) }}</option>
+              </select>
+              <div class="until-slot" [class.is-empty]="occ.recurrenceFrequency === 'none'">
+                <input
+                  type="date"
+                  [(ngModel)]="occ.until"
+                  name="ev-until-{{ row.id }}-{{ i }}"
+                  aria-label="Until"
+                  title="Until"
+                  [disabled]="occ.recurrenceFrequency === 'none'"
+                />
+              </div>
+              <input type="time" [(ngModel)]="occ.time" name="ev-time-{{ row.id }}-{{ i }}" aria-label="Start time" />
+              <input type="time" [(ngModel)]="occ.endTime" name="ev-end-{{ row.id }}-{{ i }}" aria-label="End time" />
+              <button
+                type="button"
+                class="btn-date-remove"
+                [disabled]="f.occurrenceRows.length <= 1"
+                (click)="removeOccurrenceRow(f, i)"
+              >
+                Remove
+              </button>
+            </div>
+            <button type="button" class="btn-date-add" (click)="addOccurrenceRow(f)">Add date</button>
+            <p class="field-hint">Publish preview: {{ previewOccurrenceCount(f) }} occurrence(s).</p>
+          </div>
+          <label class="full"><span>Address</span><input type="text" [(ngModel)]="f.address" name="ev-addr-{{ row.id }}" placeholder="street, number, city (for map)" /></label>
+          <label class="full"><span>Description</span><textarea rows="2" [(ngModel)]="f.description" name="ev-desc-{{ row.id }}"></textarea></label>
+          <label class="full"><span>Source link</span><input type="url" [(ngModel)]="f.website" name="ev-web-{{ row.id }}" placeholder="https://…" /></label>
           <div class="full">
-            <span>Action Tags</span>
+            <span>Action tags</span>
             <div class="chips">
               <label class="chip option-chip" *ngFor="let t of actionTagOptions">
-                <input type="checkbox"
-                       [checked]="isSelected(f.actionTags, t)"
-                       (change)="f.actionTags = toggleSelection(f.actionTags, t, $any($event.target).checked)" />
+                <input
+                  type="checkbox"
+                  [checked]="isSelected(f.actionTags, t)"
+                  (change)="f.actionTags = toggleSelection(f.actionTags, t, $any($event.target).checked)"
+                />
                 {{ actionTagLabel(t) }}
               </label>
             </div>
           </div>
           <div class="full">
-            <span>Sector Categories</span>
+            <span>Sector categories</span>
             <div class="chips">
               <label class="chip option-chip" *ngFor="let c of sectorOptions">
-                <input type="checkbox"
-                       [checked]="isSelected(f.sectorCategories, c)"
-                       (change)="f.sectorCategories = toggleSelection(f.sectorCategories, c, $any($event.target).checked)" />
+                <input
+                  type="checkbox"
+                  [checked]="isSelected(f.sectorCategories, c)"
+                  (change)="f.sectorCategories = toggleSelection(f.sectorCategories, c, $any($event.target).checked)"
+                />
                 {{ sectorLabel(c) }}
               </label>
             </div>
           </div>
         </div>
         <div class="actions">
-          <button type="button" [disabled]="isBusy(row.id)" (click)="saveEdit(row)">Save</button>
+          <button type="button" [disabled]="isBusy(row.id)" (click)="saveEdit(row)">Save changes</button>
           <button type="button" [disabled]="isBusy(row.id)" (click)="closeEdit()">Cancel</button>
         </div>
       </div>
     </li>
   </ul>
+  </section>
 </section>

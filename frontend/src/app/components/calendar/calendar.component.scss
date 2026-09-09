@@ -98,11 +98,6 @@
     background: $brand-deep;
     color: white;
     border: 2px solid $color-accent;
-
-    &:nth-child(7n) {
-      background: $color-accent;
-      color: white;
-    }
   }
 
   /* Hover only on real pointers — touch leaves :hover stuck after tap. */

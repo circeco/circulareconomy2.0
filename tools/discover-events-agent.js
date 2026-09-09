@@ -28,6 +28,7 @@ const {
   blockedDomainsFromCity,
   isBlockedHost,
   hostFromUrl,
+  matchEventGeography,
 } = require('./lib/event-discovery-common');
 
 const PROJECT_ID = process.env.FIREBASE_PROJECT_ID || 'circeco-bf511';
@@ -111,6 +112,12 @@ const DEFAULT_CITY_SEED_URLS = {
     'https://www.pulcienonsolo.it/',
     'https://swapinthecitymilano.it/',
     'https://www.stayhappening.com/s/riparazione-milano',
+    'https://wundermrkt.com/',
+    'https://wundermrkt.com/tutti-gli-eventi/',
+    'https://remiramarket.com/events',
+    'https://www.bovisattiva.org/events/mercatini-vintage-in-bovisa-e-dergano',
+    'https://scripomarket.com/evento/il-mercatino-di-via-armorari-cordusio-milano-4/',
+    'https://www.vibeevents.it/mercatini-milano/',
   ],
   stockholm: [
     'https://somo.social/sv/e/bakluckeloppis-i-vartahamnen-905',
@@ -158,7 +165,7 @@ function initAdminApp() {
 }
 
 function parseArgs() {
-  const out = { city: '', limit: 80, dryRun: false, maxPastDays: 0, maxQueries: 6, maxPages: 12 };
+  const out = { city: '', limit: 80, dryRun: false, maxPastDays: 0, maxQueries: 6, maxPages: 18 };
   for (const a of process.argv.slice(2)) {
     if (a === '--dry-run') out.dryRun = true;
     else if (a.startsWith('--city=')) out.city = a.slice('--city='.length).trim().toLowerCase();
@@ -542,7 +549,7 @@ function extractHeuristicEventsFromHtml(html, pageUrl, cityLabel, keywords) {
       .trim()
       .slice(0, 140);
     if (looksLikeJunkEventTitle(title)) continue;
-    const locationText = extractLocationFromText(chunk, cityLabel) || cityLabel;
+    const locationText = extractLocationFromText(chunk, cityLabel) || '';
     const key = `${normalizeText(title)}|${startDate}`;
     if (seen.has(key)) continue;
     seen.add(key);
@@ -585,8 +592,8 @@ function extractHeuristicEventsFromHtml(html, pageUrl, cityLabel, keywords) {
             title,
             startDate,
             endDate: startDate,
-            locationText: cityLabel,
-            address: cityLabel,
+            locationText: extractLocationFromText(window, cityLabel) || '',
+            address: extractLocationFromText(window, cityLabel) || '',
             website: pageUrl,
             description: window.slice(0, 2000),
             timeDisplay: '',
@@ -665,7 +672,7 @@ function candidateFromSnippet(hit, cityLabel) {
   const blob = `${hit.title}\n${hit.snippet}`;
   const startDate = extractDateFromText(blob);
   if (!startDate) return null;
-  const locationText = extractLocationFromText(blob, cityLabel) || cityLabel;
+  const locationText = extractLocationFromText(blob, cityLabel) || '';
   return {
     sourceType: 'web_snippet',
     sourceUrl: hit.url,
@@ -847,6 +854,7 @@ async function main() {
   let skippedNotCircular = 0;
   let skippedMemoryHard = 0;
   let skippedMemorySoft = 0;
+  let skippedWrongCity = 0;
   let memoryPenalties = 0;
 
   for (const raw of rawCandidates) {
@@ -863,7 +871,19 @@ async function main() {
     }
 
     let locationText = String(raw.locationText || raw.address || '').trim();
-    if (!locationText) locationText = extractLocationFromText(`${raw.title}\n${raw.description || ''}`, cityLabel);
+    if (!locationText) locationText = extractLocationFromText(`${raw.title}\n${raw.description || ''}`, '');
+
+    const geo = matchEventGeography(args.city, {
+      title: raw.title,
+      description: raw.description,
+      locationText,
+      address: raw.address,
+    });
+    if (!geo.ok) {
+      skippedWrongCity += 1;
+      continue;
+    }
+
     // Language-local pages often omit structured address; city label is enough for review.
     if (!locationText) locationText = cityLabel;
 
@@ -958,7 +978,7 @@ async function main() {
       `${skippedPast} past skipped; ${skippedReviewed} reviewed queue skipped; ${skippedApproved} existing approved skipped; ` +
       `${skippedRunDup} run duplicates skipped; ${skippedMissingLocation} missing location skipped; ${skippedNotCircular} non-circular skipped; ` +
       `${skippedBlockedDomain} blocked-domain skipped; ` +
-      `${skippedMemoryHard} hard memory skips; ${skippedMemorySoft} soft-memory confidence skips; ${memoryPenalties} soft-memory penalties; ` +
+      `${skippedMemoryHard} hard memory skips; ${skippedMemorySoft} soft-memory confidence skips; ${skippedWrongCity} wrong-city skipped; ${memoryPenalties} soft-memory penalties; ` +
       `${searchFailures} queries without hits; pages=${pagesFetched}; feedsParsed=${feedsParsed}; searchHits=${searchHits}); writing ${sorted.length} (limit ${args.limit})`
   );
 

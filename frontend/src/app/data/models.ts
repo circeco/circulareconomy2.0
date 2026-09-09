@@ -150,6 +150,12 @@ export type ReviewMemoryDoc = {
     actionTags?: string[];
     sectorCategories?: string[];
   };
+  /** Positive learning signals from approved places (tags + name keywords). */
+  approvalSignals?: {
+    actionTags?: string[];
+    sectorCategories?: string[];
+    keywords?: string[];
+  };
   createdAt?: unknown;
   updatedAt?: unknown;
 };

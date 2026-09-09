@@ -1,31 +1,31 @@
 <section class="catalog-shell">
-  <header class="catalog-header">
-    <h1>Place Catalogue</h1>
-    <button
-      type="button"
-      class="add-btn"
-      [disabled]="isBusy('manual:add-place')"
-      (click)="openCreate()"
-    >
-      Add place
-    </button>
-  </header>
+  <p *ngIf="error() as err" class="catalog-error" role="alert">{{ err }}</p>
 
-  <section class="toolbar">
-    <label class="search">
-      <span>Search</span>
-      <input type="text" [ngModel]="searchText()" (ngModelChange)="setSearchText($event)" placeholder="name, address, website..." />
-    </label>
-    <div class="toolbar-action">
-      <span class="toolbar-label-spacer" aria-hidden="true">Action</span>
-      <button type="button" class="refresh-btn" (click)="refresh()" [disabled]="loading()">Refresh</button>
+  <section class="catalog-panel">
+    <div class="panel-title-row">
+      <h1>Place Catalogue</h1>
+      <label class="search">
+        <span class="search-label">Search</span>
+        <input
+          type="text"
+          [ngModel]="searchText()"
+          (ngModelChange)="setSearchText($event)"
+          placeholder="name, address, website..."
+        />
+      </label>
+      <button
+        type="button"
+        class="btn-add"
+        [disabled]="isBusy('manual:add-place')"
+        (click)="openCreate()"
+      >
+        Add place
+      </button>
     </div>
-  </section>
 
-  <p *ngIf="error() as err" class="error" role="alert">{{ err }}</p>
-  <p *ngIf="loading()">Loading places…</p>
+    <p *ngIf="loading()" class="loading">Loading places…</p>
 
-  <div class="create-panel" *ngIf="creating() && createForm() as f">
+    <div class="create-panel" *ngIf="creating() && createForm() as f">
     <div class="create-title">New place ({{ cityId() }})</div>
     <div class="editor">
       <div class="grid">
@@ -139,4 +139,5 @@
       </div>
     </li>
   </ul>
+  </section>
 </section>

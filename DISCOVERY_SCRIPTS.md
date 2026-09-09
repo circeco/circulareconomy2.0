@@ -75,17 +75,20 @@ Discovery run  →  reviewQueue (needs_review)
        (metrics; rule changes stay mostly manual)
 ```
 
-**What “teaching” means:** approve/reject mainly teaches *don’t re-queue this pattern* (and lightly bias confidence). It does **not** train a model of circular language. Monthly `learningStats` help you tune OSM tags, keywords, seeds, and blocklists by hand.
+**What “teaching” means:** approve/reject mainly teaches *don’t re-queue this exact place*. Approvals also **soft-boost** similar OSM candidates (same chain name at a new address, or overlapping name keywords). It does **not** train a model or widen the Overpass query. Monthly `learningStats` still help you tune OSM tags by hand.
 
 ### Places (online memory — mature)
 
 | Collection | Role |
 |------------|------|
-| `reviewMemory` | Fingerprint city+name+address; counters; optional rejection signals |
-| `reviewMemoryNameIndex` / `reviewMemoryNameGeoIndex` | Soft name / name+geo penalties |
+| `reviewMemory` | Fingerprint city+name+address; counters; optional rejection / approval signals |
+| `reviewMemoryNameIndex` / `reviewMemoryNameGeoIndex` | Soft name / name+geo penalties; **approve-biased names store `approvalSignals`** (tags, sectors, keywords) |
 | `reviewMemoryRollups` | City counters |
+| Approved `places` catalogue | Hard skip exact/near duplicates; **soft-boost** other branches of an approved name and candidates whose name/description overlap distinctive approved keywords |
 
-Discovery (`discover-osm-places.js`): hard-skip on exact memory / approved catalogue match; soft-penalize weaker name hits; drop if confidence &lt; ~0.52. Rejected-only memory can expire (~180 days); approved stays for dedupe. Admin ↔ discovery fingerprints use the same FNV hash.
+Discovery (`discover-osm-places.js`): hard-skip on exact memory / approved catalogue match; soft-penalize weaker **reject-biased** name hits; **soft-boost** approve-biased names and catalogue keyword overlap (capped ~0.18); drop if confidence &lt; ~0.52 after a penalty with no boost. Rejected-only memory can expire (~180 days); approved stays for dedupe. Admin ↔ discovery fingerprints use the same FNV hash.
+
+Existing approved places already count: the catalogue is read on every run, so you do not need to re-approve old cards for the name-branch / keyword boost. `approvalSignals` on the name index are written on **new** approves and add tag/keyword overlap on top of that.
 
 ### Events (online memory — catching up)
 
@@ -118,7 +121,7 @@ Extraction guardrails (adjacent to learning): circular signal preferably in **ti
 | Memory on approve/reject | Yes | Yes |
 | Hard duplicate skip | Yes | Yes (date + series + title + source) |
 | Soft penalty | Yes | Yes |
-| Soft boost from approvals | Minimal | Yes |
+| Soft boost from approvals | Yes (name-branch + keywords, cap ~0.18) | Yes |
 | Source/host learning | No (domain dedupe off for chains) | Yes |
 | Series / recurrence memory | N/A | Yes |
 | Admin ↔ discovery hash aligned | Yes | Yes (2026-08) |
@@ -127,8 +130,8 @@ Extraction guardrails (adjacent to learning): circular signal preferably in **ti
 
 ### Improve along the way
 
-1. Edit title/address/tags before approve; reject junk groups so series + source update.  
-2. Watch `discoveryRuns` counters (`skippedMemoryHard` / `skippedMemorySoft` / …).  
+1. Edit name/address/tags before approve so catalogue boosts use clean signals.  
+2. Watch `discoveryRuns` counters (`skippedMemoryHard` / `skippedMemorySoft` / approval boosts in OSM logs).  
 3. Read `learningStats` → adjust OSM allowlist, event keywords, seeds, block domains.  
 4. Later: structured reject reasons; series re-open after materialization window; guarded auto soft-penalties (`LEARNING_V1_SPEC.md`).  
 5. ML re-ranker only in shadow mode, still behind human review.
@@ -155,9 +158,13 @@ For candidates in the same `cityId`, discovery skips enqueue when one of these i
 - normalized `name + address` matches an approved place
 - normalized `name` matches and coordinates are very close (~120m)
 
-Soft-penalty (not immediate skip) — see **Learning strategy**:
+Soft-penalty / soft-boost (not immediate skip) — see **Learning strategy**:
 
-- `reviewMemoryNameGeoIndex` / `reviewMemoryNameIndex` lower confidence; drop if below ~0.52
+- Reject-biased `reviewMemoryNameGeoIndex` / `reviewMemoryNameIndex` lower confidence; drop if below ~0.52 with no approval boost
+- Approve-biased same **name** at a **different** address/coords (not a catalogue duplicate): confidence **+0.10** (`approved:name-branch`)
+- Distinctive keywords from approved names/descriptions (tokens ≥4 chars, not street/city stopwords, not tokens that appear in approved **addresses**, not in ≥50% of the catalogue): **+0.04** each, cap **+0.08**
+- Name-index `approvalSignals` (written on approve): extra tag/keyword overlap, included in the overall **+0.18** cap
+- Does **not** change the Overpass allowlist or auto-publish
 
 Intentionally **not used** for dedupe:
 
@@ -358,5 +365,6 @@ This is the primary weekly path so the queue can fill without manually pasting e
 | 2026-08-24 | Added automated event web agent (`discover:events:agent`), event review memory on admin decisions, and event learning stats alongside places. |
 | 2026-08-25 | Tightened event agent: require title/strong circular signals (no query auto-pass), domain blocklist, seed-only feed parsing, lower weekly limit. |
 | 2026-08-27 | Event learning: series+source memory, title approvalSignals, confidence boost/penalty; safer HTML date extraction; aligned event memory hashes with admin FNV. Documented under **Learning strategy** in this file. |
+| 2026-09-08 | Place discovery: soft-boost from approved catalogue (other branches of an approved name + distinctive keywords) and `approvalSignals` on place name-index; no Overpass widening. |
 
 _Add a row when you change Overpass tags, add event ingestion, or change queue ID strategy._

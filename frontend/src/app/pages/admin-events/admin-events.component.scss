@@ -1,25 +1,99 @@
 .catalog-shell {
-  padding: calc(var(--header-offset, 60px) + 1.2rem) 1.2rem 2rem;
-  max-width: 760px;
+  padding: calc(var(--header-offset, 60px) + 1.5rem) 1.5rem 3rem;
+  max-width: 1100px;
   margin: 0 auto;
   font-weight: 600;
 }
 
-.catalog-header {
-  display: flex;
+.catalog-error {
+  margin: 0 0 1rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 8px;
+  background: rgba(255, 82, 82, 0.12);
+  color: #8b0000;
+  font-size: 0.95rem;
+  max-width: 70ch;
+}
+
+.catalog-panel {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 24px;
+  padding: 1rem 1.2rem 1.15rem;
+  background: #fff;
+}
+
+.panel-title-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(10rem, 22rem) minmax(0, 1fr);
   align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  flex-wrap: wrap;
+  column-gap: 0.75rem;
+  margin-bottom: 0.7rem;
 
   h1 {
-    font-size: 2rem;
+    margin: 0;
+    justify-self: start;
+    text-align: left;
+    padding-top: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.01em;
+    font-size: clamp(1.05rem, 1.5vw, 1.35rem);
     font-weight: 700;
-    margin-bottom: 0;
+    text-decoration: underline;
+    text-decoration-color: #ff5f74;
+    text-decoration-thickness: 0.5rem;
+    text-underline-offset: 0.2rem;
+  }
+
+  .search {
+    justify-self: stretch;
+    margin: 0;
+  }
+
+  .search-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .search input {
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+    padding: 0.34rem 0.45rem;
+    background: #fff;
+    height: 2rem;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .btn-add {
+    justify-self: end;
+  }
+
+  @media (max-width: 640px) {
+    grid-template-columns: minmax(0, 1fr) auto;
+
+    .search {
+      grid-column: 1 / -1;
+      grid-row: 2;
+    }
+
+    .btn-add {
+      grid-column: 2;
+      grid-row: 1;
+    }
   }
 }
 
-.add-btn {
+.btn-add {
   padding: 0.3rem 0.7rem;
   border-radius: 999px;
   border: 1px solid rgba(69, 129, 142, 0.5);
@@ -38,11 +112,11 @@
 }
 
 .create-panel {
-  margin-top: 1rem;
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  border-radius: 10px;
-  padding: 0.85rem 0.95rem;
-  background: rgba(69, 129, 142, 0.04);
+  margin-bottom: 0.75rem;
+  border: 1px dashed rgba(69, 129, 142, 0.45);
+  border-radius: 20px;
+  padding: 0.8rem 0.9rem;
+  background: #fff;
 }
 
 .create-title {
@@ -52,82 +126,20 @@
   margin-bottom: 0.55rem;
 }
 
-.toolbar {
-  margin-top: 1rem;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  align-items: flex-end;
-
-  label {
-    display: grid;
-    gap: 0.2rem;
-    font-size: 0.82rem;
-    margin-bottom: 0;
-  }
-
-  span {
-    color: #535353;
-  }
-
-  input,
-  select,
-  button,
-  textarea {
-    font: inherit;
-  }
-
-  input,
-  select {
-    border: 1px solid rgba(0, 0, 0, 0.2);
-    border-radius: 6px;
-    padding: 0.34rem 0.45rem;
-    background: #fff;
-    height: 2rem;
-    box-sizing: border-box;
-  }
-
-  .search {
-    flex: 1;
-    min-width: 16rem;
-  }
-
-  .refresh-btn {
-    border: 1px solid rgba(69, 129, 142, 0.45);
-    border-radius: 8px;
-    padding: 0.35rem 0.7rem;
-    background: #fff;
-    color: #0c343d;
-    height: 2rem;
-  }
-
-  .toolbar-action {
-    display: grid;
-    gap: 0.2rem;
-    align-self: end;
-  }
-
-  .toolbar-label-spacer {
-    visibility: hidden;
-    font-size: 0.82rem;
-    line-height: 1;
-  }
-}
-
 .rows {
-  margin: 1rem 0 0;
+  margin: 0;
   padding: 0;
   list-style: none;
   display: grid;
-  gap: 0.7rem;
+  gap: 0.75rem;
 }
 
 .row {
   display: block;
   width: 100%;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 10px;
-  padding: 0.55rem 0.6rem;
+  border: 1px solid #e6e6e6;
+  border-radius: 20px;
+  padding: 0.8rem 0.9rem;
 }
 
 .row-head {
@@ -138,7 +150,11 @@
 }
 
 .name {
-  font-weight: 700;
+  font-size: 0.95rem;
+  font-weight: 800;
+  line-height: 1.35;
+  margin-bottom: 0.25rem;
+  color: #1a1a1a;
 }
 
 .meta {
@@ -285,13 +301,123 @@
   }
 }
 
-.error {
-  color: #8b0000;
-  margin: 0.8rem 0 0;
+.field-hint {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #5f6770;
+  line-height: 1.35;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 500;
+}
+
+.occurrence-dates {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.date-schedule-head,
+.date-schedule-row {
+  display: grid;
+  grid-template-columns:
+    2.6rem
+    minmax(8.2rem, 1fr)
+    minmax(8.8rem, 1.15fr)
+    minmax(8.2rem, 1fr)
+    minmax(6.2rem, 0.85fr)
+    minmax(6.2rem, 0.85fr)
+    4.6rem;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.date-schedule-head {
+  padding: 0 0.05rem;
+
+  span {
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #6a6a6a;
+  }
+}
+
+.date-schedule-row {
+  .weekday-chip {
+    justify-self: stretch;
+    text-align: center;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: #45818e;
+    background: rgba(69, 129, 142, 0.12);
+    border-radius: 0.45rem;
+    padding: 0.32rem 0.2rem;
+  }
+
+  input[type='date'],
+  input[type='time'],
+  select {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .until-slot {
+    min-width: 0;
+
+    input[type='date'] {
+      width: 100%;
+    }
+
+    &.is-empty {
+      visibility: hidden;
+      pointer-events: none;
+    }
+  }
+}
+
+@media (max-width: 900px) {
+  .occurrence-dates {
+    overflow-x: auto;
+  }
+
+  .date-schedule-head,
+  .date-schedule-row {
+    min-width: 44rem;
+  }
+}
+
+.btn-date-add,
+.btn-date-remove {
+  justify-self: start;
+  min-width: auto;
+  padding: 0.25rem 0.55rem;
+  font-size: 0.72rem;
+  font: inherit;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.date-schedule-row .btn-date-remove {
+  justify-self: stretch;
+  min-width: 0;
+  padding: 0.28rem 0.35rem;
+}
+
+.loading {
+  color: #3b3b3b;
+  margin: 0 0 0.75rem;
+  padding: 0.25rem 0;
 }
 
 .empty {
-  color: #5a5a5a;
+  color: #3b3b3b;
   font-size: 0.9rem;
   padding: 0.25rem 0.1rem;
+  border: 0;
 }

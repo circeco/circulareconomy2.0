@@ -44,4 +44,21 @@ describe('CalendarComponent', () => {
     component.toggleDate(20);
     expect(selectedDays()).toEqual([]);
   });
+
+  it('keeps a selected Saturday on the same fill as other selected days', () => {
+    fixture.componentRef.setInput('eventDates', [
+      new Date(2026, 8, 15),
+      new Date(2026, 8, 19),
+    ]);
+    fixture.detectChanges();
+
+    component.toggleDate(19);
+    fixture.detectChanges();
+
+    const saturday = fixture.nativeElement.querySelector('.calendar-day.selected') as HTMLElement;
+    expect(saturday?.textContent?.trim()).toBe('19');
+    const styles = getComputedStyle(saturday);
+    expect(styles.backgroundColor).not.toBe('rgb(255, 82, 82)');
+    expect(styles.borderTopColor).toBe('rgb(255, 82, 82)');
+  });
 });
