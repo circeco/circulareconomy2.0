@@ -75,13 +75,11 @@ describe('NavbarComponent', () => {
     expect(avatar.src).toContain('assets/img/avatar.png');
   });
 
-  it('opens the logo site menu on admin catalogue and review pages', async () => {
+  it('shows the logo site menu on hover on admin catalogue and review pages', async () => {
     await goTo('/admin/places');
     expect(component.isLanding()).toBeFalse();
     expect(fixture.nativeElement.querySelector('#nav-title')?.textContent).toContain('CIRCECO');
 
-    fixture.nativeElement.querySelector('#logo').click();
-    fixture.detectChanges();
     const menu = fixture.nativeElement.querySelector('.logo-dropdown');
     expect(menu).toBeTruthy();
     expect(menu.textContent).toContain('Circular Atlas');
@@ -90,16 +88,13 @@ describe('NavbarComponent', () => {
     await goTo('/admin/review/places');
     expect(component.isLanding()).toBeFalse();
     expect(fixture.nativeElement.querySelector('#nav-title')?.textContent).toContain('CIRCECO');
-    expect(fixture.nativeElement.querySelector('.logo-dropdown')).toBeNull();
-
-    fixture.nativeElement.querySelector('#logo').click();
-    fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.logo-dropdown')).toBeTruthy();
   });
 
   it('keeps landing logo click as home, without a site menu', async () => {
     await goTo('/');
     expect(component.isLanding()).toBeTrue();
+    expect(fixture.nativeElement.querySelector('.logo-dropdown')).toBeNull();
     fixture.nativeElement.querySelector('#logo').click();
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.logo-dropdown')).toBeNull();

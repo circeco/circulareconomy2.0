@@ -82,6 +82,7 @@
 }
 
 #logo {
+  display: block;
   background: url(/assets/img/logo.svg) top / cover no-repeat;
   height: 40px;
   width: 40px;
@@ -92,11 +93,23 @@
   &:hover { transform: scale(0.9, 0.9); }
 }
 
+.logo-menu {
+  display: inline-block;
+
+  .logo-dropdown {
+    display: none;
+  }
+
+  &:hover .logo-dropdown,
+  &:focus-within .logo-dropdown {
+    display: block;
+  }
+}
+
 .logo-dropdown {
   position: absolute;
-  top: 60px;
+  top: 100%;
   left: 10px;
-  display: block;
   background-color: $bg-light;
   min-width: 200px;
   box-shadow: $shadow-md;
@@ -191,9 +204,18 @@
   align-items: center;
   justify-content: center;
 
-  #logo {
+  .logo-menu {
     position: absolute;
     left: 0;
+    top: 0;
+    z-index: 3;
+  }
+
+  #logo {
+    display: block;
+    width: 40px;
+    height: 40px;
+    margin: 10px;
   }
 
   .logo-dropdown a {

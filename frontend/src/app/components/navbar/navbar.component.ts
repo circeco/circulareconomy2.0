@@ -28,7 +28,6 @@ export class NavbarComponent implements AfterViewInit, OnDestroy {
 
   // Mobile hamburger state (adds 'responsive' class)
   menuOpen = signal<boolean>(false);
-  logoMenuOpen = signal<boolean>(false);
 
   // Route-aware: landing vs atlas
   isLanding = signal<boolean>(true);
@@ -85,7 +84,6 @@ export class NavbarComponent implements AfterViewInit, OnDestroy {
       !url.startsWith('/events') &&
       !url.startsWith('/admin');
     this.isLanding.set(landing);
-    this.logoMenuOpen.set(false);
     this.toggleSnapClass(landing);
   }
 
@@ -133,18 +131,11 @@ export class NavbarComponent implements AfterViewInit, OnDestroy {
     this.menuOpen.update(v => !v);
   }
 
-  onLogoClick(ev: Event): void {
-    if (this.isLanding()) {
-      this.goHome();
-      return;
-    }
-    ev.preventDefault();
-    ev.stopPropagation();
-    this.logoMenuOpen.update((open) => !open);
+  onLogoClick(): void {
+    this.goHome();
   }
 
   goToFromLogo(id: string): void {
-    this.logoMenuOpen.set(false);
     if (id === 'circular_events') {
       this.router.navigate(['/events'], { queryParamsHandling: 'merge' });
       return;
@@ -255,17 +246,12 @@ export class NavbarComponent implements AfterViewInit, OnDestroy {
     window.location.assign('/');
   }
 
-  @HostListener('document:click')
-  onDocumentClick() {
-    if (this.logoMenuOpen()) this.logoMenuOpen.set(false);
-  }
-
   // Keep “Back to top” keyboard accessibility working
   @HostListener('document:keydown', ['$event'])
   onKeydown(ev: KeyboardEvent) {
     if (ev.key === 'Escape') {
       if (this.menuOpen()) this.menuOpen.set(false);
-      if (this.logoMenuOpen()) this.logoMenuOpen.set(false);
+      (document.activeElement as HTMLElement | null)?.blur();
     }
   }
 }
