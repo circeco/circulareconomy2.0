@@ -114,6 +114,9 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     // keep map filter in sync with categories (map-side work is fine outside zone)
     this.filter.enabledCategories$.subscribe(set => this.map.setCategoryFilter(set));
     this.filter.enabledActionTagsState$.subscribe(set => this.map.setActionTagFilter(set));
+    this.subs.push(
+      this.filter.searchMatchKeys$.subscribe((keys) => this.map.setSearchKeys(keys))
+    );
 
     // initialize action tags filter with all tags enabled
     this.filter.setActionTags(this.enabledActionTags);
@@ -265,6 +268,12 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
 
   // ---------- UI handlers ----------
   onFilter(ev: Event) { this.filter.setFilter((ev.target as HTMLInputElement).value); }
+
+  trackListing = (_index: number, item: Feature): string => {
+    const p = this.propsOf(item);
+    const coords = item.geometry?.coordinates || [];
+    return String(p.PLACE_KEY || `${p.STORE_NAME || p.NAME || ''}|${p.ADDRESS_LINE1 || p.ADDRESS || ''}|${coords[0]},${coords[1]}`);
+  };
 
   onToggleCategory(ev: Event, cat: string) {
     ev.preventDefault(); ev.stopPropagation();

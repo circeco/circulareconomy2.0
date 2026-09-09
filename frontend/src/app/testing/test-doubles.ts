@@ -38,7 +38,7 @@ export class EventFavoritesServiceStub implements Partial<EventFavoritesService>
   toggle(_eventId: string) { return Promise.resolve(); }
 }
 
-export class MapServiceStub implements Pick<MapService, 'init' | 'onReady' | 'queryRenderedFeatures$' | 'onFeatureClick' | 'onLocateClick' | 'openPopup' | 'closePopup' | 'flyTo' | 'flyToCity' | 'jumpToCity' | 'clearPlaces' | 'setPlacesData' | 'setFavoritesVisibility' | 'setCategoryFilter' | 'setActionTagFilter' | 'showUserLocation' | 'clearUserLocation' | 'resize' | 'destroy'> {
+export class MapServiceStub implements Pick<MapService, 'init' | 'onReady' | 'queryRenderedFeatures$' | 'onFeatureClick' | 'onLocateClick' | 'openPopup' | 'closePopup' | 'flyTo' | 'flyToCity' | 'jumpToCity' | 'clearPlaces' | 'setPlacesData' | 'setFavoritesVisibility' | 'setCategoryFilter' | 'setActionTagFilter' | 'setSearchKeys' | 'showUserLocation' | 'clearUserLocation' | 'resize' | 'destroy'> {
   private ready$ = new Subject<boolean>();
   private features$ = new Subject<any[]>();
   private click$ = new Subject<{ feature: any; coords: [number, number] }>();
@@ -60,6 +60,7 @@ export class MapServiceStub implements Pick<MapService, 'init' | 'onReady' | 'qu
   setFavoritesVisibility(_v: boolean) {}
   setCategoryFilter(_set: Set<string>) {}
   setActionTagFilter(_set: Set<string>) {}
+  setSearchKeys(_keys: Set<string> | null) {}
   showUserLocation() {}
   clearUserLocation() {}
   resize() {}
@@ -71,6 +72,7 @@ export class PlacesFilterStub implements Partial<PlacesFilter> {
   ACTION_TAG_IDS: string[] = [];
   enabledCategories$ = of(new Set<string>());
   enabledActionTagsState$ = of(new Set<string>());
+  searchMatchKeys$ = of(null);
   filteredFeatures$ = of([]);
 
   setAllFeatures(_features: any) {}

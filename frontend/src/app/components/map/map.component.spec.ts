@@ -70,6 +70,19 @@ describe('MapComponent', () => {
     expect(component).toBeTruthy();
   });
 
+  it('keeps action tags with the map and listings above so popups tuck under the list', () => {
+    const atlas = fixture.nativeElement.querySelector('#circular_atlas') as HTMLElement;
+    const stage = atlas.querySelector('.map-stage') as HTMLElement;
+    const sidebar = atlas.querySelector('.atlas-sidebar') as HTMLElement;
+    expect(stage).toBeTruthy();
+    expect(stage.querySelector('#map')).toBeTruthy();
+    expect(stage.querySelector('.map-action-tags-row')).toBeTruthy();
+    expect(stage.querySelector('.category-filters.desktop-cats')).toBeTruthy();
+    expect(sidebar.parentElement).toBe(atlas);
+    expect(stage.contains(sidebar)).toBeFalse();
+    expect(atlas.querySelector('.map-popup-host')).toBeNull();
+  });
+
   it('shows Loading places until the first rendered-features query after city GeoJSON', () => {
     expect(component.listingsReady).toBeFalse();
     const empty = fixture.nativeElement.querySelector('.listings-empty') as HTMLElement;

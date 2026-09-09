@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, combineLatest, map } from 'rxjs';
+import { BehaviorSubject, combineLatest, distinctUntilChanged, map } from 'rxjs';
 import { canonicalizeActionTag } from '../data/taxonomy';
 import { GeolocationService } from './geolocation.service';
 
@@ -46,7 +46,11 @@ export class PlacesFilter {
 
   constructor(private geo: GeolocationService) {}
 
-  setAllFeatures(list: Feature[]) { this.allFeatures$.next(list ?? []); }
+  setAllFeatures(list: Feature[]) {
+    const next = list ?? [];
+    if (this.samePlaceList(this.allFeatures$.value, next)) return;
+    this.allFeatures$.next(next);
+  }
   setCityFeatures(fc: FeatureCollection | { features?: Feature[] } | null) {
     const features = (fc?.features || []) as Feature[];
     this.cityFeatures$.next(features);
@@ -55,7 +59,11 @@ export class PlacesFilter {
   setFilter(text: string) { this.filterText$.next((text || '').trim().toLowerCase()); }
   setUserOrigin(origin: { lat: number; lng: number } | null) { this.userOrigin$.next(origin); }
   setSortByDistance(on: boolean) { this.sortByDistance$.next(!!on); }
-  setFavoriteKeys(keys: Set<string>) { this.favoriteKeys$.next(new Set(keys)); }
+  setFavoriteKeys(keys: Set<string>) {
+    const next = new Set(keys);
+    if (this.sameKeySet(this.favoriteKeys$.value, next)) return;
+    this.favoriteKeys$.next(next);
+  }
   setFavoritesOnly(on: boolean) { this.favoritesOnly$.next(!!on); }
   toggleCategory(cat: string) {
     const next = new Set(this.enabledCats$.value);
@@ -74,24 +82,38 @@ export class PlacesFilter {
 
   readonly enabledCategories$ = this.enabledCats$.asObservable();
   readonly enabledActionTagsState$ = this.enabledActionTags$.asObservable();
+  /** Place keys that match the search box, or null when search is empty (no extra map constraint). */
+  readonly searchMatchKeys$ = combineLatest([this.cityFeatures$, this.filterText$]).pipe(
+    map(([city, typed]) => {
+      if (!typed || !city.length) return null;
+      const keys = new Set<string>();
+      for (const f of city) {
+        if (!this.matchesSearchText(f, typed)) continue;
+        const k = this.canonicalKey(f);
+        if (k) keys.add(k);
+      }
+      return keys;
+    }),
+    distinctUntilChanged((a, b) => this.sameKeySet(a, b))
+  );
   readonly filteredFeatures$ = combineLatest([
     this.allFeatures$,
-    this.cityFeatures$,
     this.filterText$,
     this.enabledCats$,
     this.enabledActionTags$,
+    this.favoriteKeys$,
+    this.favoritesOnly$,
     this.userOrigin$,
     this.sortByDistance$,
   ]).pipe(
-    map(([visible, city, typed, enabledCats, enabledTags, origin, sortByDistance]) => {
+    map(([visible, typed, enabledCats, enabledTags, favoriteKeys, favoritesOnly, origin, sortByDistance]) => {
       const nearby = !!sortByDistance && !!origin;
-      // Full city catalogue while searching so DESCRIPTION (and other fields) are available
-      // even when the list UI hides them and Mapbox rendered features omit them.
-      let list = typed && city.length ? this.dedupe(city) : this.dedupe(visible);
-      if (typed && city.length) {
-        list = list.filter((f: Feature) => this.matchesCategories(f, enabledCats));
-      }
+      let list = this.dedupe(visible);
+      list = list.filter((f: Feature) => this.matchesCategories(f, enabledCats));
       list = list.filter((f: Feature) => this.matchesActionTags(f, enabledTags));
+      if (favoritesOnly) {
+        list = list.filter((f: Feature) => this.matchesFavorite(f, favoriteKeys));
+      }
       if (typed) {
         list = list.filter((f: Feature) => this.matchesSearchText(f, typed));
       }
@@ -173,7 +195,6 @@ export class PlacesFilter {
   }
 
   private matchesCategories(feature: Feature, enabled: Set<string>): boolean {
-    // Empty set means "all categories" (same convention as the map filter).
     if (!enabled.size || enabled.size >= this.CATEGORY_IDS.length) return true;
     const props = this.enrichProps(feature) as PlaceProps & { CATEGORIES?: unknown[] };
     const primary = String(props.CATEGORY || '').toLowerCase();
@@ -183,6 +204,31 @@ export class PlacesFilter {
       if (enabled.has(String(c || '').toLowerCase())) return true;
     }
     return false;
+  }
+
+  private matchesFavorite(feature: Feature, favoriteKeys: Set<string>): boolean {
+    if (!favoriteKeys.size) return false;
+    const key = this.canonicalKey(feature);
+    return !!key && favoriteKeys.has(key);
+  }
+
+  private samePlaceList(a: Feature[], b: Feature[]): boolean {
+    if (a === b) return true;
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) {
+      if (this.canonicalKey(a[i]) !== this.canonicalKey(b[i])) return false;
+    }
+    return true;
+  }
+
+  private sameKeySet(a: Set<string> | null, b: Set<string> | null): boolean {
+    if (a === b) return true;
+    if (!a || !b) return false;
+    if (a.size !== b.size) return false;
+    for (const k of a) {
+      if (!b.has(k)) return false;
+    }
+    return true;
   }
 
   private canonicalKey(feature: Feature){

@@ -61,7 +61,7 @@
     <div class="listings-section">
       <div id="listings" class="listings">
         <div
-          *ngFor="let item of filteredList; let i = index"
+          *ngFor="let item of filteredList; let i = index; trackBy: trackListing"
           class="item"
           [id]="'listing-' + i"
           (click)="focusOn(item)"
@@ -110,7 +110,9 @@
     </div>
   </aside>
 
-  <div class="map-action-tags-row">
+  <div class="map-stage">
+    <div id="map" #mapHost></div>
+    <div class="map-action-tags-row">
     <button
       *ngFor="let tag of actionTagIds"
       type="button"
@@ -158,6 +160,7 @@
       </span>
     </button>
   </div>
+  </div>
 
   <div class="locate-status" *ngIf="locateStatusMessage" role="status">
     <p>{{ locateStatusMessage }}</p>
@@ -204,6 +207,4 @@
       (click)="onLocateControlClick()"
     ></button>
   </div>
-
-  <div id="map" #mapHost></div>
 </section>

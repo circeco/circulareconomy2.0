@@ -17,6 +17,8 @@ export class MapService {
   private lastCategorySet = new Set<string>();
   private readonly allActionTags = ACTION_TAGS.slice();
   private lastActionTagSet = new Set<string>(this.allActionTags);
+  /** Matching PLACE_KEYs while searching; null means search is off. */
+  private searchKeys: Set<string> | null = null;
   private readonly baseColor = 'rgb(69,129,142)';
   private readonly actionTagColors: Record<string, string> = ACTION_TAG_COLORS as Record<string, string>;
 
@@ -79,6 +81,8 @@ export class MapService {
 
   private onLoad() {
     try {
+      // Monochrome-based Studio style omits OSM highway=pedestrian from road lines/labels.
+      this.ensurePedestrianStreetLayers();
       if (!this.getSource('places')) {
         this.map.addSource('places', { type: 'geojson', data: this.EMPTY_FC });
       }
@@ -252,6 +256,13 @@ export class MapService {
     this.closePopupIfFilteredOut();
   }
 
+  setSearchKeys(keys: Set<string> | null) {
+    if (this.sameKeySet(this.searchKeys, keys)) return;
+    this.searchKeys = keys ? new Set(keys) : null;
+    this.applyFilters();
+    this.closePopupIfFilteredOut();
+  }
+
   setFavoritesVisibility(v: boolean) {
     this.favoritesVisible = v;
     if (this.getLayer('favorites')) {
@@ -400,6 +411,7 @@ export class MapService {
   resize() { this.map?.resize(); }
   destroy() {
     window.removeEventListener('favorites:update', this.onFavoritesUpdate);
+    this.closePopup();
     this.userMarker?.remove();
     this.userMarker = null;
     this.map?.remove(); this.map = null; this.loaded = false; this.placesReady = false;
@@ -434,6 +446,85 @@ export class MapService {
       },
     };
     this.map.addControl(control, 'bottom-right');
+  }
+
+  /**
+   * The Circeco Studio style only labels motorway…street_limited.
+   * OSM pedestrian streets (piazzas, shopping streets) are class=pedestrian and stay unnamed
+   * unless we add them here. Names appear from zoom 15 so city-scale stays uncluttered.
+   */
+  private ensurePedestrianStreetLayers() {
+    if (!this.map || this.getLayer('road-label-pedestrian')) return;
+    if (!this.getSource('composite') || !this.getLayer('road-label-simple')) return;
+
+    const beforeId = 'road-label-simple';
+    const pedestrianLine: any[] = [
+      'all',
+      ['match', ['get', 'class'], ['pedestrian'], true, false],
+      ['match', ['get', 'structure'], ['none', 'ford', 'bridge'], true, false],
+      ['==', ['geometry-type'], 'LineString'],
+    ];
+    const pedestrianLabel: any[] = [
+      'all',
+      ['match', ['get', 'class'], ['pedestrian'], true, false],
+      ['==', ['geometry-type'], 'LineString'],
+    ];
+
+    try {
+      if (!this.getLayer('road-pedestrian')) {
+        this.map.addLayer({
+          id: 'road-pedestrian',
+          type: 'line',
+          source: 'composite',
+          'source-layer': 'road',
+          minzoom: 14,
+          filter: pedestrianLine,
+          layout: {
+            'line-cap': ['step', ['zoom'], 'butt', 14, 'round'],
+            'line-join': ['step', ['zoom'], 'miter', 14, 'round'],
+          },
+          paint: {
+            'line-color': this.map.getPaintProperty?.('road-simple', 'line-color') || 'hsl(185, 3%, 100%)',
+            'line-width': [
+              'interpolate',
+              ['exponential', 1.5],
+              ['zoom'],
+              13, 0.5,
+              18, 7,
+            ],
+          },
+        }, beforeId);
+      }
+
+      this.map.addLayer({
+        id: 'road-label-pedestrian',
+        type: 'symbol',
+        source: 'composite',
+        'source-layer': 'road',
+        minzoom: 15,
+        filter: pedestrianLabel,
+        layout: {
+          'text-size': this.map.getLayoutProperty?.('road-label-simple', 'text-size')
+            || ['interpolate', ['linear'], ['zoom'], 10, 8.1, 18, 12.6],
+          'text-max-angle': 30,
+          'text-font': this.map.getLayoutProperty?.('road-label-simple', 'text-font')
+            || ['Khand Regular', 'Arial Unicode MS Regular'],
+          'symbol-placement': 'line',
+          'text-padding': 1,
+          'text-rotation-alignment': 'map',
+          'text-pitch-alignment': 'viewport',
+          'text-field': ['coalesce', ['get', 'name_en'], ['get', 'name']],
+          'text-letter-spacing': 0.01,
+        },
+        paint: {
+          'text-color': this.map.getPaintProperty?.('road-label-simple', 'text-color') || 'hsl(185, 3%, 47%)',
+          'text-halo-color': this.map.getPaintProperty?.('road-label-simple', 'text-halo-color') || 'hsl(185, 1%, 100%)',
+          'text-halo-width': this.map.getPaintProperty?.('road-label-simple', 'text-halo-width') ?? 1,
+        },
+      }, beforeId);
+    } catch (e) {
+      console.error('[map] failed adding pedestrian street layers', e);
+    }
   }
 
   private ensureUserLocationLayers() {
@@ -483,7 +574,9 @@ export class MapService {
   }
 
   setFavoriteKeys(keys: Set<string>) {
-    this.favoriteKeys = new Set(keys);
+    const next = new Set(keys);
+    if (this.sameKeySet(this.favoriteKeys, next)) return;
+    this.favoriteKeys = next;
     this.applyFilters();
     this.applyPaint();
   }
@@ -520,13 +613,22 @@ export class MapService {
       expr = ['==', ['literal', 1], 0];
     }
 
+    if (this.searchKeys) {
+      const searchList = Array.from(this.searchKeys);
+      if (searchList.length) {
+        expr = ['all', expr, ['in', ['get', 'PLACE_KEY'], ['literal', searchList]]];
+      } else {
+        expr = ['==', ['literal', 1], 0];
+      }
+    }
+
     if (this.getLayer('places')) {
       this.map.setFilter('places', expr);
     }
     this.applyPaint();
   }
 
-  /** Drop popup when the open place no longer passes category / action / favorites filters. */
+  /** Drop popup when the open place no longer passes category / action / favorites / search filters. */
   private closePopupIfFilteredOut(): void {
     if (!this.openPopupProps) return;
     if (!this.placePassesCurrentFilters(this.openPopupProps)) {
@@ -573,6 +675,21 @@ export class MapService {
       if (!key || !this.favoriteKeys.has(key)) return false;
     }
 
+    if (this.searchKeys) {
+      const key = String(props['PLACE_KEY'] || '');
+      if (!key || !this.searchKeys.has(key)) return false;
+    }
+
+    return true;
+  }
+
+  private sameKeySet(a: Set<string> | null, b: Set<string> | null): boolean {
+    if (a === b) return true;
+    if (!a || !b) return false;
+    if (a.size !== b.size) return false;
+    for (const k of a) {
+      if (!b.has(k)) return false;
+    }
     return true;
   }
 

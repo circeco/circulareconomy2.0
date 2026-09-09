@@ -44,6 +44,10 @@
   height: 100%;
 }
 
+.mapboxgl-popup {
+  z-index: 5;
+}
+
 .mapboxgl-popup-close-button { display: none; }
 .popup-header, .listing-header { display: flex; }
 .popup-header h4 { @include underline-accent-thiner($color-accent); }
