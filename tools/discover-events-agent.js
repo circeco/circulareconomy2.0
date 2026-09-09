@@ -124,6 +124,7 @@ const DEFAULT_CITY_SEED_URLS = {
     'https://www.stayhappening.com/e/l%C3%A5t-oss-lappa-stoppa-och-laga-E2ISYP28AF2',
     'https://biblioteket.stockholm.se/evenemang/repair-share-cafe-smycka-och-utforska-1',
     'https://stockholm.naturskyddsforeningen.se/2026/05/13/cafe-repet-lappa-laga-3/',
+    'https://loppiskartan.se/loppiskalender',
   ],
   turin: ['https://www.repaircafe.org/en/visit/'],
   uppsala: ['https://www.repaircafe.org/en/visit/'],
