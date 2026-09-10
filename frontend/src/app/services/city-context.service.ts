@@ -1,5 +1,5 @@
 import { inject, Injectable, signal } from '@angular/core';
-import { NavigationEnd, Router } from '@angular/router';
+import { NavigationEnd, Params, Router } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { toObservable } from '@angular/core/rxjs-interop';
 
@@ -60,7 +60,7 @@ export class CityContextService {
     const tree = this.router.parseUrl(this.router.url);
     const prevCity = tree.queryParams['city'];
     if (prevCity === cityId) return;
-    const next = { ...tree.queryParams, city: cityId };
+    const next: Params = { ...tree.queryParams, city: cityId };
     // Switching city should not keep a previous city's place/event deep-link.
     // Adding `city` to a URL that had none must keep an intentional `place`/`event`.
     if (prevCity) {
