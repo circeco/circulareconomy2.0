@@ -531,7 +531,7 @@
   .events-day-heading {
     display: block;
     margin: 0;
-    padding: 0 2px;
+    padding: 0;
     font-family: $font-bebas;
     font-size: 22px;
     font-weight: 400;
@@ -546,24 +546,47 @@
   .events-day-row {
     display: flex;
     flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    align-items: stretch;
     gap: 12px;
     overflow-x: auto;
     overflow-y: hidden;
     scroll-snap-type: x mandatory;
+    scroll-padding-inline: 0;
     -webkit-overflow-scrolling: touch;
     padding-bottom: 4px;
+    margin: 0;
     scrollbar-width: none;
 
     &::-webkit-scrollbar {
       display: none;
     }
+
+    /* One card: full width, no snap/centering leftover space (iOS Safari). */
+    &:not(:has(.event-card:nth-child(2))) {
+      overflow-x: hidden;
+      scroll-snap-type: none;
+    }
   }
 
   .event-card {
-    flex: 0 0 min(82vw, 320px);
+    box-sizing: border-box;
+    flex: 0 0 100%;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
     scroll-snap-align: start;
+    scroll-snap-stop: always;
     background: #ffffff;
     color: inherit;
+  }
+
+  /* Multiple cards: same left edge as singles; slight peek of the next card. */
+  .events-day-row:has(.event-card:nth-child(2)) .event-card {
+    flex-basis: calc(100% - 28px);
+    width: calc(100% - 28px);
+    max-width: calc(100% - 28px);
   }
 
   .events-empty {
