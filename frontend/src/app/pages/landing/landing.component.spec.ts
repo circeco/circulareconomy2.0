@@ -1,7 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { signal } from '@angular/core';
 import { of } from 'rxjs';
+
+import { CLEAR_FOCUS_QUERY_PARAMS } from '../../utils/clear-focus-query-params';
 
 import { LandingComponent } from './landing.component';
 import { EventsService } from '../../services/events.service';
@@ -68,6 +70,29 @@ describe('LandingComponent', () => {
     expect(component.eventsLoaded).toBeTrue();
     expect(component.events.length).toBe(0);
     expect(component.cityName()).toBe('Stockholm');
+  });
+
+  it('drops place on View map and keeps it only for goToMapWithPlace', () => {
+    const router = TestBed.inject(Router);
+    const nav = spyOn(router, 'navigate').and.resolveTo(true);
+
+    component.goToMapPage();
+    expect(nav).toHaveBeenCalledWith(['/atlas'], {
+      queryParams: CLEAR_FOCUS_QUERY_PARAMS,
+      queryParamsHandling: 'merge',
+    });
+
+    component.goToEventsPage();
+    expect(nav).toHaveBeenCalledWith(['/events'], {
+      queryParams: CLEAR_FOCUS_QUERY_PARAMS,
+      queryParamsHandling: 'merge',
+    });
+
+    component.goToMapWithPlace('four-vintage');
+    expect(nav).toHaveBeenCalledWith(['/atlas'], {
+      queryParams: { place: 'four-vintage', event: null },
+      queryParamsHandling: 'merge',
+    });
   });
 });
 

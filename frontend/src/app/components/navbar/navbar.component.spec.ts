@@ -99,4 +99,23 @@ describe('NavbarComponent', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.logo-dropdown')).toBeNull();
   });
+
+  it('drops stale place and event when opening Atlas while keeping city', async () => {
+    await goTo('/?city=milan&place=four-vintage&event=e1');
+    component.goToFromLogo('circular_atlas_demo');
+    await fixture.whenStable();
+    expect(router.url.startsWith('/atlas')).toBeTrue();
+    expect(router.url).toContain('city=milan');
+    expect(router.url).not.toContain('place=');
+    expect(router.url).not.toContain('event=');
+  });
+
+  it('drops stale place when going home from Atlas', async () => {
+    await goTo('/atlas?city=milan&place=four-vintage');
+    component.goHome();
+    await fixture.whenStable();
+    expect(router.url.split('?')[0]).toBe('/');
+    expect(router.url).toContain('city=milan');
+    expect(router.url).not.toContain('place=');
+  });
 });

@@ -133,6 +133,15 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
           this.pendingFocusPlaceId = placeId;
           this.pinnedPlaceCityId = this.cityContext.cityId();
           this.tryFocusPendingPlace();
+          return;
+        }
+        const wasPinned = !!this.pinnedPlaceCityId || !!this.pendingFocusPlaceId;
+        this.pendingFocusPlaceId = null;
+        this.pinnedPlaceCityId = null;
+        this.listingScrollPlaceId = null;
+        if (wasPinned) {
+          this.map.closePopup();
+          this.moveMapToSelectedCity(this.cityContext.cityId());
         }
       })
     );

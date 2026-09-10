@@ -58,8 +58,16 @@ export class CityContextService {
    */
   private mergeCityIntoCurrentUrl(cityId: string): void {
     const tree = this.router.parseUrl(this.router.url);
-    if (tree.queryParams['city'] === cityId) return;
-    tree.queryParams = { ...tree.queryParams, city: cityId };
+    const prevCity = tree.queryParams['city'];
+    if (prevCity === cityId) return;
+    const next = { ...tree.queryParams, city: cityId };
+    // Switching city should not keep a previous city's place/event deep-link.
+    // Adding `city` to a URL that had none must keep an intentional `place`/`event`.
+    if (prevCity) {
+      delete next['place'];
+      delete next['event'];
+    }
+    tree.queryParams = next;
     this.router.navigateByUrl(tree, { replaceUrl: true });
   }
 

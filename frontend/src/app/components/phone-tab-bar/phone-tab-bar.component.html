@@ -5,6 +5,7 @@
     [class.active]="isActive(tab)"
     [class.disabled]="tab.disabled"
     [routerLink]="tab.disabled ? null : tab.link"
+    [queryParams]="clearFocusQueryParams"
     [attr.aria-label]="tab.label"
     [attr.aria-current]="isActive(tab) ? 'page' : null"
     [attr.aria-disabled]="tab.disabled"

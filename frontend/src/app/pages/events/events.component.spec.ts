@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { signal } from '@angular/core';
-import { of } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 
 import { EventsComponent } from './events.component';
 import { EventsService, EventItem } from '../../services/events.service';
@@ -131,5 +131,49 @@ describe('EventsComponent empty copy', () => {
     component.favoritesFilterActive.set(true);
     fixture.detectChanges();
     expect(emptyText(fixture)).toBe('No events saved as favourite');
+  });
+});
+
+describe('EventsComponent event query param', () => {
+  it('clears selectedEventId when event is absent even if date remains', async () => {
+    const queryParams$ = new BehaviorSubject<Record<string, string>>({
+      date: '2026-09-15',
+      event: 'e1',
+    });
+
+    await TestBed.configureTestingModule({
+      imports: [EventsComponent],
+      providers: [
+        provideRouter([]),
+        { provide: EventsService, useValue: { events$: of([sampleEvent()]) } },
+        { provide: ActivatedRoute, useValue: { queryParams: queryParams$.asObservable() } },
+        { provide: AuthService, useClass: AuthServiceStub },
+        { provide: EventFavoritesService, useClass: EventFavoritesServiceStub },
+        {
+          provide: CityContextService,
+          useValue: {
+            cityId$: of('stockholm'),
+            cityId: signal('stockholm'),
+            cityName: signal('Stockholm'),
+          },
+        },
+        {
+          provide: CitiesService,
+          useValue: {
+            cities$: of([{ id: 'stockholm', name: 'Stockholm' }]),
+            list: signal([{ id: 'stockholm', name: 'Stockholm' }]),
+          },
+        },
+      ],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(EventsComponent);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+    expect(component.selectedEventId()).toBe('e1');
+
+    queryParams$.next({ date: '2026-09-15' });
+    expect(component.selectedEventId()).toBeNull();
+    expect(component.selectedDateTimes().size).toBe(1);
   });
 });

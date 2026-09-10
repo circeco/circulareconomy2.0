@@ -22,6 +22,7 @@ import {
 } from '../../data/taxonomy';
 import { websiteDisplayLabel as formatWebsiteDisplayLabel } from '../../utils/website-display';
 import { resolveCityDisplayName } from '../../utils/city-display-name';
+import { CLEAR_FOCUS_QUERY_PARAMS } from '../../utils/clear-focus-query-params';
 
 @Component({
   selector: 'landing-page',
@@ -203,7 +204,10 @@ export class LandingComponent implements AfterViewInit, AfterViewChecked, OnDest
   }
 
   goToMapPage(): void {
-    this.router.navigate(['/atlas'], { queryParamsHandling: 'merge' });
+    this.router.navigate(['/atlas'], {
+      queryParams: CLEAR_FOCUS_QUERY_PARAMS,
+      queryParamsHandling: 'merge',
+    });
   }
 
   toggleActionCard(id: string): void {
@@ -211,21 +215,33 @@ export class LandingComponent implements AfterViewInit, AfterViewChecked, OnDest
   }
 
   goToMapWithPlace(placeId: string): void {
-    this.router.navigate(['/atlas'], { queryParams: { place: placeId }, queryParamsHandling: 'merge' });
+    this.router.navigate(['/atlas'], {
+      queryParams: { place: placeId, event: null },
+      queryParamsHandling: 'merge',
+    });
   }
 
   goToEventsPage(): void {
-    this.router.navigate(['/events'], { queryParamsHandling: 'merge' });
+    this.router.navigate(['/events'], {
+      queryParams: CLEAR_FOCUS_QUERY_PARAMS,
+      queryParamsHandling: 'merge',
+    });
   }
 
   goToEventPage(event: EventItem): void {
     const d = event.date;
     if (!(d instanceof Date) || Number.isNaN(d.getTime())) {
-      this.router.navigate(['/events'], { queryParams: { event: event.id }, queryParamsHandling: 'merge' });
+      this.router.navigate(['/events'], {
+        queryParams: { event: event.id, place: null },
+        queryParamsHandling: 'merge',
+      });
       return;
     }
     const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    this.router.navigate(['/events'], { queryParams: { date: dateStr, event: event.id }, queryParamsHandling: 'merge' });
+    this.router.navigate(['/events'], {
+      queryParams: { date: dateStr, event: event.id, place: null },
+      queryParamsHandling: 'merge',
+    });
   }
 
   actionTagLabel(tag: string): string {

@@ -8,6 +8,7 @@ import { CityContextService } from '../../services/city-context.service';
 import { CitiesService } from '../../services/cities.service';
 import { PhoneChromeService } from '../../services/phone-chrome.service';
 import { resolveCityDisplayName } from '../../utils/city-display-name';
+import { CLEAR_FOCUS_QUERY_PARAMS } from '../../utils/clear-focus-query-params';
 
 @Component({
   selector: 'app-phone-top-bar',
@@ -21,6 +22,7 @@ export class PhoneTopBarComponent {
   private cities = inject(CitiesService);
   readonly cityContext = inject(CityContextService);
   readonly chrome = inject(PhoneChromeService);
+  readonly clearFocusQueryParams = CLEAR_FOCUS_QUERY_PARAMS;
 
   private readonly path = toSignal(
     this.router.events.pipe(

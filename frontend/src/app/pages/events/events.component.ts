@@ -138,6 +138,8 @@ export class EventsComponent implements AfterViewChecked {
               hasExplicitDateFilter = true;
             }
           }
+        } else {
+          this.selectedEventId.set(null);
         }
         if (hasExplicitDateFilter && dateToUse) {
           const dayStart = new Date(dateToUse.getFullYear(), dateToUse.getMonth(), dateToUse.getDate());
@@ -149,7 +151,6 @@ export class EventsComponent implements AfterViewChecked {
           this.selectedDateTimes.set(new Set());
           this.initialCalendarSelection = [];
           this.initialCalendarViewDate = null;
-          if (!eventId) this.selectedEventId.set(null);
         }
       });
 
