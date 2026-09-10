@@ -7,6 +7,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { CityContextService } from '../../services/city-context.service';
 import { CitiesService } from '../../services/cities.service';
 import { PhoneChromeService } from '../../services/phone-chrome.service';
+import { resolveCityDisplayName } from '../../utils/city-display-name';
 
 @Component({
   selector: 'app-phone-top-bar',
@@ -41,9 +42,11 @@ export class PhoneTopBarComponent {
 
   readonly cityLabel = computed(() => {
     const id = this.cityContext.cityId();
-    const fromList = this.cities.list().find((c) => c.id === id)?.name;
-    if (fromList) return fromList;
-    return this.cityContext.cityName() || id;
+    return resolveCityDisplayName(
+      id,
+      this.cities.list().find((c) => c.id === id)?.name,
+      this.cityContext.cityName()
+    );
   });
 
   openCity(): void {

@@ -93,9 +93,9 @@ describe('EventsComponent empty copy', () => {
     expect(emptyText(fixture)).toBe('No upcoming circular events in Stockholm.');
   });
 
-  it('falls back to cityId when the list and cached name are empty', async () => {
+  it('formats cityId for display when the list and cached name are empty', async () => {
     const { fixture } = await createComponent({ cityId: 'stockholm', cities: [] });
-    expect(emptyText(fixture)).toBe('No upcoming circular events in stockholm.');
+    expect(emptyText(fixture)).toBe('No upcoming circular events in Stockholm.');
   });
 
   it('keeps the filters sentence when a date is selected and nothing matches', async () => {

@@ -20,6 +20,7 @@ import {
   canonicalizeSectorCategories,
 } from '../../data/taxonomy';
 import { websiteDisplayLabel as formatWebsiteDisplayLabel } from '../../utils/website-display';
+import { resolveCityDisplayName } from '../../utils/city-display-name';
 
 interface EventCategoryOption {
   id: string;
@@ -60,12 +61,14 @@ export class EventsComponent implements AfterViewChecked {
 
   events = signal<EventItem[]>([]);
   eventDatesForCalendar: Date[] = [];
-  /** Same fallback as PhoneTopBar: cached list, then stored name, then cityId. */
+  /** Same fallback as PhoneTopBar: cached list, then stored name, then formatted cityId. */
   readonly cityName = computed(() => {
     const id = this.cityContext.cityId();
-    const fromList = this.cities.list().find((c) => c.id === id)?.name;
-    if (fromList) return fromList;
-    return this.cityContext.cityName() || id;
+    return resolveCityDisplayName(
+      id,
+      this.cities.list().find((c) => c.id === id)?.name,
+      this.cityContext.cityName()
+    );
   });
   private lastEventsCityId = '';
 

@@ -113,8 +113,8 @@ describe('LandingComponent city name fallback', () => {
     expect(component.cityName()).toBe('Stockholm');
   });
 
-  it('falls back to cityId when the list and cached name are empty', async () => {
+  it('formats cityId for display when the list and cached name are empty', async () => {
     const component = await createLanding({ cityId: 'stockholm', cities: [] });
-    expect(component.cityName()).toBe('stockholm');
+    expect(component.cityName()).toBe('Stockholm');
   });
 });
