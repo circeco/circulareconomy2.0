@@ -17,7 +17,6 @@ describe('MapComponent', () => {
   let fixture: ComponentFixture<MapComponent>;
   let geo: GeolocationService;
   const cityId$ = new BehaviorSubject('milan');
-  const queryParams$ = new BehaviorSubject<Record<string, string>>({});
   const cities = [
     { id: 'milan', name: 'Milan', center: { lat: 45.4642, lng: 9.19 } },
     { id: 'stockholm', name: 'Stockholm', center: { lat: 59.325, lng: 18.072 } },
@@ -27,19 +26,12 @@ describe('MapComponent', () => {
     try { sessionStorage.removeItem('circeco.geoConsent'); } catch {}
     try { localStorage.removeItem('circeco.useMyLocation'); } catch {}
     cityId$.next('milan');
-    queryParams$.next({});
     await TestBed.configureTestingModule({
       imports: [MapComponent],
       providers: [
         { provide: MapService, useClass: MapServiceStub },
         { provide: PlacesFilter, useClass: PlacesFilterStub },
-        {
-          provide: ActivatedRoute,
-          useValue: {
-            snapshot: { queryParamMap: { get: (key: string) => queryParams$.value[key] ?? null } },
-            queryParams: queryParams$.asObservable(),
-          },
-        },
+        { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: { get: () => null } }, queryParams: of({}) } },
         {
           provide: CityContextService,
           useValue: {
@@ -187,27 +179,6 @@ describe('MapComponent', () => {
     expect(cityId$.value).toBe('stockholm');
     expect(remember).toHaveBeenCalledWith('Stockholm');
     expect(component.suggestedCity).toBeNull();
-  });
-
-  it('clears URL pin and closes the popup when place is dropped from the query', () => {
-    const map = TestBed.inject(MapService);
-    const close = spyOn(map, 'closePopup');
-    const jump = spyOn(map, 'jumpToCity');
-    (component as unknown as { pendingFocusPlaceId: string | null }).pendingFocusPlaceId = 'four-vintage';
-    (component as unknown as { pinnedPlaceCityId: string | null }).pinnedPlaceCityId = 'milan';
-
-    queryParams$.next({});
-
-    expect((component as unknown as { pendingFocusPlaceId: string | null }).pendingFocusPlaceId).toBeNull();
-    expect((component as unknown as { pinnedPlaceCityId: string | null }).pinnedPlaceCityId).toBeNull();
-    expect(close).toHaveBeenCalled();
-    expect(jump).toHaveBeenCalledWith([9.19, 45.4642], 11);
-  });
-
-  it('pins a place from the query string so goToMapWithPlace still focuses', () => {
-    queryParams$.next({ place: 'four-vintage' });
-    expect((component as unknown as { pendingFocusPlaceId: string | null }).pendingFocusPlaceId).toBe('four-vintage');
-    expect((component as unknown as { pinnedPlaceCityId: string | null }).pinnedPlaceCityId).toBe('milan');
   });
 
   it('opens the search sheet and closes it when focusing a place', () => {

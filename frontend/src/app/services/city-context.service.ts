@@ -7,6 +7,22 @@ const LS_KEY = 'circeco.cityId';
 const LS_NAME_KEY = 'circeco.cityName';
 const DEFAULT_CITY_ID = 'stockholm';
 
+/**
+ * Merge `city` into query params. Switching city drops stale `place`/`event`.
+ * Adding `city` when it was missing keeps an intentional deep-link.
+ * Returns `null` when the URL already has this city.
+ */
+export function mergeCityQueryParams(current: Params, cityId: string): Params | null {
+  const prevCity = current['city'];
+  if (prevCity === cityId) return null;
+  const next: Params = { ...current, city: cityId };
+  if (prevCity) {
+    delete next['place'];
+    delete next['event'];
+  }
+  return next;
+}
+
 function readStoredCityId(): string {
   try {
     return String(localStorage.getItem(LS_KEY) || '').trim().toLowerCase();
@@ -58,15 +74,8 @@ export class CityContextService {
    */
   private mergeCityIntoCurrentUrl(cityId: string): void {
     const tree = this.router.parseUrl(this.router.url);
-    const prevCity = tree.queryParams['city'];
-    if (prevCity === cityId) return;
-    const next: Params = { ...tree.queryParams, city: cityId };
-    // Switching city should not keep a previous city's place/event deep-link.
-    // Adding `city` to a URL that had none must keep an intentional `place`/`event`.
-    if (prevCity) {
-      delete next['place'];
-      delete next['event'];
-    }
+    const next = mergeCityQueryParams(tree.queryParams, cityId);
+    if (!next) return;
     tree.queryParams = next;
     this.router.navigateByUrl(tree, { replaceUrl: true });
   }
