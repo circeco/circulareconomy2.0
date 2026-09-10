@@ -8,7 +8,6 @@ import { EventsService } from '../../services/events.service';
 import { FeaturedPlacesService } from '../../services/featured-places.service';
 import { AuthService } from '../../services/auth.service';
 import { EventFavoritesService } from '../../services/event-favorites.service';
-import { FavoritesService } from '../../services/favorites.service';
 import { SearchService } from '../../services/search.service';
 import { CityContextService } from '../../services/city-context.service';
 import { CitiesService } from '../../services/cities.service';
@@ -26,13 +25,11 @@ describe('LandingComponent', () => {
         {
           provide: FeaturedPlacesService,
           useValue: {
-            getFeaturedPlaces: () => of([]),
             getAllPlaces: () => of([]),
           },
         },
         { provide: AuthService, useValue: { user$: of(null), openModal: () => {} } },
         { provide: EventFavoritesService, useValue: { toggle: () => {} } },
-        { provide: FavoritesService, useValue: {} },
         { provide: SearchService, useValue: { query: signal(''), setQuery: () => {} } },
         { provide: CityContextService, useValue: { cityId: signal('stockholm'), cityId$: of('stockholm') } },
         { provide: CitiesService, useValue: { cities$: of([{ id: 'stockholm', name: 'Stockholm' }]) } },

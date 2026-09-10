@@ -6,19 +6,19 @@ import {
   NgZone,
   signal
 } from '@angular/core';
-import { CommonModule, AsyncPipe, NgIf } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { Router, NavigationEnd, RouterLink } from '@angular/router';
 import { filter } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Observable } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
-import { SearchService } from '../../services/search.service';
 import { ViewportService } from '../../services/viewport.service';
 import { GeolocationService } from '../../services/geolocation.service';
 
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [CommonModule, NgIf, AsyncPipe, RouterLink],
+  imports: [CommonModule, RouterLink],
   templateUrl: './navbar.component.html',
   styleUrls: ['./navbar.component.scss'],
 })
@@ -39,7 +39,6 @@ export class NavbarComponent implements AfterViewInit, OnDestroy {
 
   constructor(
     public auth: AuthService,
-    public searchService: SearchService,
     public geo: GeolocationService,
     private zone: NgZone,
     private router: Router,
@@ -48,7 +47,10 @@ export class NavbarComponent implements AfterViewInit, OnDestroy {
     this.admin$ = this.auth.isAdmin();
     // Watch route changes to toggle landing/atlas mode and (re)wire scrollspy
     this.router.events
-      .pipe(filter(e => e instanceof NavigationEnd))
+      .pipe(
+        filter(e => e instanceof NavigationEnd),
+        takeUntilDestroyed()
+      )
       .subscribe(() => {
         this.updateModeFromUrl();
         this.destroyScrollSpy();
@@ -196,8 +198,6 @@ export class NavbarComponent implements AfterViewInit, OnDestroy {
       this.router.navigate(['/'], { queryParamsHandling: 'merge' });
     }
   }
-
-  private scrollToSection(id: string): void {
     const target = document.getElementById(id);
     if (!target) return;
     const rect = target.getBoundingClientRect();
@@ -223,15 +223,6 @@ export class NavbarComponent implements AfterViewInit, OnDestroy {
     }
     if (url.startsWith('/admin')) return 'CIRCECO';
     return 'CIRCULAR ATLAS: Find circular solutions in your area!';
-  }
-
-  showSearchBar(): boolean {
-    return false;
-  }
-
-  onSearchInput(ev: Event): void {
-    const value = (ev.target as HTMLInputElement)?.value ?? '';
-    this.searchService.setQuery(value);
   }
 
   openLogin(): void { this.auth.openModal(); }

@@ -112,9 +112,9 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     this.filter.setCategories(this.enabledCategories);
 
     // keep map filter in sync with categories (map-side work is fine outside zone)
-    this.filter.enabledCategories$.subscribe(set => this.map.setCategoryFilter(set));
-    this.filter.enabledActionTagsState$.subscribe(set => this.map.setActionTagFilter(set));
     this.subs.push(
+      this.filter.enabledCategories$.subscribe(set => this.map.setCategoryFilter(set)),
+      this.filter.enabledActionTagsState$.subscribe(set => this.map.setActionTagFilter(set)),
       this.filter.searchMatchKeys$.subscribe((keys) => this.map.setSearchKeys(keys))
     );
 
@@ -168,31 +168,35 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     );
 
     // Wait until map & layers are rendered at least once
-    this.map.onReady().subscribe(() => {
-      this.tryFocusPendingPlace();
+    this.subs.push(
+      this.map.onReady().subscribe(() => {
+        this.tryFocusPendingPlace();
 
-      // 1) Feed visible features into the store — run INSIDE Angular so UI updates immediately
-      this.map.queryRenderedFeatures$().subscribe(fs => {
-        this.zone.run(() => {
-          if (!this.cityPlacesReceived) return;
-          this.listingsReady = true;
-          this.filter.setAllFeatures(fs as any);
-          this.cdr.markForCheck();
-        });
-      });
+        // 1) Feed visible features into the store — run INSIDE Angular so UI updates immediately
+        this.subs.push(
+          this.map.queryRenderedFeatures$().subscribe(fs => {
+            this.zone.run(() => {
+              if (!this.cityPlacesReceived) return;
+              this.listingsReady = true;
+              this.filter.setAllFeatures(fs as any);
+              this.cdr.markForCheck();
+            });
+          })
+        );
 
-      // 2) Open popup on dot click (places or favorites)
-      this.map.onFeatureClick().subscribe(({ feature, coords }) => {
-        this.zone.run(() => {
-          const props = this.propsOf(feature as any);
-          const content = this.buildPopupContent({ ...(feature as any), properties: props });
-          this.map.openPopup(coords, content, props as Record<string, unknown>);
-          this.cdr.markForCheck();
-        });
-      });
-
-      // Category filter stream already wired in ngOnInit
-    });
+        // 2) Open popup on dot click (places or favorites)
+        this.subs.push(
+          this.map.onFeatureClick().subscribe(({ feature, coords }) => {
+            this.zone.run(() => {
+              const props = this.propsOf(feature as any);
+              const content = this.buildPopupContent({ ...(feature as any), properties: props });
+              this.map.openPopup(coords, content, props as Record<string, unknown>);
+              this.cdr.markForCheck();
+            });
+          })
+        );
+      })
+    );
 
     this.subs.push(
       this.cityContext.cityId$.subscribe((cityId) => {
@@ -235,15 +239,17 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
     );
 
     // 3) Update the displayed list when filter output changes — run INSIDE Angular
-    this.filter.filteredFeatures$.subscribe(list => {
-      this.zone.run(() => {
-        this.filteredList = this.listingsReady ? list : [];
-        this.cdr.markForCheck();
-        setTimeout(() => this.mountListHearts(), 0);
-        this.tryFocusPendingPlace();
-        this.scrollListingToFocusedPlace();
-      });
-    });
+    this.subs.push(
+      this.filter.filteredFeatures$.subscribe(list => {
+        this.zone.run(() => {
+          this.filteredList = this.listingsReady ? list : [];
+          this.cdr.markForCheck();
+          setTimeout(() => this.mountListHearts(), 0);
+          this.tryFocusPendingPlace();
+          this.scrollListingToFocusedPlace();
+        });
+      })
+    );
 
     // Favourites events
     window.addEventListener('favorites:update', this.onFavUpdate);

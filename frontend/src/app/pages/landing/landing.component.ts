@@ -1,10 +1,5 @@
 import { FooterComponent } from '../../components/footer/footer.component';
-import { Component, DestroyRef, inject, signal } from '@angular/core';
-import { AfterViewInit, AfterViewChecked } from '@angular/core';
-import { OnDestroy } from '@angular/core';
-import { NgZone } from '@angular/core';
-import { ElementRef } from '@angular/core';
-import { ViewChild } from '@angular/core';
+import { AfterViewChecked, AfterViewInit, Component, DestroyRef, ElementRef, inject, NgZone, OnDestroy, signal, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { combineLatest, firstValueFrom } from 'rxjs';
@@ -14,7 +9,6 @@ import { EventsService, EventItem } from '../../services/events.service';
 import { FeaturedPlacesService, FeaturedPlace } from '../../services/featured-places.service';
 import { AuthService } from '../../services/auth.service';
 import { EventFavoritesService } from '../../services/event-favorites.service';
-import { FavoritesService } from '../../services/favorites.service';
 import { SearchService } from '../../services/search.service';
 import { CityContextService } from '../../services/city-context.service';
 import { CitiesService } from '../../services/cities.service';
@@ -66,7 +60,6 @@ export class LandingComponent implements AfterViewInit, AfterViewChecked, OnDest
     private featuredPlacesService: FeaturedPlacesService,
     public auth: AuthService,
     public eventFavorites: EventFavoritesService,
-    private favoritesService: FavoritesService,
     public searchService: SearchService,
     private cityContext: CityContextService,
     private cities: CitiesService,
@@ -85,14 +78,14 @@ export class LandingComponent implements AfterViewInit, AfterViewChecked, OnDest
       .subscribe(([cityId, cities]) => {
         this.cityName = cities.find((c) => c.id === cityId)?.name || '';
       });
-    this.featuredPlacesService.getFeaturedPlaces().subscribe((places) => {
-      this.featuredPlaces = places;
-      this.lastClampMeasureKey = '';
-      setTimeout(() => this.mountPlaceHearts(), 0);
-    });
-    this.featuredPlacesService.getAllPlaces().subscribe((places) => {
-      this.allPlaces = places;
-    });
+    this.featuredPlacesService.getAllPlaces()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((places) => {
+        this.allPlaces = places;
+        this.featuredPlaces = places.slice(0, 4);
+        this.lastClampMeasureKey = '';
+        setTimeout(() => this.mountPlaceHearts(), 0);
+      });
   }
 
   ngAfterViewInit(): void {
