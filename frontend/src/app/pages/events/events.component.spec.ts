@@ -36,6 +36,7 @@ describe('EventsComponent empty copy', () => {
     cityId?: string;
     events?: EventItem[];
     cities?: { id: string; name: string }[];
+    cachedCityName?: string;
   }): Promise<{ fixture: ComponentFixture<EventsComponent>; component: EventsComponent }> {
     const cityId = opts?.cityId ?? 'stockholm';
     const cities = opts?.cities ?? [
@@ -53,9 +54,13 @@ describe('EventsComponent empty copy', () => {
         { provide: EventFavoritesService, useClass: EventFavoritesServiceStub },
         {
           provide: CityContextService,
-          useValue: { cityId$: of(cityId), cityId: signal(cityId) },
+          useValue: {
+            cityId$: of(cityId),
+            cityId: signal(cityId),
+            cityName: signal(opts?.cachedCityName ?? ''),
+          },
         },
-        { provide: CitiesService, useValue: { cities$: of(cities) } },
+        { provide: CitiesService, useValue: { cities$: of(cities), list: signal(cities) } },
       ],
     }).compileComponents();
 
@@ -77,6 +82,20 @@ describe('EventsComponent empty copy', () => {
   it('uses the CitiesService display name for the selected cityId', async () => {
     const { fixture } = await createComponent({ cityId: 'milan' });
     expect(emptyText(fixture)).toBe('No upcoming circular events in Milan.');
+  });
+
+  it('falls back to the cached cityContext name when the cities list is empty', async () => {
+    const { fixture } = await createComponent({
+      cityId: 'stockholm',
+      cities: [],
+      cachedCityName: 'Stockholm',
+    });
+    expect(emptyText(fixture)).toBe('No upcoming circular events in Stockholm.');
+  });
+
+  it('falls back to cityId when the list and cached name are empty', async () => {
+    const { fixture } = await createComponent({ cityId: 'stockholm', cities: [] });
+    expect(emptyText(fixture)).toBe('No upcoming circular events in stockholm.');
   });
 
   it('keeps the filters sentence when a date is selected and nothing matches', async () => {

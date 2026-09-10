@@ -60,7 +60,13 @@ export class EventsComponent implements AfterViewChecked {
 
   events = signal<EventItem[]>([]);
   eventDatesForCalendar: Date[] = [];
-  readonly cityName = signal('');
+  /** Same fallback as PhoneTopBar: cached list, then stored name, then cityId. */
+  readonly cityName = computed(() => {
+    const id = this.cityContext.cityId();
+    const fromList = this.cities.list().find((c) => c.id === id)?.name;
+    if (fromList) return fromList;
+    return this.cityContext.cityName() || id;
+  });
   private lastEventsCityId = '';
 
   readonly favoriteEventDatesForCalendar = computed(() => {
@@ -85,10 +91,9 @@ export class EventsComponent implements AfterViewChecked {
     private router: Router,
     private route: ActivatedRoute
   ) {
-    combineLatest([this.cityContext.cityId$, this.cities.cities$])
+    this.cityContext.cityId$
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(([cityId, cities]) => {
-        this.cityName.set(cities.find((c) => c.id === cityId)?.name || '');
+      .subscribe((cityId) => {
         // New city → clear date filter so we don't show an empty day from the previous city.
         if (this.lastEventsCityId && this.lastEventsCityId !== cityId) {
           this.selectedDateTimes.set(new Set());

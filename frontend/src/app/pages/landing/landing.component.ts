@@ -1,8 +1,8 @@
 import { FooterComponent } from '../../components/footer/footer.component';
-import { AfterViewChecked, AfterViewInit, Component, DestroyRef, ElementRef, inject, NgZone, OnDestroy, signal, ViewChild } from '@angular/core';
+import { AfterViewChecked, AfterViewInit, Component, computed, DestroyRef, ElementRef, inject, NgZone, OnDestroy, signal, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { combineLatest, firstValueFrom } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DEMO_VIDEO_URL } from '../../config/media';
 import { EventsService, EventItem } from '../../services/events.service';
@@ -36,7 +36,13 @@ export class LandingComponent implements AfterViewInit, AfterViewChecked, OnDest
   demoUrl = DEMO_VIDEO_URL;
   events: EventItem[] = [];
   eventsLoaded = false;
-  cityName = '';
+  /** Same fallback as PhoneTopBar: cached list, then stored name, then cityId. */
+  readonly cityName = computed(() => {
+    const id = this.cityContext.cityId();
+    const fromList = this.cities.list().find((c) => c.id === id)?.name;
+    if (fromList) return fromList;
+    return this.cityContext.cityName() || id;
+  });
   featuredPlaces: FeaturedPlace[] = [];
   allPlaces: FeaturedPlace[] = [];
   allEvents: EventItem[] = [];
@@ -73,11 +79,6 @@ export class LandingComponent implements AfterViewInit, AfterViewChecked, OnDest
       this.eventsLoaded = true;
       this.lastClampMeasureKey = '';
     });
-    combineLatest([this.cityContext.cityId$, this.cities.cities$])
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(([cityId, cities]) => {
-        this.cityName = cities.find((c) => c.id === cityId)?.name || '';
-      });
     this.featuredPlacesService.getAllPlaces()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((places) => {

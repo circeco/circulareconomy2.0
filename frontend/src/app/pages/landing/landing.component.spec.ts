@@ -31,8 +31,21 @@ describe('LandingComponent', () => {
         { provide: AuthService, useValue: { user$: of(null), openModal: () => {} } },
         { provide: EventFavoritesService, useValue: { toggle: () => {} } },
         { provide: SearchService, useValue: { query: signal(''), setQuery: () => {} } },
-        { provide: CityContextService, useValue: { cityId: signal('stockholm'), cityId$: of('stockholm') } },
-        { provide: CitiesService, useValue: { cities$: of([{ id: 'stockholm', name: 'Stockholm' }]) } },
+        {
+          provide: CityContextService,
+          useValue: {
+            cityId: signal('stockholm'),
+            cityId$: of('stockholm'),
+            cityName: signal(''),
+          },
+        },
+        {
+          provide: CitiesService,
+          useValue: {
+            cities$: of([{ id: 'stockholm', name: 'Stockholm' }]),
+            list: signal([{ id: 'stockholm', name: 'Stockholm' }]),
+          },
+        },
       ]
     })
     .overrideComponent(LandingComponent, {
@@ -54,6 +67,54 @@ describe('LandingComponent', () => {
   it('names the selected city in the upcoming-events empty note', () => {
     expect(component.eventsLoaded).toBeTrue();
     expect(component.events.length).toBe(0);
-    expect(component.cityName).toBe('Stockholm');
+    expect(component.cityName()).toBe('Stockholm');
+  });
+});
+
+describe('LandingComponent city name fallback', () => {
+  async function createLanding(opts: {
+    cityId?: string;
+    cities?: { id: string; name: string }[];
+    cachedCityName?: string;
+  }): Promise<LandingComponent> {
+    const cityId = opts.cityId ?? 'stockholm';
+    const cities = opts.cities ?? [];
+
+    await TestBed.configureTestingModule({
+      imports: [LandingComponent],
+      providers: [
+        provideRouter([]),
+        { provide: EventsService, useValue: { events$: of([]) } },
+        { provide: FeaturedPlacesService, useValue: { getAllPlaces: () => of([]) } },
+        { provide: AuthService, useValue: { user$: of(null), openModal: () => {} } },
+        { provide: EventFavoritesService, useValue: { toggle: () => {} } },
+        { provide: SearchService, useValue: { query: signal(''), setQuery: () => {} } },
+        {
+          provide: CityContextService,
+          useValue: {
+            cityId: signal(cityId),
+            cityId$: of(cityId),
+            cityName: signal(opts.cachedCityName ?? ''),
+          },
+        },
+        { provide: CitiesService, useValue: { cities$: of(cities), list: signal(cities) } },
+      ],
+    })
+      .overrideComponent(LandingComponent, { set: { template: '<div>landing-test</div>' } })
+      .compileComponents();
+
+    const fixture = TestBed.createComponent(LandingComponent);
+    fixture.detectChanges();
+    return fixture.componentInstance;
+  }
+
+  it('falls back to the cached cityContext name when the cities list is empty', async () => {
+    const component = await createLanding({ cities: [], cachedCityName: 'Stockholm' });
+    expect(component.cityName()).toBe('Stockholm');
+  });
+
+  it('falls back to cityId when the list and cached name are empty', async () => {
+    const component = await createLanding({ cityId: 'stockholm', cities: [] });
+    expect(component.cityName()).toBe('stockholm');
   });
 });
