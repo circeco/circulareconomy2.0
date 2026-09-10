@@ -25,11 +25,18 @@ const {
   inferActionTags,
   confidenceForEvent,
   createEventMemoryLookup,
-  blockedDomainsFromCity,
+  envBlockDomains,
   isBlockedHost,
   hostFromUrl,
   matchEventGeography,
 } = require('./lib/event-discovery-common');
+const {
+  MAX_QUERIES_HARD_CAP,
+  queryPenaltyFor,
+  queryYieldToObject,
+  resolveEventDiscoveryPlan,
+  seedId,
+} = require('./lib/event-discovery-queries');
 
 const PROJECT_ID = process.env.FIREBASE_PROJECT_ID || 'circeco-bf511';
 const CITY_ALIASES = {
@@ -42,96 +49,6 @@ const CITY_ALIASES = {
 };
 const USER_AGENT = 'circeco-discovery-events-agent/1.0 (+https://github.com/circeco/circulareconomy2.0)';
 const MIN_CONFIDENCE_AFTER_MEMORY = 0.52;
-
-const DEFAULT_CITY_QUERIES = {
-  milan: [
-    'repair cafe Milano',
-    'mercatino dell usato Milano',
-    'mercatone antiquariato Navigli 2026',
-    'swap party Milano',
-    'economia circolare evento Milano',
-    'laboratorio di riparazione Milano evento',
-    'zero waste Milano evento',
-    'baratto Milano evento',
-    'vintage market Milano',
-  ],
-  stockholm: [
-    'repair cafe Stockholm',
-    'repair café Stockholm',
-    'loppis Stockholm evenemang',
-    'bakluckeloppis Stockholm',
-    'återbruk evenemang Stockholm',
-    'lappa laga Stockholm',
-    'circular economy event Stockholm',
-    'fixit clinic Stockholm',
-  ],
-  turin: [
-    'repair cafe Torino',
-    'mercatino dell usato Torino',
-    'swap party Torino',
-    'economia circolare evento Torino',
-  ],
-  uppsala: [
-    'repair cafe Uppsala',
-    'loppis Uppsala evenemang',
-    'återbruk Uppsala',
-    'bytfest Uppsala',
-  ],
-  malmo: [
-    'repair cafe Malmö',
-    'repair café Malmö',
-    'loppis Malmö evenemang',
-    'återbruk Malmö',
-    'bytfest Malmö',
-    'circular economy event Malmö',
-  ],
-  goteborg: [
-    'repair cafe Göteborg',
-    'repair café Göteborg',
-    'loppis Göteborg evenemang',
-    'återbruk Göteborg',
-    'bytfest Göteborg',
-    'circular economy event Gothenburg',
-  ],
-  lund: [
-    'repair cafe Lund',
-    'loppis Lund evenemang',
-    'återbruk Lund',
-    'bytfest Lund',
-  ],
-};
-
-/**
- * Proposed high-signal pages (IT/SV calendars + hubs). Override via
- * cities/{id}.discovery.eventSeedUrls when needed.
- */
-const DEFAULT_CITY_SEED_URLS = {
-  milan: [
-    'https://labbaronarepaircafe.com/',
-    'https://www.milanofree.it/milano/eventi/mercatone-dellantiquariato-sui-navigli-calendario-2026-orari-e-come-arrivare.html',
-    'https://www.pulcienonsolo.it/',
-    'https://swapinthecitymilano.it/',
-    'https://www.stayhappening.com/s/riparazione-milano',
-    'https://wundermrkt.com/',
-    'https://wundermrkt.com/tutti-gli-eventi/',
-    'https://remiramarket.com/events',
-    'https://www.bovisattiva.org/events/mercatini-vintage-in-bovisa-e-dergano',
-    'https://scripomarket.com/evento/il-mercatino-di-via-armorari-cordusio-milano-4/',
-    'https://www.vibeevents.it/mercatini-milano/',
-  ],
-  stockholm: [
-    'https://somo.social/sv/e/bakluckeloppis-i-vartahamnen-905',
-    'https://www.stayhappening.com/e/l%C3%A5t-oss-lappa-stoppa-och-laga-E2ISYP28AF2',
-    'https://biblioteket.stockholm.se/evenemang/repair-share-cafe-smycka-och-utforska-1',
-    'https://stockholm.naturskyddsforeningen.se/2026/05/13/cafe-repet-lappa-laga-3/',
-    'https://loppiskartan.se/loppiskalender',
-  ],
-  turin: ['https://www.repaircafe.org/en/visit/'],
-  uppsala: ['https://www.repaircafe.org/en/visit/'],
-  malmo: ['https://www.repaircafe.org/en/visit/'],
-  goteborg: ['https://www.repaircafe.org/en/visit/'],
-  lund: ['https://www.repaircafe.org/en/visit/'],
-};
 
 const MONTHS = {
   january: 1, jan: 1, gennaio: 1, januari: 1,
@@ -166,13 +83,13 @@ function initAdminApp() {
 }
 
 function parseArgs() {
-  const out = { city: '', limit: 80, dryRun: false, maxPastDays: 0, maxQueries: 6, maxPages: 18 };
+  const out = { city: '', limit: 80, dryRun: false, maxPastDays: 0, maxQueries: 20, maxPages: 18 };
   for (const a of process.argv.slice(2)) {
     if (a === '--dry-run') out.dryRun = true;
     else if (a.startsWith('--city=')) out.city = a.slice('--city='.length).trim().toLowerCase();
     else if (a.startsWith('--limit=')) out.limit = Math.max(1, parseInt(a.slice('--limit='.length), 10) || 80);
     else if (a.startsWith('--max-past-days=')) out.maxPastDays = Math.max(0, parseInt(a.slice('--max-past-days='.length), 10) || 0);
-    else if (a.startsWith('--max-queries=')) out.maxQueries = Math.max(1, parseInt(a.slice('--max-queries='.length), 10) || 6);
+    else if (a.startsWith('--max-queries=')) out.maxQueries = Math.max(1, parseInt(a.slice('--max-queries='.length), 10) || 20);
     else if (a.startsWith('--max-pages=')) out.maxPages = Math.max(1, parseInt(a.slice('--max-pages='.length), 10) || 12);
   }
   if (!out.city) {
@@ -669,11 +586,12 @@ function parseIcs(text, sourceUrl) {
   return out;
 }
 
-function candidateFromSnippet(hit, cityLabel) {
+function candidateFromSnippet(hit, cityLabel, query) {
   const blob = `${hit.title}\n${hit.snippet}`;
   const startDate = extractDateFromText(blob);
   if (!startDate) return null;
   const locationText = extractLocationFromText(blob, cityLabel) || '';
+  const q = String(query || '').trim();
   return {
     sourceType: 'web_snippet',
     sourceUrl: hit.url,
@@ -686,7 +604,9 @@ function candidateFromSnippet(hit, cityLabel) {
     website: hit.url,
     description: hit.snippet.slice(0, 2000),
     timeDisplay: '',
-    evidenceSnippet: `search snippet; url=${hit.url}`,
+    query: q,
+    eventQueries: q ? [q] : [],
+    evidenceSnippet: `search snippet; query=${q}; url=${hit.url}`,
   };
 }
 
@@ -715,32 +635,99 @@ async function loadReviewedQueueEventIds(db, cityId) {
   return new Set(snap.docs.map((d) => d.id));
 }
 
-function resolveQueries(cityId, cityDoc) {
-  const fromCity = []
-    .concat(cityDoc?.discovery?.eventSearchQueries || [])
-    .concat(cityDoc?.eventSearchQueries || [])
-    .map((x) => String(x || '').trim())
-    .filter(Boolean);
-  const defaults = DEFAULT_CITY_QUERIES[cityId] || [
-    `repair cafe ${cityId}`,
-    `second hand market ${cityId}`,
-    `circular economy event ${cityId}`,
-  ];
-  return [...new Set(fromCity.length ? fromCity : defaults)];
+function uniqIds(values) {
+  const out = [];
+  for (const v of values || []) {
+    const s = String(v || '').trim();
+    if (!s || out.includes(s)) continue;
+    out.push(s);
+  }
+  return out;
 }
 
-function resolveSeedUrls(cityId, cityDoc) {
-  const fromCity = []
-    .concat(cityDoc?.discovery?.eventSeedUrls || [])
-    .concat(cityDoc?.eventSeedUrls || [])
-    .map((x) => String(x || '').trim())
-    .filter((u) => /^https?:\/\//i.test(u));
-  const defaults = DEFAULT_CITY_SEED_URLS[cityId] || [];
-  return [...new Set(fromCity.length ? fromCity : defaults)];
+function pageKey(url) {
+  return String(url || '').trim();
 }
 
-function resolveBlockedDomains(cityDoc) {
-  return blockedDomainsFromCity(cityDoc);
+function rememberPage(map, url, extra = {}) {
+  const key = pageKey(url);
+  if (!key) return;
+  const cur = map.get(key) || { queries: [], seedUrl: '' };
+  for (const q of [].concat(extra.query || []).concat(extra.queries || [])) {
+    const s = String(q || '').trim();
+    if (s && !cur.queries.includes(s)) cur.queries.push(s);
+  }
+  if (extra.seedUrl) cur.seedUrl = extra.seedUrl;
+  map.set(key, cur);
+}
+
+function copyPageAttr(map, from, to) {
+  const src = map.get(pageKey(from));
+  if (!src) return;
+  rememberPage(map, to, { queries: src.queries, seedUrl: src.seedUrl });
+}
+
+function eventQueriesFor(raw, pageAttr, pageUrl) {
+  const ids = [];
+  if (raw.query) ids.push(String(raw.query).trim());
+  if (Array.isArray(raw.eventQueries)) ids.push(...raw.eventQueries);
+  for (const key of [pageUrl, raw.sourceUrl, raw.website].map(pageKey).filter(Boolean)) {
+    const attr = pageAttr.get(key);
+    if (!attr) continue;
+    ids.push(...attr.queries);
+    if (attr.seedUrl) ids.push(seedId(attr.seedUrl));
+  }
+  return uniqIds(ids);
+}
+
+function bumpYield(map, ids, field) {
+  for (const id of ids || []) {
+    const row = map.get(id) || { fetched: 0, queued: 0 };
+    row[field] += 1;
+    map.set(id, row);
+  }
+}
+
+function mergeEventQueries(payload, ids) {
+  const next = uniqIds([...(payload.eventQueries || []), ...(payload.candidate?.eventQueries || []), ...ids]);
+  payload.eventQueries = next;
+  if (payload.candidate) payload.candidate.eventQueries = next;
+}
+
+async function persistEventRun(db, city, summary) {
+  const runId = `events_${city}_${Date.now()}`;
+  await db.collection('discoveryRuns').doc(runId).set(
+    {
+      runId,
+      cityId: city,
+      sourceSet: ['events-agent'],
+      startedAt: summary.at,
+      finishedAt: summary.at,
+      status: summary.status,
+      dryRun: summary.dryRun,
+      fetchedCount: summary.fetchedCount,
+      queuedCount: summary.queuedCount,
+      events: summary,
+      config: { limit: summary.limit, maxQueries: summary.maxQueries, maxPages: summary.maxPages },
+      updatedAt: FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
+    },
+    { merge: true }
+  );
+  if (summary.dryRun) return;
+  try {
+    await db.collection('cities').doc(city).update({
+      'discovery.lastEventRun': summary,
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+  } catch (e) {
+    console.warn('[discover-events-agent] could not write cities.discovery.lastEventRun', e.message || e);
+  }
+}
+
+function resolveBlockedDomains(plan) {
+  const enabled = (plan.blocks && plan.blocks.enabled ? plan.blocks.enabled : []).map((c) => c.id);
+  return [...new Set(enabled.concat(envBlockDomains()))];
 }
 
 async function main() {
@@ -750,12 +737,22 @@ async function main() {
 
   const citySnap = await db.collection('cities').doc(args.city).get();
   const cityDoc = citySnap.exists ? citySnap.data() || {} : {};
+  let globalDoc = {};
+  try {
+    const globalSnap = await db.collection('discoveryConfig').doc('eventDiscovery').get();
+    if (globalSnap.exists) globalDoc = globalSnap.data() || {};
+  } catch (e) {
+    console.warn('[discover-events-agent] could not read discoveryConfig/eventDiscovery', e.message || e);
+  }
+  const plan = resolveEventDiscoveryPlan(args.city, globalDoc, cityDoc);
   const cityLabel = String(cityDoc.name || args.city);
   const keywords = circularKeywordsFromCity(cityDoc, args.city);
-  const queries = resolveQueries(args.city, cityDoc).slice(0, args.maxQueries);
-  const seedUrls = resolveSeedUrls(args.city, cityDoc);
-  const blockedDomains = resolveBlockedDomains(cityDoc);
+  const queryCap = Math.min(MAX_QUERIES_HARD_CAP, args.maxQueries);
+  const queries = plan.queries.enabled.map((c) => c.id).slice(0, queryCap);
+  const seedUrls = plan.seeds.enabled.map((c) => c.label).filter((u) => /^https?:\/\//i.test(u));
+  const blockedDomains = resolveBlockedDomains(plan);
   const seedUrlSet = new Set(seedUrls);
+  const penalties = plan.penalties || {};
 
   console.log(
     `[discover-events-agent] city=${args.city} dryRun=${args.dryRun} limit=${args.limit} maxPastDays=${args.maxPastDays} queries=${queries.length} seeds=${seedUrls.length} keywords=${keywords.length} blockedDomains=${blockedDomains.length}`
@@ -768,11 +765,17 @@ async function main() {
 
   const rawCandidates = [];
   const pageUrls = new Set(seedUrls);
+  const pageAttr = new Map();
+  const queryYield = new Map();
   let searchHits = 0;
   let pagesFetched = 0;
   let feedsParsed = 0;
   let searchFailures = 0;
   let skippedBlockedDomain = 0;
+  let skippedQueryLowConfidence = 0;
+  let queryPenalties = 0;
+
+  for (const seedUrl of seedUrls) rememberPage(pageAttr, seedUrl, { seedUrl });
 
   for (const query of queries) {
     const { engine, results } = await searchWeb(query);
@@ -785,9 +788,10 @@ async function main() {
         continue;
       }
       pageUrls.add(hit.url);
-      const fromSnippet = candidateFromSnippet(hit, cityLabel);
+      rememberPage(pageAttr, hit.url, { query });
+      const fromSnippet = candidateFromSnippet(hit, cityLabel, query);
       if (fromSnippet) {
-        fromSnippet.query = query;
+        bumpYield(queryYield, fromSnippet.eventQueries, 'fetched');
         rawCandidates.push(fromSnippet);
       }
     }
@@ -806,14 +810,19 @@ async function main() {
     try {
       const { finalUrl, text } = await fetchText(pageUrl);
       pagesFetched += 1;
+      copyPageAttr(pageAttr, pageUrl, finalUrl);
       if (isBlockedHost(finalUrl, blockedDomains)) {
         skippedBlockedDomain += 1;
         continue;
       }
-      for (const ev of extractJsonLdEvents(text, finalUrl)) rawCandidates.push(ev);
-      for (const ev of extractHeuristicEventsFromHtml(text, finalUrl, cityLabel, keywords)) rawCandidates.push(ev);
+      const tagAndPush = (ev, url) => {
+        const eventQueries = eventQueriesFor(ev, pageAttr, url);
+        bumpYield(queryYield, eventQueries, 'fetched');
+        rawCandidates.push({ ...ev, eventQueries });
+      };
+      for (const ev of extractJsonLdEvents(text, finalUrl)) tagAndPush(ev, finalUrl);
+      for (const ev of extractHeuristicEventsFromHtml(text, finalUrl, cityLabel, keywords)) tagAndPush(ev, finalUrl);
 
-      // Prefer seed pages for linked calendars; also allow ICS/RSS from circular-looking hosts.
       const host = hostFromUrl(finalUrl);
       const allowFeeds =
         isSeedPage ||
@@ -825,6 +834,7 @@ async function main() {
             continue;
           }
           try {
+            copyPageAttr(pageAttr, finalUrl, feedUrl);
             const feed = await fetchText(feedUrl, 'text/calendar, application/rss+xml, application/xml, text/xml, */*;q=0.5');
             feedsParsed += 1;
             let parsed = [];
@@ -833,7 +843,7 @@ async function main() {
             } else if (/<rss[\s>]|<feed[\s>]/i.test(feed.text)) {
               parsed = parseRssOrAtom(feed.text, feedUrl);
             }
-            for (const ev of parsed) rawCandidates.push(ev);
+            for (const ev of parsed) tagAndPush(ev, feedUrl);
           } catch (e) {
             console.warn(`[discover-events-agent] feed fetch failed ${feedUrl}:`, e.message || e);
           }
@@ -846,6 +856,7 @@ async function main() {
   }
 
   const byDocId = new Map();
+  const byKey = new Map();
   const runSeenKeys = new Set();
   let skippedPast = 0;
   let skippedReviewed = 0;
@@ -885,16 +896,15 @@ async function main() {
       continue;
     }
 
-    // Language-local pages often omit structured address; city label is enough for review.
     if (!locationText) locationText = cityLabel;
 
-    // Strict: title/description only — never inject search-query tokens as fake circular proof.
     const circular = isCircularEventCandidate(raw.title, raw.description, keywords);
     if (!circular.ok) {
       skippedNotCircular += 1;
       continue;
     }
     const actionTags = inferActionTags(raw.title, raw.description, circular.matchedActionTags);
+    const eventQueries = eventQueriesFor(raw, pageAttr, raw.sourceUrl);
 
     const key = eventDedupeKey(args.city, raw.title, raw.startDate, locationText);
     if (approvedKeys.has(key)) {
@@ -902,6 +912,8 @@ async function main() {
       continue;
     }
     if (runSeenKeys.has(key)) {
+      const prev = byKey.get(key);
+      if (prev) mergeEventQueries(prev.payload, eventQueries);
       skippedRunDup += 1;
       continue;
     }
@@ -926,6 +938,7 @@ async function main() {
       sectorCategories: [],
       source: 'web_agent',
       sourceHost: hostFromUrl(evidenceUrl),
+      eventQueries,
     };
 
     const memorySignal = await memoryLookup.assess(candidate);
@@ -944,19 +957,30 @@ async function main() {
         continue;
       }
     }
+    const qPenalty = queryPenaltyFor(eventQueries, penalties);
+    if (qPenalty > 0) {
+      confidence = Math.max(0.05, confidence - qPenalty);
+      queryPenalties += 1;
+      if (confidence < MIN_CONFIDENCE_AFTER_MEMORY) {
+        skippedQueryLowConfidence += 1;
+        continue;
+      }
+    }
 
-    byDocId.set(docId, {
+    const queryHint = eventQueries.length ? `; query=${eventQueries.join(',')}` : '';
+    const row = {
       docId,
       payload: {
         kind: 'event',
         cityId: args.city,
         status: 'needs_review',
         confidence,
+        eventQueries,
         candidate,
         evidence: [
           {
             url: candidate.website || raw.sourceUrl,
-            snippet: `${String(raw.evidenceSnippet || '').slice(0, 140)}; circular=${circular.matchedKeywords.slice(0, 3).join(',')}; via=${circular.via}; actions=${actionTags.join(',')}${
+            snippet: `${String(raw.evidenceSnippet || '').slice(0, 140)}; circular=${circular.matchedKeywords.slice(0, 3).join(',')}; via=${circular.via}; actions=${actionTags.join(',')}${queryHint}${
               memorySignal.reasons.length ? `; memory=${memorySignal.reasons.join(',')}` : ''
             }`,
             capturedAt: new Date().toISOString(),
@@ -966,7 +990,9 @@ async function main() {
         updatedAt: FieldValue.serverTimestamp(),
         createdAt: FieldValue.serverTimestamp(),
       },
-    });
+    };
+    byDocId.set(docId, row);
+    byKey.set(key, row);
     runSeenKeys.add(key);
   }
 
@@ -974,19 +1000,52 @@ async function main() {
     .sort((a, b) => Number(b.payload.confidence || 0) - Number(a.payload.confidence || 0))
     .slice(0, args.limit);
 
+  for (const row of sorted) bumpYield(queryYield, row.payload.eventQueries, 'queued');
+  for (const [id, row] of queryYield) {
+    console.log(`[discover-events-agent] query-yield ${id} fetched=${row.fetched} queued=${row.queued}`);
+  }
+
   console.log(
     `[discover-events-agent] fetched ${rawCandidates.length} raw entries, ${byDocId.size} candidates after filters (` +
       `${skippedPast} past skipped; ${skippedReviewed} reviewed queue skipped; ${skippedApproved} existing approved skipped; ` +
       `${skippedRunDup} run duplicates skipped; ${skippedMissingLocation} missing location skipped; ${skippedNotCircular} non-circular skipped; ` +
       `${skippedBlockedDomain} blocked-domain skipped; ` +
       `${skippedMemoryHard} hard memory skips; ${skippedMemorySoft} soft-memory confidence skips; ${skippedWrongCity} wrong-city skipped; ${memoryPenalties} soft-memory penalties; ` +
+      `${queryPenalties} query penalties; ${skippedQueryLowConfidence} query-confidence skips; ` +
       `${searchFailures} queries without hits; pages=${pagesFetched}; feedsParsed=${feedsParsed}; searchHits=${searchHits}); writing ${sorted.length} (limit ${args.limit})`
   );
+
+  const summary = {
+    at: new Date().toISOString(),
+    status: 'success',
+    dryRun: args.dryRun,
+    limit: args.limit,
+    maxQueries: queryCap,
+    maxPages: args.maxPages,
+    fetchedCount: rawCandidates.length,
+    queuedCount: sorted.length,
+    skippedNotCircular,
+    skippedPast,
+    skippedApproved,
+    skippedWrongCity,
+    skippedBlockedDomain,
+    skippedMemoryHard,
+    skippedMemorySoft,
+    skippedQueryLowConfidence,
+    queryPenalties,
+    queryYield: queryYieldToObject(queryYield),
+    errorSummary: '',
+  };
+  console.log(`[discover-events-agent] run-summary ${JSON.stringify(summary)}`);
+  if (!args.dryRun) await persistEventRun(db, args.city, summary);
 
   if (args.dryRun) {
     for (const row of sorted.slice(0, 25)) {
       const c = row.payload.candidate;
-      console.log(`  [dry-run] ${row.docId} ${c.title} @ ${c.startDate} (${row.payload.confidence.toFixed(2)}) ${c.website}`);
+      const q = Array.isArray(row.payload.eventQueries) && row.payload.eventQueries.length
+        ? ` {${row.payload.eventQueries.join(', ')}}`
+        : '';
+      console.log(`  [dry-run] ${row.docId} ${c.title} @ ${c.startDate} (${row.payload.confidence.toFixed(2)})${q} ${c.website}`);
     }
     if (sorted.length > 25) console.log(`  ... ${sorted.length - 25} more`);
     return;

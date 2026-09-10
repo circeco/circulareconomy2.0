@@ -71,6 +71,7 @@ export type EventReviewGroup = {
   evidence: ReviewQueueEventRow['evidence'];
   memberIds: string[];
   dates: string[];
+  eventQueries: string[];
 };
 
 interface NameIndexDelta {
@@ -305,6 +306,8 @@ export class AdminReviewComponent {
       c.description,
       ...(c.actionTags ?? []),
       ...(c.sectorCategories ?? []),
+      ...(c.osmClauses ?? []),
+      ...(row.osmClauses ?? []),
     ]
       .join(' ')
       .toLowerCase();
@@ -323,6 +326,8 @@ export class AdminReviewComponent {
       ...(group.dates ?? []),
       ...(c.actionTags ?? []),
       ...(c.sectorCategories ?? []),
+      ...(group.eventQueries ?? []),
+      ...(c.eventQueries ?? []),
     ]
       .join(' ')
       .toLowerCase();
@@ -1280,6 +1285,14 @@ export class AdminReviewComponent {
         endDate: dates[0] || primary.candidate.endDate || primary.candidate.startDate,
         recurrence,
       };
+      const eventQueries: string[] = [];
+      for (const member of list) {
+        for (const raw of [...(member.eventQueries || []), ...(member.candidate?.eventQueries || [])]) {
+          const id = String(raw || '').trim();
+          if (!id || eventQueries.includes(id)) continue;
+          eventQueries.push(id);
+        }
+      }
       groups.push({
         id: primary.id,
         cityId: primary.cityId,
@@ -1288,6 +1301,7 @@ export class AdminReviewComponent {
         evidence: primary.evidence,
         memberIds: list.map((r) => r.id),
         dates,
+        eventQueries,
       });
     }
     return groups.sort((a, b) => b.confidence - a.confidence);
@@ -1360,6 +1374,20 @@ export class AdminReviewComponent {
 
   displaySectorCategories(values: string[] | undefined): string[] {
     return canonicalizeSectorCategories(this.expandDelimited(values)).map((s) => SECTOR_CATEGORY_LABELS[s]);
+  }
+
+  displayOsmClauses(row: ReviewQueuePlaceRow): string[] {
+    const out: string[] = [];
+    for (const raw of [...(row.osmClauses || []), ...(row.candidate?.osmClauses || [])]) {
+      const id = String(raw || '').trim();
+      if (!id || out.includes(id)) continue;
+      out.push(id);
+    }
+    return out;
+  }
+
+  displayEventQueries(group: EventReviewGroup): string[] {
+    return [...(group.eventQueries || [])];
   }
 
   sectorLabel(id: string): string {

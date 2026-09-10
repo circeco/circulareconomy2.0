@@ -15,6 +15,16 @@ const path = require('path');
 const { readFileSync, existsSync } = require('fs');
 const { initializeApp, cert, getApps } = require('firebase-admin/app');
 const { getFirestore, FieldValue } = require('firebase-admin/firestore');
+const {
+  buildOverpassQuery,
+  clausePenaltyFor,
+  compactOsmTags,
+  matchingClauseIds,
+  overlayFromCityDoc,
+  resolveOsmClauses,
+  splitClausesByGroup,
+  clauseYieldToObject,
+} = require('./lib/osm-discovery-queries');
 
 const PROJECT_ID = process.env.FIREBASE_PROJECT_ID || 'circeco-bf511';
 const REJECT_ONLY_RETENTION_DAYS = Math.max(30, parseInt(process.env.REVIEW_MEMORY_REJECT_TTL_DAYS || '180', 10) || 180);
@@ -91,13 +101,17 @@ function parseArgs() {
     city: '',
     /** Smaller default radius reduces Overpass load (504 timeouts on busy servers). */
     radiusM: 9000,
+    radiusFromCli: false,
     limit: 100,
     dryRun: false,
   };
   for (const a of process.argv.slice(2)) {
     if (a === '--dry-run') out.dryRun = true;
     else if (a.startsWith('--city=')) out.city = a.slice('--city='.length).trim().toLowerCase();
-    else if (a.startsWith('--radius=')) out.radiusM = Math.max(1000, parseInt(a.slice('--radius='.length), 10) || 9000);
+    else if (a.startsWith('--radius=')) {
+      out.radiusM = Math.max(1000, parseInt(a.slice('--radius='.length), 10) || 9000);
+      out.radiusFromCli = true;
+    }
     else if (a.startsWith('--limit=')) out.limit = Math.max(1, parseInt(a.slice('--limit='.length), 10) || 100);
   }
   if (!out.city) {
@@ -108,49 +122,74 @@ function parseArgs() {
   return out;
 }
 
-/** Split into two lighter queries to avoid Overpass timeouts (504). */
-function buildOverpassQueryShops(lat, lng, radiusM) {
-  const r = radiusM;
-  const q = lat;
-  const p = lng;
-  return `
-[out:json][timeout:90];
-(
-  node["shop"="second_hand"](around:${r},${q},${p});
-  way["shop"="second_hand"](around:${r},${q},${p});
-  node["shop"="charity"](around:${r},${q},${p});
-  way["shop"="charity"](around:${r},${q},${p});
-  node["shop"="variety_store"](around:${r},${q},${p});
-  way["shop"="variety_store"](around:${r},${q},${p});
-  node["shop"="rental"](around:${r},${q},${p});
-  way["shop"="rental"](around:${r},${q},${p});
-  node["shop"="vintage"](around:${r},${q},${p});
-  way["shop"="vintage"](around:${r},${q},${p});
-  node["shop"]["name"~"vintage",i](around:${r},${q},${p});
-  way["shop"]["name"~"vintage",i](around:${r},${q},${p});
-  node["shop"]["name"~"humana",i](around:${r},${q},${p});
-  way["shop"]["name"~"humana",i](around:${r},${q},${p});
-  node["shop"="books"](around:${r},${q},${p});
-  way["shop"="books"](around:${r},${q},${p});
-);
-out center;
-`;
+async function loadOsmQueryPlan(db, cityId) {
+  const [citySnap, globalSnap] = await Promise.all([
+    db.collection('cities').doc(cityId).get(),
+    db.collection('discoveryConfig').doc('osmPlaces').get(),
+  ]);
+  const cityDoc = citySnap.exists ? citySnap.data() || {} : {};
+  const globalOverlay = globalSnap.exists ? globalSnap.data() || {} : {};
+  const resolved = resolveOsmClauses(globalOverlay, overlayFromCityDoc(cityDoc));
+  if (!resolved.enabled.length) {
+    throw new Error(`No OSM clauses enabled for ${cityId}. Re-enable at least one query in Admin → Discovery.`);
+  }
+  return { cityDoc, resolved };
 }
 
-function buildOverpassQueryAmenitiesCraft(lat, lng, radiusM) {
-  const r = radiusM;
-  const q = lat;
-  const p = lng;
-  return `
-[out:json][timeout:90];
-(
-  node["amenity"="recycling"](around:${r},${q},${p});
-  way["amenity"="recycling"](around:${r},${q},${p});
-  node["amenity"="recycling_centre"](around:${r},${q},${p});
-  way["amenity"="recycling_centre"](around:${r},${q},${p});
-);
-out center;
-`;
+function buildPlaceRunSummary(args) {
+  return {
+    at: new Date().toISOString(),
+    status: args.status,
+    dryRun: !!args.dryRun,
+    radiusM: Number(args.radiusM) || 0,
+    effectiveRadiusM: Number(args.effectiveRadiusM || args.radiusM) || 0,
+    limit: Number(args.limit) || 0,
+    fetchedCount: Number(args.fetchedCount) || 0,
+    queuedCount: Number(args.queuedCount) || 0,
+    candidatesAfterFilters: Number(args.candidatesAfterFilters) || 0,
+    skippedReviewedQueue: Number(args.skippedReviewedQueue) || 0,
+    skippedMemoryHard: Number(args.skippedMemoryHard) || 0,
+    skippedMemorySoft: Number(args.skippedMemorySoft) || 0,
+    skippedApproved: Number(args.skippedApproved) || 0,
+    clausePenalties: Number(args.clausePenalties) || 0,
+    skippedClauseLowConfidence: Number(args.skippedClauseLowConfidence) || 0,
+    catalogueCount: Number(args.catalogueCount) || 0,
+    memoryApproved: Number(args.memoryApproved) || 0,
+    memoryRejected: Number(args.memoryRejected) || 0,
+    clauseYield: clauseYieldToObject(args.clauseYield || {}),
+    errorSummary: String(args.errorSummary || '').slice(0, 500),
+  };
+}
+
+async function persistPlaceRun(db, city, summary) {
+  const runId = `osm_${city}_${Date.now()}`;
+  await db.collection('discoveryRuns').doc(runId).set(
+    {
+      runId,
+      cityId: city,
+      sourceSet: ['osm'],
+      startedAt: summary.at,
+      finishedAt: summary.at,
+      status: summary.status,
+      dryRun: summary.dryRun,
+      fetchedCount: summary.fetchedCount,
+      queuedCount: summary.queuedCount,
+      places: summary,
+      config: { radiusM: summary.radiusM, limit: summary.limit },
+      updatedAt: FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
+    },
+    { merge: true }
+  );
+  if (summary.dryRun) return;
+  try {
+    await db.collection('cities').doc(city).update({
+      'discovery.lastPlaceRun': summary,
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+  } catch (e) {
+    console.warn('[discover-osm] could not write cities.discovery.lastPlaceRun', e.message || e);
+  }
 }
 
 function overpassMirrorUrls() {
@@ -230,7 +269,7 @@ async function runOverpass(query) {
   throw lastErr || new Error('Overpass: all mirrors failed');
 }
 
-async function fetchOverpassWithAdaptiveRadius(center, radiusM, cityId) {
+async function fetchOverpassWithAdaptiveRadius(center, radiusM, cityId, enabledClauses) {
   const attempted = new Set();
   const radiusAttempts = [radiusM, Math.min(radiusM, 4500), 3000, 2200]
     .map((r) => Math.max(1000, Math.trunc(r)))
@@ -239,19 +278,20 @@ async function fetchOverpassWithAdaptiveRadius(center, radiusM, cityId) {
       attempted.add(r);
       return true;
     });
+  const { shops, amenities } = splitClausesByGroup(enabledClauses);
 
   let lastErr = null;
   for (const r of radiusAttempts) {
     try {
-      const qShops = buildOverpassQueryShops(center.lat, center.lng, r);
-      const qAmenity = buildOverpassQueryAmenitiesCraft(center.lat, center.lng, r);
+      const qShops = buildOverpassQuery(shops, center.lat, center.lng, r);
+      const qAmenity = buildOverpassQuery(amenities, center.lat, center.lng, r);
       if (r !== radiusM) {
         console.warn(
           `[discover-osm] retrying ${cityId} with reduced radius=${r}m after Overpass timeout/load failure`
         );
       }
-      const data1 = await runOverpass(qShops);
-      const data2 = await runOverpass(qAmenity);
+      const data1 = qShops ? await runOverpass(qShops) : { elements: [] };
+      const data2 = qAmenity ? await runOverpass(qAmenity) : { elements: [] };
       return { data1, data2, effectiveRadiusM: r };
     } catch (e) {
       lastErr = e;
@@ -331,11 +371,15 @@ function inferActionTags(tags, name, description) {
   const out = [];
   const knownNoAutoAction = shop === 'rental';
   const vintage = hasVintageSignal(tags, name, description);
-  if (shop === 'second_hand' || shop === 'charity' || shop === 'vintage') out.push('reuse');
+  if (shop === 'second_hand' || shop === 'charity' || shop === 'vintage' || shop === 'antiques') out.push('reuse');
   if (shop === 'books' && isSecondHandBookstore(tags, name, description)) out.push('reuse');
   if (shop === 'variety_store' && isCircularVarietyStore(tags, name, description)) out.push('reuse');
   if (hasTrustedReuseBrandSignal(name, description)) out.push('reuse');
   if (shop === 'rental') out.push('rental');
+  const rentalFlag = String(tags.rental || '').toLowerCase();
+  if (['yes', 'only', 'true', '1'].includes(rentalFlag)) out.push('rental');
+  const repairFlag = String(tags.repair || '').toLowerCase();
+  if (['yes', 'only', 'true', '1'].includes(repairFlag)) out.push('repair');
   if (shop === 'vintage' || vintage) out.push('reuse');
   if (hasRefurbishSignal(tags, name, description)) out.push('refurbish');
   if (amenity === 'recycling' || amenity === 'recycling_centre') out.push('recycle');
@@ -809,15 +853,25 @@ async function fetchCityCenter(db, cityId) {
 }
 
 async function main() {
-  const { city, radiusM, limit, dryRun } = parseArgs();
+  const args = parseArgs();
+  const { city, limit, dryRun } = args;
   initAdminApp();
   const db = getFirestore();
 
-  console.log(`[discover-osm] city=${city} radius=${radiusM}m limit=${limit} dryRun=${dryRun}`);
-  console.log(`[discover-osm] projectId=${PROJECT_ID} mirrors=${overpassMirrorUrls().join(' | ')}`);
-
   const compacted = await compactExpiredRejectedMemory(db);
   const center = await fetchCityCenter(db, city);
+  const { cityDoc, resolved } = await loadOsmQueryPlan(db, city);
+  let radiusM = args.radiusM;
+  if (!args.radiusFromCli) {
+    const stored = Number(cityDoc?.discovery?.radiusM);
+    if (Number.isFinite(stored) && stored >= 1000) radiusM = Math.trunc(stored);
+  }
+
+  console.log(`[discover-osm] city=${city} radius=${radiusM}m limit=${limit} dryRun=${dryRun}`);
+  console.log(`[discover-osm] projectId=${PROJECT_ID} mirrors=${overpassMirrorUrls().join(' | ')}`);
+  const enabledClauses = resolved.enabled;
+  const clauseYield = new Map(enabledClauses.map((c) => [c.id, { fetched: 0, queued: 0 }]));
+  console.log(`[discover-osm] clauses=${enabledClauses.map((c) => c.id).join(',')}`);
   const approvedIndex = await loadApprovedPlacesIndex(db, city);
   const memoryRollup = await loadCityMemoryRollup(db, city);
   const reviewedQueueIds = await loadReviewedQueueDocIds(db, city);
@@ -828,13 +882,23 @@ async function main() {
   let data2;
   let effectiveRadiusM = radiusM;
   try {
-    const fetched = await fetchOverpassWithAdaptiveRadius(center, radiusM, city);
+    const fetched = await fetchOverpassWithAdaptiveRadius(center, radiusM, city, enabledClauses);
     data1 = fetched.data1;
     data2 = fetched.data2;
     effectiveRadiusM = fetched.effectiveRadiusM;
   } catch (e) {
     console.error('[discover-osm] Overpass failed', e.message || e);
     process.exitCode = 1;
+    if (!dryRun) {
+      const failed = buildPlaceRunSummary({
+        status: 'failed',
+        radiusM,
+        limit,
+        errorSummary: e.message || String(e),
+      });
+      console.log(`[discover-osm] run-summary ${JSON.stringify(failed)}`);
+      await persistPlaceRun(db, city, failed);
+    }
     return;
   }
   if (effectiveRadiusM !== radiusM) {
@@ -854,6 +918,8 @@ async function main() {
   let penalizedByMemory = 0;
   let skippedAsMemoryLowConfidence = 0;
   let boostedByApproval = 0;
+  let penalizedByClause = 0;
+  let skippedAsClauseLowConfidence = 0;
 
   for (const el of elements) {
     if (el.type !== 'node' && el.type !== 'way') continue;
@@ -863,19 +929,13 @@ async function main() {
     const coords = elementCoords(el);
     if (!coords) continue;
     const description = String(tags.description || tags['description:en'] || '');
-    const shopVal = String(tags.shop || '').toLowerCase();
-    const isBooks = String(tags.shop || '') === 'books';
-    const isVarietyStore = String(tags.shop || '') === 'variety_store';
-    if (isBooks && !isSecondHandBookstore(tags, name, description)) continue;
-    if (isVarietyStore && !isCircularVarietyStore(tags, name, description)) continue;
-    if (
-      shopVal === 'clothes' &&
-      !hasUsedOrVintageSignal(tags, name, description) &&
-      !hasTrustedReuseBrandSignal(name, description)
-    ) {
-      continue;
+    const osmClauseIds = matchingClauseIds(tags, name, enabledClauses);
+    if (!osmClauseIds.length) continue;
+    for (const id of osmClauseIds) {
+      const row = clauseYield.get(id) || { fetched: 0, queued: 0 };
+      row.fetched += 1;
+      clauseYield.set(id, row);
     }
-
     const address = buildAddress(tags) || `${coords.lat.toFixed(5)}, ${coords.lng.toFixed(5)}`;
     const docId = `osm_${city}_${el.type}_${el.id}`;
     if (reviewedQueueIds.has(docId)) {
@@ -910,16 +970,24 @@ async function main() {
       confidence = Math.max(0.05, confidence - memorySignal.penalty);
       penalizedByMemory++;
     }
+    const clausePenalty = clausePenaltyFor(osmClauseIds, resolved.penalties);
+    if (clausePenalty > 0) {
+      confidence = Math.max(0.05, confidence - clausePenalty);
+      penalizedByClause++;
+      memoryReasons.push(`clause-penalty:${osmClauseIds[0]}`);
+    }
     const approvalBoost = Math.min(APPROVAL_BOOST_CAP, (memorySignal.boost || 0) + catalogueBoost.boost);
     if (approvalBoost > 0) {
       confidence = Math.min(0.95, confidence + approvalBoost);
       boostedByApproval++;
     }
-    if (confidence < MIN_CONFIDENCE_AFTER_MEMORY && memorySignal.penalty > 0 && approvalBoost <= 0) {
-      skippedAsMemoryLowConfidence++;
+    if (confidence < MIN_CONFIDENCE_AFTER_MEMORY && (memorySignal.penalty > 0 || clausePenalty > 0) && approvalBoost <= 0) {
+      if (memorySignal.penalty > 0) skippedAsMemoryLowConfidence++;
+      else skippedAsClauseLowConfidence++;
       continue;
     }
 
+    const osmTags = compactOsmTags(tags);
     candidates.push({
       docId,
       payload: {
@@ -927,6 +995,7 @@ async function main() {
         cityId: city,
         status: 'needs_review',
         confidence,
+        osmClauses: osmClauseIds,
         candidate: {
           name,
           address,
@@ -935,6 +1004,8 @@ async function main() {
           coords,
           sectorCategories: inferSector(tags),
           actionTags,
+          osmClauses: osmClauseIds,
+          ...(Object.keys(osmTags).length ? { osmTags } : {}),
         },
         evidence: [
           {
@@ -964,6 +1035,8 @@ async function main() {
       `${skippedAsMemoryLowConfidence} soft-memory confidence skips; ` +
       `${penalizedByMemory} soft-memory penalties; ` +
       `${boostedByApproval} approval boosts; ` +
+      `${penalizedByClause} clause penalties; ` +
+      `${skippedAsClauseLowConfidence} clause-confidence skips; ` +
       `${skippedAsDuplicate} duplicates vs approved skipped; ` +
       `memory compaction deleted ${compacted}; ` +
       `memory rollup city=${city} indexed=${memoryRollup.indexedCount} approved=${memoryRollup.approvedCount} rejected=${memoryRollup.rejectedCount}; ` +
@@ -971,12 +1044,49 @@ async function main() {
       `); writing ${capped.length} (limit ${limit})`
   );
 
+  for (const c of capped) {
+    for (const id of c.payload.osmClauses || []) {
+      const row = clauseYield.get(id) || { fetched: 0, queued: 0 };
+      row.queued += 1;
+      clauseYield.set(id, row);
+    }
+  }
+  for (const [id, row] of clauseYield) {
+    console.log(`[discover-osm] clause-yield ${id} fetched=${row.fetched} queued=${row.queued}`);
+  }
+
+  const summary = buildPlaceRunSummary({
+    status: 'success',
+    dryRun,
+    radiusM,
+    effectiveRadiusM,
+    limit,
+    fetchedCount: elements.length,
+    queuedCount: capped.length,
+    candidatesAfterFilters: candidates.length,
+    skippedReviewedQueue,
+    skippedMemoryHard,
+    skippedMemorySoft: skippedAsMemoryLowConfidence,
+    skippedApproved: skippedAsDuplicate,
+    clausePenalties: penalizedByClause,
+    skippedClauseLowConfidence,
+    catalogueCount: approvedIndex.total,
+    memoryApproved: memoryRollup.approvedCount,
+    memoryRejected: memoryRollup.rejectedCount,
+    clauseYield,
+  });
+  console.log(`[discover-osm] run-summary ${JSON.stringify(summary)}`);
+  if (!dryRun) await persistPlaceRun(db, city, summary);
+
   if (dryRun) {
     for (const c of capped.slice(0, 20)) {
+      const clauses = Array.isArray(c.payload.osmClauses) && c.payload.osmClauses.length
+        ? ` {${c.payload.osmClauses.join(', ')}}`
+        : '';
       const signals = Array.isArray(c.payload.memorySignals) && c.payload.memorySignals.length
         ? ` [${c.payload.memorySignals.join(', ')}]`
         : '';
-      console.log(`  [dry-run] ${c.docId} ${c.payload.candidate.name} (${c.payload.confidence.toFixed(2)})${signals}`);
+      console.log(`  [dry-run] ${c.docId} ${c.payload.candidate.name} (${c.payload.confidence.toFixed(2)})${clauses}${signals}`);
     }
     if (capped.length > 20) console.log(`  … ${capped.length - 20} more`);
     return;

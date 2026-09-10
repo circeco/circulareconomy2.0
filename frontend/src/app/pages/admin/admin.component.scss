@@ -15,3 +15,17 @@
     line-height: 1.5;
   }
 }
+
+.admin-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem 1rem;
+  margin-top: 1.25rem;
+
+  a {
+    color: #0c343d;
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 0.2rem;
+  }
+}

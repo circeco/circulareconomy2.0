@@ -14,6 +14,12 @@ export const FS_PATHS = {
   eventReviewMemory: 'eventReviewMemory',
   eventReviewMemoryTitleIndex: 'eventReviewMemoryTitleIndex',
   eventReviewMemoryRollups: 'eventReviewMemoryRollups',
+  discoveryConfig: 'discoveryConfig',
+  discoveryConfigOsmPlaces: 'osmPlaces',
+  discoveryConfigEvents: 'eventDiscovery',
+  discoveryJobs: 'discoveryJobs',
+  learningStats: 'learningStats',
+  discoveryRuns: 'discoveryRuns',
 
   // user-scoped collections already used by the app
   userFavourites: (uid: string) => `users/${uid}/favourites`,

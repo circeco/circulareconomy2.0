@@ -13,7 +13,10 @@
     "discover:events": "node tools/discover-event-feeds.js",
     "discover:events:agent": "node tools/discover-events-agent.js",
     "discover:monthly": "node tools/scheduled-discovery-job.js",
+    "discover:jobs": "node tools/process-discovery-jobs.js",
     "learning:report": "node tools/generate-learning-v1-report.js",
+    "test:osm-queries": "node --test tools/lib/osm-discovery-queries.spec.js",
+    "test:event-queries": "node --test tools/lib/event-discovery-queries.spec.js",
     "admin:set-claim": "node tools/set-admin-claim.js"
   },
   "keywords": [],

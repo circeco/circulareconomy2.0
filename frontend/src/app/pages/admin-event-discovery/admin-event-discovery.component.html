@@ -1,0 +1,175 @@
+<section class="catalog-shell">
+  <p *ngIf="error() as err" class="catalog-error" role="alert">{{ err }}</p>
+  <p *ngIf="notice() as ok" class="catalog-ok" role="status">{{ ok }}</p>
+
+  <section class="catalog-panel">
+    <div class="panel-title-row">
+      <h1>Discovery Queries</h1>
+      <nav class="discovery-switch" aria-label="Discovery type">
+        <a routerLink="/admin/discovery/places" routerLinkActive="is-active">Places</a>
+        <a routerLink="/admin/discovery/events" routerLinkActive="is-active">Events</a>
+      </nav>
+    </div>
+
+    <p class="lede">
+      Weekly event discovery searches these strings, crawls these seed pages, and skips these hosts for {{ cityLabel() }}.
+      {{ enabledCount() }} of {{ fetchRows().length }} search and seed queries are on for the next run.
+    </p>
+
+    <p *ngIf="loading()" class="loading">Loading queries…</p>
+
+    <div class="section-block" *ngIf="!loading()">
+      <h2 class="section-title">Last run</h2>
+      <ng-container *ngIf="lastEventRun() as run; else noEventRun">
+        <p class="run-copy">
+          {{ run.at | date:"d MMM y, HH:mm" }} — {{ run.status }}.
+          {{ run.fetchedCount }} fetched, {{ run.queuedCount }} queued.
+          Skipped: {{ run.skippedNotCircular }} not circular,
+          {{ run.skippedPast }} past,
+          {{ run.skippedApproved }} already approved,
+          {{ run.skippedWrongCity }} wrong city,
+          {{ run.skippedBlockedDomain }} blocked host,
+          {{ run.skippedMemoryHard }} memory.
+        </p>
+        <p class="run-copy empty" *ngIf="run.status === 'failed' && run.errorSummary">{{ run.errorSummary }}</p>
+      </ng-container>
+      <ng-template #noEventRun>
+        <p class="run-copy">No event discovery run stored yet.</p>
+      </ng-template>
+      <p class="run-copy" *ngIf="job() as j">
+        Job {{ j.status }}<ng-container *ngIf="j.errorSummary"> — {{ j.errorSummary }}</ng-container>.
+      </p>
+    </div>
+
+    <div class="section-block" *ngIf="!loading()">
+      <h2 class="section-title">Discovery Learning</h2>
+      <p class="hint" *ngIf="fetchRows().length && !enabledCount()">
+        All search and seed queries are off. Turn at least one on before running discovery.
+      </p>
+      <table class="stats" *ngIf="learningRows().length">
+        <thead>
+          <tr>
+            <th class="col-on">On</th>
+            <th>Query</th>
+            <th>Type</th>
+            <th>Reviewed</th>
+            <th>Approved</th>
+            <th>Rejected</th>
+            <th>Rate</th>
+            <th class="col-actions">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of learningRows()" [class.is-off]="!row.enabled">
+            <td class="col-on">
+              <label class="switch">
+                <input
+                  type="checkbox"
+                  [checked]="row.enabled"
+                  [disabled]="saving() || running()"
+                  [attr.aria-label]="(row.enabled ? 'Disable ' : 'Enable ') + row.item.label"
+                  (change)="toggleItem(row.item, row.kind, $any($event.target).checked)"
+                />
+                <span class="slider" aria-hidden="true"></span>
+              </label>
+            </td>
+            <td>{{ row.item.label }}</td>
+            <td>{{ kindLabel(row.kind) }}</td>
+            <td>{{ row.stat?.reviewed || 0 }}</td>
+            <td>{{ row.stat?.approved || 0 }}</td>
+            <td>{{ row.stat?.rejected || 0 }}</td>
+            <td>{{ row.stat ? percent(row.stat.approvalRate) : '—' }}</td>
+            <td class="col-actions">
+              <div class="actions">
+                <button type="button" [disabled]="saving()" (click)="startEdit(row.item, row.kind)">Edit</button>
+                <button type="button" class="danger" [disabled]="saving()" (click)="removeRow(row.item, row.kind)">Remove</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="empty" *ngIf="!learningRows().length">No search queries, seed pages, or blocked hosts for this city.</p>
+
+      <div class="suggestions" *ngIf="suggestions().remove.length || suggestions().add.length">
+        <p class="hint">Recommendations only. Apply them if you agree.</p>
+        <ul class="suggest-list">
+          <li *ngFor="let row of suggestions().remove">
+            <span>Consider removing <strong>{{ row.id }}</strong> ({{ row.support }} reviews, {{ percent(row.approvalRate) }} approved)</span>
+            <button type="button" [disabled]="saving()" (click)="applySuggestion(row)">Remove</button>
+          </li>
+          <li *ngFor="let row of suggestions().add">
+            <span>Consider adding <strong>{{ row.id }}</strong></span>
+            <button type="button" [disabled]="saving()" (click)="applySuggestion(row)">Add</button>
+          </li>
+        </ul>
+      </div>
+
+      <div class="create-panel">
+        <div class="create-title">{{ editingId() ? 'Edit query' : 'Add a query' }}</div>
+        <dl class="legend">
+          <div>
+            <dt>Search</dt>
+            <dd>Web search string the weekly agent runs.</dd>
+          </div>
+          <div>
+            <dt>Seed page</dt>
+            <dd>A site URL the agent crawls for events.</dd>
+          </div>
+          <div>
+            <dt>Blocked host</dt>
+            <dd>Skip events from this domain.</dd>
+          </div>
+          <div>
+            <dt>Reviewed / Rate</dt>
+            <dd>Approve and reject counts for cards this query found.</dd>
+          </div>
+        </dl>
+        <div class="add-grid event-add">
+          <label class="add-caption" for="event-add-kind">Type</label>
+          <label class="add-caption" for="event-add-token">{{ addTokenCaption() }}</label>
+          <span class="add-caption add-caption-spacer" aria-hidden="true"></span>
+          <select
+            id="event-add-kind"
+            class="add-control"
+            [ngModel]="addKind()"
+            (ngModelChange)="setAddKind($event)"
+            [disabled]="!!editingId()"
+          >
+            <option value="search">Search query</option>
+            <option value="seed">Seed URL</option>
+            <option value="block">Blocked host</option>
+          </select>
+          <input
+            id="event-add-token"
+            class="add-control"
+            type="text"
+            [ngModel]="addToken()"
+            (ngModelChange)="setAddToken($event)"
+            [placeholder]="addPlaceholder()"
+          />
+          <div class="add-actions-row">
+            <button type="button" class="btn-add" [disabled]="saving() || !addToken().trim()" (click)="addFromForm()">
+              {{ editingId() ? 'Save' : 'Add' }}
+            </button>
+            <button *ngIf="editingId()" type="button" class="btn-cancel" [disabled]="saving()" (click)="cancelEdit()">
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <p class="hint" *ngIf="extraKeywords().length">City extra keywords: {{ extraKeywords().join(', ') }}.</p>
+
+      <div class="run-wrap">
+        <button
+          type="button"
+          class="btn-run"
+          [disabled]="saving() || running() || !enabledCount()"
+          (click)="runDiscovery()"
+        >
+          {{ running() ? 'Running…' : 'Run discovery' }}
+        </button>
+      </div>
+    </div>
+  </section>
+</section>

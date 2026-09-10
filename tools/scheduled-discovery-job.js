@@ -16,6 +16,8 @@ const { readFileSync, existsSync } = require('fs');
 const { spawn } = require('child_process');
 const { initializeApp, cert, getApps } = require('firebase-admin/app');
 const { getFirestore, FieldValue } = require('firebase-admin/firestore');
+const { parseOsmRunSummary } = require('./lib/osm-discovery-queries');
+const { parseEventRunSummary } = require('./lib/event-discovery-queries');
 
 const PROJECT_ID = process.env.FIREBASE_PROJECT_ID || 'circeco-bf511';
 
@@ -73,23 +75,29 @@ function parseArgs() {
 }
 
 function parsePlaceDiscoverMetrics(outputText) {
+  const summary = parseOsmRunSummary(outputText);
   const overpass = outputText.match(/Overpass returned (\d+) elements, (\d+) candidates after filters/) || [];
   const skipped = outputText.match(/(\d+) reviewed queue skipped;\s+(\d+) hard memory skips;\s+(\d+) soft-memory confidence skips;\s+(\d+) soft-memory penalties;\s+(\d+) duplicates vs approved skipped/) || [];
   const write = outputText.match(/writing (\d+) \(limit (\d+)\)/) || [];
   return {
-    fetchedCount: Number(overpass[1] || 0),
-    candidatesAfterFilters: Number(overpass[2] || 0),
-    skippedReviewedQueue: Number(skipped[1] || 0),
-    skippedMemoryHard: Number(skipped[2] || 0),
-    skippedMemorySoft: Number(skipped[3] || 0),
+    fetchedCount: Number(summary?.fetchedCount ?? overpass[1] ?? 0),
+    candidatesAfterFilters: Number(summary?.candidatesAfterFilters ?? overpass[2] ?? 0),
+    skippedReviewedQueue: Number(summary?.skippedReviewedQueue ?? skipped[1] ?? 0),
+    skippedMemoryHard: Number(summary?.skippedMemoryHard ?? skipped[2] ?? 0),
+    skippedMemorySoft: Number(summary?.skippedMemorySoft ?? skipped[3] ?? 0),
     memoryPenaltiesApplied: Number(skipped[4] || 0),
-    skippedApproved: Number(skipped[5] || 0),
-    queuedCount: Number(write[1] || 0),
-    configuredLimit: Number(write[2] || 0),
+    skippedApproved: Number(summary?.skippedApproved ?? skipped[5] ?? 0),
+    queuedCount: Number(summary?.queuedCount ?? write[1] ?? 0),
+    configuredLimit: Number(summary?.limit ?? write[2] ?? 0),
+    clauseYield: summary?.clauseYield && typeof summary.clauseYield === 'object' ? summary.clauseYield : {},
+    effectiveRadiusM: Number(summary?.effectiveRadiusM || 0) || 0,
+    clausePenalties: Number(summary?.clausePenalties || 0) || 0,
+    skippedClauseLowConfidence: Number(summary?.skippedClauseLowConfidence || 0) || 0,
   };
 }
 
 function parseEventDiscoverMetrics(outputText) {
+  const summary = parseEventRunSummary(outputText);
   const overviews = [...String(outputText || '').matchAll(/fetched (\d+) raw entries, (\d+) candidates after filters/g)];
   let fetchedCount = 0;
   let candidatesAfterFilters = 0;
@@ -108,20 +116,23 @@ function parseEventDiscoverMetrics(outputText) {
     configuredLimit = Math.max(configuredLimit, Number(m[2] || 0));
   }
   return {
-    fetchedCount,
+    fetchedCount: Number(summary?.fetchedCount ?? fetchedCount),
     candidatesAfterFilters,
-    skippedPast: Number(skipped[1] || 0),
+    skippedPast: Number(summary?.skippedPast ?? skipped[1] ?? 0),
     skippedReviewedQueue: Number(skipped[2] || 0),
-    skippedApproved: Number(skipped[3] || 0),
+    skippedApproved: Number(summary?.skippedApproved ?? skipped[3] ?? 0),
     skippedRunDuplicates: Number(skipped[4] || 0),
     skippedMissingLocation: Number(skipped[5] || 0),
-    skippedNotCircular: Number(skipped[6] || 0),
+    skippedNotCircular: Number(summary?.skippedNotCircular ?? skipped[6] ?? 0),
+    skippedWrongCity: Number(summary?.skippedWrongCity || 0) || 0,
+    skippedBlockedDomain: Number(summary?.skippedBlockedDomain || 0) || 0,
     failedFeeds: Number(feedsFailed[1] || 0),
-    skippedMemoryHard: Number(memory[1] || 0),
-    skippedMemorySoft: Number(memory[2] || 0),
+    skippedMemoryHard: Number(summary?.skippedMemoryHard ?? memory[1] ?? 0),
+    skippedMemorySoft: Number(summary?.skippedMemorySoft ?? memory[2] ?? 0),
     memoryPenaltiesApplied: Number(memory[3] || 0),
-    queuedCount,
-    configuredLimit,
+    queuedCount: Number(summary?.queuedCount ?? queuedCount),
+    configuredLimit: Number(summary?.limit ?? configuredLimit),
+    queryYield: summary?.queryYield && typeof summary.queryYield === 'object' ? summary.queryYield : {},
   };
 }
 
@@ -155,7 +166,7 @@ function runCityPlaceDiscovery(cityId, args) {
 function runCityEventDiscovery(cityId, args) {
   const shared = [`--city=${cityId}`, `--limit=${args.limit}`, `--max-past-days=${args.eventMaxPastDays}`];
   if (args.dryRun) shared.push('--dry-run');
-  const agentArgs = [...shared, '--max-queries=6', '--max-pages=22'];
+  const agentArgs = [...shared, '--max-queries=20', '--max-pages=28'];
   // Primary: web search agent. Bonus: configured RSS/Atom/ICS feeds when present.
   return Promise.all([
     runNodeScript('discover-events-agent.js', agentArgs),
@@ -253,6 +264,29 @@ async function main() {
       updatedAt: FieldValue.serverTimestamp(),
     };
     await logRunDoc(db, runId, payload);
+    if (!args.dryRun && eventEnabled) {
+      try {
+        await db.collection('cities').doc(cityId).update({
+          'discovery.lastEventRun': {
+            at: payload.finishedAt,
+            status,
+            fetchedCount: eventMetrics.fetchedCount,
+            queuedCount: eventMetrics.queuedCount,
+            skippedNotCircular: eventMetrics.skippedNotCircular,
+            skippedPast: eventMetrics.skippedPast,
+            skippedApproved: eventMetrics.skippedApproved,
+            skippedMemoryHard: eventMetrics.skippedMemoryHard,
+            skippedMemorySoft: eventMetrics.skippedMemorySoft,
+            skippedWrongCity: eventMetrics.skippedWrongCity,
+            skippedBlockedDomain: eventMetrics.skippedBlockedDomain,
+            queryYield: eventMetrics.queryYield || {},
+          },
+          updatedAt: FieldValue.serverTimestamp(),
+        });
+      } catch (e) {
+        console.warn(`[scheduled-discovery] could not write lastEventRun for ${cityId}`, e.message || e);
+      }
+    }
     if (status === 'success') ok++;
     else failed++;
   }

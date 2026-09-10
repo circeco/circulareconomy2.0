@@ -45,6 +45,7 @@ These only appear **after you run** the discovery script against production (or 
 | Event feed discovery | `npm run discover:events -- --city=<id> [opts]` | Fetches RSS/Atom/ICS feeds and writes circular event candidates into `reviewQueue`. |
 | Event web agent | `npm run discover:events:agent -- --city=<id> [opts]` | Searches the open web for circular events, extracts candidates, applies memory gates, writes `reviewQueue`. |
 | Scheduled multi-city discovery | `npm run discover:monthly -- [opts]` | Runs place and/or event discovery for enabled cities and logs each run to `discoveryRuns`. |
+| Process queued admin jobs | `npm run discover:jobs` | Picks up `discoveryJobs` written by **Admin → Discovery Queries → Run discovery**. |
 | Monthly learning report | `npm run learning:report -- --period=YYYY-MM [--city=<id>]` | Aggregates moderation outcomes and writes per-city stats to `learningStats`. |
 | Admin claim | `npm run admin:set-claim -- <email>` | Sets Firebase Auth custom claim `admin: true` for the review UI. |
 
@@ -75,7 +76,7 @@ Discovery run  →  reviewQueue (needs_review)
        (metrics; rule changes stay mostly manual)
 ```
 
-**What “teaching” means:** approve/reject mainly teaches *don’t re-queue this exact place*. Approvals also **soft-boost** similar OSM candidates (same chain name at a new address, or overlapping name keywords). It does **not** train a model or widen the Overpass query. Monthly `learningStats` still help you tune OSM tags by hand.
+**What “teaching” means:** approve/reject mainly teaches *don’t re-queue this exact place*. Approvals also **soft-boost** similar OSM candidates (same chain name at a new address, or overlapping name keywords). Monthly `learning:report` **down-ranks** noisy OSM clauses (confidence penalty) and **suggests** add/disable in Admin → Place discovery. It does **not** auto-add or auto-remove Overpass tags. Edit the query list by hand at `/admin/discovery/places`. Event search queries work the same way at `/admin/discovery/events`.
 
 ### Places (online memory — mature)
 
@@ -112,7 +113,7 @@ Extraction guardrails (adjacent to learning): circular signal preferably in **ti
 
 ### Offline report
 
-`npm run learning:report -- --period=YYYY-MM` → `learningStats/{cityId}_{period}`. CI runs it after monthly places discovery. Use it to spot noisy signals; auto policy apply from the report is specified in `LEARNING_V1_SPEC.md` but not the main operating mode yet.
+`npm run learning:report -- --period=YYYY-MM` → `learningStats/{cityId}_{period}` (places) and `learningStats/{cityId}_{period}_events`. CI runs it after monthly places discovery. The report also writes per-city `discovery.osmClausePenalties` / `osmQuerySuggestions` (places) and `discovery.eventQueryPenalties` / `eventQuerySuggestions` (events). Apply add/disable in `/admin/discovery/places` or `/admin/discovery/events`.
 
 ### Status snapshot
 
@@ -126,13 +127,13 @@ Extraction guardrails (adjacent to learning): circular signal preferably in **ti
 | Series / recurrence memory | N/A | Yes |
 | Admin ↔ discovery hash aligned | Yes | Yes (2026-08) |
 | Structured reject reasons in UI | No | No |
-| Auto policy from monthly report | No | No |
+| Auto policy from monthly report | Clause down-rank + suggestions; no auto-disable | No |
 
 ### Improve along the way
 
 1. Edit name/address/tags before approve so catalogue boosts use clean signals.  
 2. Watch `discoveryRuns` counters (`skippedMemoryHard` / `skippedMemorySoft` / approval boosts in OSM logs).  
-3. Read `learningStats` → adjust OSM allowlist, event keywords, seeds, block domains.  
+3. Read `learningStats` / `/admin/discovery/places` or `/admin/discovery/events` suggestions → add or disable queries by hand.  
 4. Later: structured reject reasons; series re-open after materialization window; guarded auto soft-penalties (`LEARNING_V1_SPEC.md`).  
 5. ML re-ranker only in shadow mode, still behind human review.
 
@@ -183,26 +184,40 @@ The script currently includes an OSM element only when **all** of the following 
 
 #### Queried OSM tags (current allowlist)
 
-- `shop=second_hand`
-- `shop=charity`
-- `shop=variety_store`
-- `shop=rental`
-- `shop=vintage`
-- `shop=books`
-- `amenity=recycling`
-- `amenity=recycling_centre`
-- `shop` with `name` containing `vintage` (case-insensitive)
-- `shop` with `name` containing `humana` (case-insensitive)
+Simple types:
+
+- `shop=second_hand`, `charity`, `rental`, `vintage`, `antiques`
+- `amenity=recycling`, `recycling_centre`
+- `shop` name contains `vintage`, `humana`, or `libraccio`
+
+Combined (`shop=<type>` **and** extra flag `yes|only`):
+
+- `second_hand` on bicycle, books, clothes, computer, electronics, furniture, houseware, interior_decoration, jewelry, music, shoes, sports, toys, variety_store, watches
+- `vintage` on clothes, furniture, jewelry, music
+- `rental` on bicycle, sports
+- `repair` on bicycle, computer, electronics
+
+`shop=vintage` / `shop=antiques` are shop **types**. `vintage=yes` is an extra flag on another type (e.g. a clothes shop). There is no OSM `antique=yes`; antiques is the type.
+
+Edit this list in **Admin → Discovery Queries** (`/admin/discovery/places`): Type **Shop + extra flag**, then pick shop type and extra (`second_hand`, `vintage`, `rental`, `repair`). Or via Firestore:
+
+- `discoveryConfig/osmPlaces` — extras + disables for **all cities**
+- `cities/{id}.discovery.osmQueries` — city extras, disables, and re-enables
+- `cities/{id}.discovery.osmClausePenalties` — written by `learning:report` (down-rank only)
+- `cities/{id}.discovery.osmQuerySuggestions` — written by `learning:report` (apply in the admin UI)
+
+Each queued place stores `osmClauses` (which query lines matched). Discovery logs `clause-yield <id> fetched=N queued=M`.
 
 #### Mapping to app fields
 
 - `actionTags` inference:
-  - `reuse`: `shop=second_hand|charity|vintage`
+  - `reuse`: `shop=second_hand|charity|vintage|antiques`
   - `reuse` for bookstores (`shop=books`) **only** when second-hand signals are present
     (e.g. `second_hand=yes|only`, or strong text markers such as `Libraccio`, `used books`, `libri usati`)
   - `reuse` for `shop=variety_store` **only** when used/vintage signals are present
   - `reuse` for trusted reuse-brand signal (`humana*`)
-  - `rental`: `shop=rental` (dedicated action tag, not `share`)
+  - `rental`: `shop=rental` or `rental=yes` (dedicated action tag, not `share`)
+  - `repair`: `repair=yes`
   - `refurbish`: when text signals indicate refurbished/reconditioned offers
     (e.g. `refurbish`, `refurbished`, `ricondizionato`)
   - `recycle`: `amenity=recycling|recycling_centre`
@@ -303,19 +318,21 @@ If it still fails, wait a few minutes and retry, or run with `--radius=6000`.
 
 `npm run discover:events:agent -- --city=<id>`:
 
-1. Runs city search queries (defaults per city, or `cities/{id}.discovery.eventSearchQueries`)
-2. Visits proposed seed pages (`DEFAULT_CITY_SEED_URLS`, or `discovery.eventSeedUrls` override)
+1. Runs city search queries (defaults per city, plus `discoveryConfig/eventDiscovery` and `cities/{id}.discovery.eventQueryConfig`). Legacy `eventSearchQueries` still **replaces** defaults if no overlay is set.
+2. Visits proposed seed pages (defaults, plus `eventSeedConfig` extras; legacy `eventSeedUrls` still replaces defaults if no overlay is set)
 3. Extracts JSON-LD `Event`, dated HTML heuristics; linked ICS/RSS **only from seed pages**
 4. Keeps only candidates with circular signals in **title** (preferred) or strong multi-word keywords in description
 5. Skips blocked domains (defaults include `milanopocket.it`, ticket vendors, social noise)
 6. Skips via approved events, reviewed queue ids, and `eventReviewMemory` (exact date, series fingerprint, hard title rejects, repeatedly rejected sources)
-7. Writes `reviewQueue` candidates for admin review
+7. Writes `reviewQueue` candidates for admin review, with `eventQueries` (search text and/or `seed:<url>`)
 
-Weekly CI defaults: upcoming-only (`event_max_past_days=0`) and `limit=40`.
+Weekly CI defaults: upcoming-only (`event_max_past_days=0`), `limit=40`, up to **20** search queries.
+
+Edit search queries, seeds, and blocked hosts in **Admin → Discovery Queries → Events** (`/admin/discovery/events`). Each blocked host can be turned off like a query; only hosts that are on are skipped.
 
 Learning gates for this agent are summarized under **Learning strategy** above (series, source host, title signals, year-required HTML dates).
 
-This is the primary weekly path so the queue can fill without manually pasting events. Optional city overrides: `eventKeywords`, `eventBlockDomains`, `eventSeedUrls`, `eventSearchQueries` under `cities/{id}` or `cities/{id}.discovery`.
+This is the primary weekly path so the queue can fill without manually pasting events. Optional city extras: `eventKeywords`, overlay `eventQueryConfig` / `eventSeedConfig` / `eventBlockConfig` under `cities/{id}.discovery`. Legacy `eventBlockDomains` still adds extra hosts.
 
 ### Limitations (important)
 
@@ -366,5 +383,11 @@ This is the primary weekly path so the queue can fill without manually pasting e
 | 2026-08-25 | Tightened event agent: require title/strong circular signals (no query auto-pass), domain blocklist, seed-only feed parsing, lower weekly limit. |
 | 2026-08-27 | Event learning: series+source memory, title approvalSignals, confidence boost/penalty; safer HTML date extraction; aligned event memory hashes with admin FNV. Documented under **Learning strategy** in this file. |
 | 2026-09-08 | Place discovery: soft-boost from approved catalogue (other branches of an approved name + distinctive keywords) and `approvalSignals` on place name-index; no Overpass widening. |
+| 2026-09-10 | OSM clauses are a named catalog: admin add/disable at `/admin/discovery/places`, per-hit `osmClauses` + clause-yield logs, monthly down-rank + add/disable suggestions. |
+| 2026-09-10 | Discovery page: last OSM run + radius, fetched/queued per clause (`discovery.lastPlaceRun`), silent filters. |
+| 2026-09-10 | Event discovery queries page at `/admin/discovery/events`: same enable/disable/add overlay, `eventQueries` attribution, last-run yield, monthly down-rank + disable suggestions. |
+| 2026-09-10 | Admin **Run discovery** queues `discoveryJobs/{city}_{places|events}`. Local processor: `npm run discover:jobs`. Production: `queued-discovery.yml` (every 10 min) after push + Firestore rules deploy. |
+| 2026-09-10 | Stopped querying all `shop=books` / `shop=variety_store`. Overpass now asks for those tags **and** `second_hand=yes|only`, plus Libraccio by name. Removed post-Overpass silent filters. |
+| 2026-09-10 | Place queries: `shop=antiques`; combined extras `second_hand` / `vintage` / `rental` / `repair` with a shop-type dropdown at `/admin/discovery/places`. |
 
 _Add a row when you change Overpass tags, add event ingestion, or change queue ID strategy._

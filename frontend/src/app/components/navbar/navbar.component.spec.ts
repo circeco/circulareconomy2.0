@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
+import { of } from 'rxjs';
 
 import { NavbarComponent } from './navbar.component';
 import { AuthService } from '../../services/auth.service';
@@ -26,6 +27,9 @@ describe('NavbarComponent', () => {
           { path: 'admin', component: BlankComponent },
           { path: 'admin/places', component: BlankComponent },
           { path: 'admin/events', component: BlankComponent },
+          { path: 'admin/discovery', component: BlankComponent },
+          { path: 'admin/discovery/places', component: BlankComponent },
+          { path: 'admin/discovery/events', component: BlankComponent },
           { path: 'admin/review/places', component: BlankComponent },
           { path: 'admin/review/events', component: BlankComponent },
         ]),
@@ -89,6 +93,17 @@ describe('NavbarComponent', () => {
     expect(component.isLanding()).toBeFalse();
     expect(fixture.nativeElement.querySelector('#nav-title')?.textContent).toContain('CIRCECO');
     expect(fixture.nativeElement.querySelector('.logo-dropdown')).toBeTruthy();
+  });
+
+  it('shows a single Discovery Queries admin link', () => {
+    auth.displayUser.set({ uid: 'u1', email: 'a@b.c', photoURL: null });
+    component.admin$ = of(true);
+    fixture.detectChanges();
+    const text = fixture.nativeElement.textContent as string;
+    expect(text).toContain('Discovery Queries');
+    expect(text).not.toContain('Place discovery');
+    expect(text).not.toContain('Event discovery');
+    expect(fixture.nativeElement.querySelectorAll('#discovery-queries-link').length).toBe(1);
   });
 
   it('keeps landing logo click as home, without a site menu', async () => {

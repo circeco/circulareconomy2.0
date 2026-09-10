@@ -50,6 +50,9 @@ export type PlaceDoc = {
   description?: string;
   sectorCategories?: string[];
   actionTags?: ActionTag[];
+  /** OSM query clause ids that produced this candidate (discovery only). */
+  osmClauses?: string[];
+  osmTags?: { shop?: string; amenity?: string; craft?: string };
   placeKey?: string;
   sourceRefs?: SourceRef[];
   status?: RecordStatus;
@@ -75,6 +78,8 @@ export type EventDoc = {
   sectorCategories?: string[];
   actionTags?: ActionTag[];
   sourceRefs?: SourceRef[];
+  /** Event discovery: search query / seed ids that produced this candidate. */
+  eventQueries?: string[];
   /** Links occurrences that share one reviewed series. */
   seriesId?: string;
   /** Recurrence rule copied onto each materialized occurrence. */
@@ -115,6 +120,10 @@ export type ReviewQueueDoc = {
   candidate: PlaceCandidate | EventCandidate;
   evidence: EvidenceItem[];
   matchCandidates?: MatchCandidate[];
+  /** Place discovery: Overpass clause ids attributed to this queue row. */
+  osmClauses?: string[];
+  /** Event discovery: search query / seed ids attributed to this queue row. */
+  eventQueries?: string[];
   review?: ReviewMeta;
   publishedRef?: { collection: 'places' | 'events'; id: string };
   createdAt?: unknown;

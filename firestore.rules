@@ -82,6 +82,16 @@ service cloud.firestore {
       allow read, create, update, delete: if isAdmin();
     }
 
+    /** Shared OSM / event query overlays (extra/disabled clauses): admin only */
+    match /discoveryConfig/{docId} {
+      allow read, create, update, delete: if isAdmin();
+    }
+
+    /** Admin-requested discovery runs (places/events): admin only */
+    match /discoveryJobs/{docId} {
+      allow read, create, update, delete: if isAdmin();
+    }
+
     // --- User data (existing app behaviour) ---
     match /users/{uid}/favourites/{docId} {
       allow read, write: if isOwner(uid);

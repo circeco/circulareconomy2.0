@@ -219,18 +219,20 @@ function normalizeDomainList(list) {
   )];
 }
 
-function blockedDomainsFromCity(city) {
-  const blocked = new Set(DEFAULT_BLOCKED_EVENT_DOMAINS);
-  for (const d of normalizeDomainList(city?.eventBlockDomains)) blocked.add(d);
-  for (const d of normalizeDomainList(city?.discovery?.eventBlockDomains)) blocked.add(d);
-  for (const d of normalizeDomainList(
+function envBlockDomains() {
+  return normalizeDomainList(
     String(process.env.DISCOVERY_EVENT_BLOCK_DOMAINS || '')
       .split(',')
       .map((x) => x.trim())
       .filter(Boolean)
-  )) {
-    blocked.add(d);
-  }
+  );
+}
+
+function blockedDomainsFromCity(city) {
+  const blocked = new Set(DEFAULT_BLOCKED_EVENT_DOMAINS);
+  for (const d of normalizeDomainList(city?.eventBlockDomains)) blocked.add(d);
+  for (const d of normalizeDomainList(city?.discovery?.eventBlockDomains)) blocked.add(d);
+  for (const d of envBlockDomains()) blocked.add(d);
   return [...blocked];
 }
 
@@ -550,6 +552,7 @@ module.exports = {
   hashString,
   normalizeText,
   hostFromUrl,
+  envBlockDomains,
   blockedDomainsFromCity,
   isBlockedHost,
   eventFingerprint,

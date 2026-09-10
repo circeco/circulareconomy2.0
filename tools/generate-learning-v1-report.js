@@ -12,6 +12,16 @@ const path = require('path');
 const { readFileSync, existsSync } = require('fs');
 const { initializeApp, cert, getApps } = require('firebase-admin/app');
 const { getFirestore, FieldValue } = require('firebase-admin/firestore');
+const {
+  clausesFromQueueRow,
+  computeClausePenalties,
+  overlayFromCityDoc,
+  recommendClauseAdditions,
+  recommendClauseRemovals,
+  resolveOsmClauses,
+  tagsToClauseIds,
+} = require('./lib/osm-discovery-queries');
+const { eventQueriesFromRow } = require('./lib/event-discovery-queries');
 
 const PROJECT_ID = process.env.FIREBASE_PROJECT_ID || 'circeco-bf511';
 
@@ -119,7 +129,28 @@ function extractSignals(docData) {
   for (const a of action) out.push(`action:${a}`);
   for (const s of sector) out.push(`sector:${s}`);
   if (source) out.push(`source:${source}`);
+  for (const clauseId of clausesFromQueueRow(docData)) out.push(`osm:${clauseId}`);
+  for (const queryId of eventQueriesFromRow(docData)) out.push(`eventq:${queryId}`);
   return [...new Set(out)];
+}
+
+function statsFromSignals(signalStats, prefix) {
+  const cut = prefix.length;
+  return (signalStats || [])
+    .filter((row) => String(row.key || '').startsWith(prefix))
+    .map((row) => ({
+      ...row,
+      id: String(row.key || '').slice(cut),
+      key: String(row.key || '').slice(cut),
+    }));
+}
+
+function clauseStatsFromSignals(signalStats) {
+  return statsFromSignals(signalStats, 'osm:');
+}
+
+function eventQueryStatsFromSignals(signalStats) {
+  return statsFromSignals(signalStats, 'eventq:');
 }
 
 async function buildCityKindReport(db, cityId, kind, period, start, end) {
@@ -159,6 +190,17 @@ async function buildCityKindReport(db, cityId, kind, period, start, end) {
   const positives = topN(allSignals, 20, (r) => r.support >= 3 && r.approvalRate >= 0.75);
   const negatives = topN(allSignals, 20, (r) => r.support >= 3 && r.approvalRate <= 0.25);
 
+  const approvedTagCounts = new Map();
+  for (const d of approvedSnap.docs) {
+    const row = d.data() || {};
+    const reviewedAt = toIso(row.review?.reviewedAt || row.updatedAt || row.createdAt);
+    if (!inRange(reviewedAt, start, end)) continue;
+    const tags = row.candidate && typeof row.candidate === 'object' ? row.candidate.osmTags : null;
+    for (const id of tagsToClauseIds(tags)) {
+      approvedTagCounts.set(id, (approvedTagCounts.get(id) || 0) + 1);
+    }
+  }
+
   return {
     cityId,
     kind,
@@ -170,6 +212,7 @@ async function buildCityKindReport(db, cityId, kind, period, start, end) {
     signalStats: allSignals.slice(0, 300),
     positives,
     negatives,
+    approvedTagCounts: Object.fromEntries(approvedTagCounts),
     generatedAt: new Date().toISOString(),
   };
 }
@@ -186,15 +229,59 @@ async function main() {
     return;
   }
   console.log(`[learning-report] period=${args.period} cities=${cities.join(',')}`);
+  const globalSnap = await db.collection('discoveryConfig').doc('osmPlaces').get();
+  const globalOverlay = globalSnap.exists ? globalSnap.data() || {} : {};
   for (const cityId of cities) {
     const places = await buildCityKindReport(db, cityId, 'place', args.period, start, end);
     const events = await buildCityKindReport(db, cityId, 'event', args.period, start, end);
+    const citySnap = await db.collection('cities').doc(cityId).get();
+    const cityDoc = citySnap.exists ? citySnap.data() || {} : {};
+    const resolved = resolveOsmClauses(globalOverlay, overlayFromCityDoc(cityDoc));
+    const osmClauseStats = clauseStatsFromSignals(places.signalStats);
+    const eventQueryStats = eventQueryStatsFromSignals(events.signalStats);
+    const clausePenalties = computeClausePenalties(osmClauseStats);
+    const eventQueryPenalties = computeClausePenalties(eventQueryStats);
+    const prevPenalties =
+      cityDoc.discovery && typeof cityDoc.discovery === 'object'
+        ? { ...(cityDoc.discovery.osmClausePenalties || {}) }
+        : {};
+    const prevEventPenalties =
+      cityDoc.discovery && typeof cityDoc.discovery === 'object'
+        ? { ...(cityDoc.discovery.eventQueryPenalties || {}) }
+        : {};
+    for (const row of osmClauseStats) {
+      const reviewed = Number(row.reviewed || 0);
+      const approvalRate = Number(row.approvalRate || 0);
+      if (reviewed >= 8 && approvalRate > 0.35) delete prevPenalties[row.key];
+    }
+    for (const row of eventQueryStats) {
+      const reviewed = Number(row.reviewed || 0);
+      const approvalRate = Number(row.approvalRate || 0);
+      if (reviewed >= 8 && approvalRate > 0.35) delete prevEventPenalties[row.key];
+    }
+    const mergedPenalties = { ...prevPenalties, ...clausePenalties };
+    const mergedEventPenalties = { ...prevEventPenalties, ...eventQueryPenalties };
+    const recommendRemove = recommendClauseRemovals(osmClauseStats);
+    const recommendAdd = recommendClauseAdditions(places.approvedTagCounts, resolved.enabled.map((c) => c.id));
+    const osmQuerySuggestions = {
+      period: args.period,
+      remove: recommendRemove,
+      add: recommendAdd,
+    };
+    const eventQuerySuggestions = {
+      period: args.period,
+      remove: recommendClauseRemovals(eventQueryStats),
+      add: [],
+    };
     const docId = `${cityId}_${args.period}`;
     await db.collection('learningStats').doc(docId).set(
       {
         ...places,
         kind: 'place',
         events,
+        osmClauseStats,
+        clausePenalties: mergedPenalties,
+        osmQuerySuggestions,
         updatedAt: FieldValue.serverTimestamp(),
         createdAt: FieldValue.serverTimestamp(),
       },
@@ -203,16 +290,34 @@ async function main() {
     await db.collection('learningStats').doc(`${docId}_events`).set(
       {
         ...events,
+        eventQueryStats,
+        eventQueryPenalties: mergedEventPenalties,
+        eventQuerySuggestions,
         updatedAt: FieldValue.serverTimestamp(),
         createdAt: FieldValue.serverTimestamp(),
       },
       { merge: true }
     );
+    if (citySnap.exists) {
+      await db.collection('cities').doc(cityId).update({
+        'discovery.osmClausePenalties': mergedPenalties,
+        'discovery.osmQuerySuggestions': osmQuerySuggestions,
+        'discovery.eventQueryPenalties': mergedEventPenalties,
+        'discovery.eventQuerySuggestions': eventQuerySuggestions,
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+    }
     console.log(
       `[learning-report] city=${cityId} places reviewed=${places.reviewedCount} approved=${places.approvedCount} rejected=${places.rejectedCount} signals=${places.signalStats.length}`
     );
     console.log(
       `[learning-report] city=${cityId} events reviewed=${events.reviewedCount} approved=${events.approvedCount} rejected=${events.rejectedCount} signals=${events.signalStats.length}`
+    );
+    console.log(
+      `[learning-report] city=${cityId} osm clauses=${osmClauseStats.length} penalties=${Object.keys(mergedPenalties).length} suggest-remove=${recommendRemove.length} suggest-add=${recommendAdd.length}`
+    );
+    console.log(
+      `[learning-report] city=${cityId} event queries=${eventQueryStats.length} penalties=${Object.keys(mergedEventPenalties).length} suggest-remove=${eventQuerySuggestions.remove.length}`
     );
   }
 }

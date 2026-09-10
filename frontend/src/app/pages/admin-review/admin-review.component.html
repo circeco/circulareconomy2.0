@@ -141,6 +141,13 @@
                     <span class="tag-chip muted" *ngIf="displaySectorCategories(group.candidate.sectorCategories).length === 0">none</span>
                   </div>
                 </div>
+
+                <div class="tag-group" *ngIf="displayEventQueries(group).length">
+                  <div class="tag-label">Discovery query</div>
+                  <div class="tag-list">
+                    <span class="tag-chip" *ngFor="let id of displayEventQueries(group)">{{ id }}</span>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -370,6 +377,13 @@
                   <div class="tag-list">
                     <span class="tag-chip" *ngFor="let s of displaySectorCategories(row.candidate.sectorCategories)">{{ s }}</span>
                     <span class="tag-chip muted" *ngIf="displaySectorCategories(row.candidate.sectorCategories).length === 0">none</span>
+                  </div>
+                </div>
+
+                <div class="tag-group" *ngIf="displayOsmClauses(row).length">
+                  <div class="tag-label">OSM query</div>
+                  <div class="tag-list">
+                    <span class="tag-chip" *ngFor="let id of displayOsmClauses(row)">{{ id }}</span>
                   </div>
                 </div>
               </div>

@@ -10,3 +10,4 @@ import { RouterLink } from '@angular/router';
   styleUrls: ['./admin.component.scss']
 })
 export class AdminComponent {}
+

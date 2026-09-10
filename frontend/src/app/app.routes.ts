@@ -66,6 +66,25 @@ export const routes: Routes = [
     title: 'Admin Events'
   },
   {
+    path: 'admin/discovery',
+    redirectTo: 'admin/discovery/places',
+    pathMatch: 'full',
+  },
+  {
+    path: 'admin/discovery/places',
+    loadComponent: () =>
+      import('./pages/admin-discovery/admin-discovery.component').then(m => m.AdminDiscoveryComponent),
+    canActivate: [adminGuard],
+    title: 'Discovery Queries'
+  },
+  {
+    path: 'admin/discovery/events',
+    loadComponent: () =>
+      import('./pages/admin-event-discovery/admin-event-discovery.component').then(m => m.AdminEventDiscoveryComponent),
+    canActivate: [adminGuard],
+    title: 'Discovery Queries'
+  },
+  {
     path: 'admin',
     loadComponent: () =>
       import('./pages/admin/admin.component').then(m => m.AdminComponent),

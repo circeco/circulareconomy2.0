@@ -1,0 +1,242 @@
+<section class="catalog-shell">
+  <p *ngIf="error() as err" class="catalog-error" role="alert">{{ err }}</p>
+  <p *ngIf="notice() as ok" class="catalog-ok" role="status">{{ ok }}</p>
+
+  <section class="catalog-panel">
+    <div class="panel-title-row">
+      <h1>Discovery Queries</h1>
+      <nav class="discovery-switch" aria-label="Discovery type">
+        <a routerLink="/admin/discovery/places" routerLinkActive="is-active">Places</a>
+        <a routerLink="/admin/discovery/events" routerLinkActive="is-active">Events</a>
+      </nav>
+    </div>
+
+    <p class="lede">
+      These OSM tags are what place discovery asks Overpass for {{ cityLabel() }}.
+      {{ enabledCount() }} of {{ learningRows().length }} queries are on for the next run.
+    </p>
+
+    <p *ngIf="loading()" class="loading">Loading queries…</p>
+
+    <div class="section-block" *ngIf="!loading()">
+      <h2 class="section-title">Last run</h2>
+      <p class="run-copy run-with-radius" *ngIf="searchCenter() as c">
+        <span>
+          Centre {{ c.lat | number:'1.3-3' }}, {{ c.lng | number:'1.3-3' }}.
+          {{ radiusKm() }} km around this point.
+        </span>
+        <label class="radius-field">
+          Radius
+          <select
+            [ngModel]="radiusKm()"
+            (ngModelChange)="setRadiusKm($event)"
+            [disabled]="saving() || running()"
+          >
+            <option *ngFor="let km of radiusOptions" [ngValue]="km">{{ km }} km</option>
+          </select>
+        </label>
+      </p>
+      <p class="run-copy empty" *ngIf="!searchCenter()">This city has no map centre in Firestore.</p>
+      <ng-container *ngIf="lastPlaceRun() as run">
+        <p class="run-copy" *ngIf="run.effectiveRadiusM && run.radiusM && run.effectiveRadiusM !== run.radiusM">
+          Last run shrank to {{ run.effectiveRadiusM / 1000 | number:'1.0-0' }} km after an Overpass timeout.
+        </p>
+      </ng-container>
+      <ng-container *ngIf="lastPlaceRun() as run; else noPlaceRun">
+        <p class="run-copy">
+          {{ run.at | date:"d MMM y, HH:mm" }} — {{ run.status }}.
+          OSM returned {{ run.fetchedCount }} features, {{ run.queuedCount }} queued
+          <ng-container *ngIf="run.limit"> (limit {{ run.limit }})</ng-container>.
+          Skipped: {{ run.skippedReviewedQueue }} already reviewed,
+          {{ run.skippedMemoryHard }} memory,
+          {{ run.skippedApproved }} approved duplicates.
+          <ng-container *ngIf="run.catalogueCount"> Catalogue {{ run.catalogueCount }} places.</ng-container>
+        </p>
+        <p class="run-copy empty" *ngIf="run.status === 'failed' && run.errorSummary">{{ run.errorSummary }}</p>
+      </ng-container>
+      <ng-template #noPlaceRun>
+        <p class="run-copy">No place discovery run stored yet.</p>
+      </ng-template>
+      <p class="run-copy" *ngIf="job() as j">
+        Job {{ j.status }}<ng-container *ngIf="j.errorSummary"> — {{ j.errorSummary }}</ng-container>.
+      </p>
+    </div>
+
+    <div class="section-block" *ngIf="!loading()">
+      <h2 class="section-title">Discovery Learning</h2>
+      <p class="hint" *ngIf="learningRows().length && !enabledCount()">
+        All queries are off. Turn at least one on before running discovery.
+      </p>
+      <table class="stats" *ngIf="learningRows().length">
+        <thead>
+          <tr>
+            <th class="col-on">On</th>
+            <th>Query</th>
+            <th>Reviewed</th>
+            <th>Approved</th>
+            <th>Rejected</th>
+            <th>Rate</th>
+            <th class="col-actions">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of learningRows()" [class.is-off]="!row.enabled">
+            <td class="col-on">
+              <label class="switch">
+                <input
+                  type="checkbox"
+                  [checked]="row.enabled"
+                  [disabled]="saving() || running()"
+                  [attr.aria-label]="(row.enabled ? 'Disable ' : 'Enable ') + row.clause.label"
+                  (change)="toggleClause(row.clause, $any($event.target).checked)"
+                />
+                <span class="slider" aria-hidden="true"></span>
+              </label>
+            </td>
+            <td>{{ row.clause.label }}</td>
+            <td>{{ row.stat?.reviewed || 0 }}</td>
+            <td>{{ row.stat?.approved || 0 }}</td>
+            <td>{{ row.stat?.rejected || 0 }}</td>
+            <td>{{ row.stat ? percent(row.stat.approvalRate) : '—' }}</td>
+            <td class="col-actions">
+              <div class="actions">
+                <button type="button" [disabled]="saving()" (click)="startEdit(row.clause)">Edit</button>
+                <button type="button" class="danger" [disabled]="saving()" (click)="removeRow(row.clause)">Remove</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="empty" *ngIf="!learningRows().length">No queries for this city.</p>
+
+      <div class="suggestions" *ngIf="suggestions().remove.length || suggestions().add.length">
+        <p class="hint">Recommendations only. Apply them if you agree.</p>
+        <ul class="suggest-list">
+          <li *ngFor="let row of suggestions().remove">
+            <span>Consider removing <strong>{{ row.id }}</strong> ({{ row.support }} reviews, {{ percent(row.approvalRate) }} approved)</span>
+            <button type="button" [disabled]="saving()" (click)="applySuggestion(row)">Remove</button>
+          </li>
+          <li *ngFor="let row of suggestions().add">
+            <span>Consider adding <strong>{{ row.id }}</strong> ({{ row.support }} approved places used this OSM tag)</span>
+            <button type="button" [disabled]="saving()" (click)="applySuggestion(row)">Add</button>
+          </li>
+        </ul>
+      </div>
+
+      <div class="create-panel">
+        <div class="create-title">{{ editingId() ? 'Edit query' : 'Add a query' }}</div>
+        <dl class="legend">
+          <div>
+            <dt>shop</dt>
+            <dd>A store: second_hand, books, clothes, bicycle…</dd>
+          </div>
+          <div>
+            <dt>amenity</dt>
+            <dd>A public place: recycling, recycling_centre…</dd>
+          </div>
+          <div>
+            <dt>craft</dt>
+            <dd>A workshop: electronics_repair, tailor…</dd>
+          </div>
+          <div>
+            <dt>Name contains</dt>
+            <dd>Matches the place name, not the OSM type.</dd>
+          </div>
+          <div>
+            <dt>and second_hand=yes</dt>
+            <dd>That shop type only when OSM also marks used goods.</dd>
+          </div>
+          <div>
+            <dt>and vintage=yes</dt>
+            <dd>That shop type only when OSM also marks vintage.</dd>
+          </div>
+          <div>
+            <dt>and rental=yes / repair=yes</dt>
+            <dd>That shop type also rents or also repairs.</dd>
+          </div>
+          <div>
+            <dt>shop=vintage / antiques</dt>
+            <dd>The shop’s type is vintage or antiques, not an extra flag.</dd>
+          </div>
+          <div>
+            <dt>Reviewed / Rate</dt>
+            <dd>Approve and reject counts for cards this query found.</dd>
+          </div>
+        </dl>
+        <div class="add-grid" [class.has-extra]="addForm().kind === 'and_tag'">
+          <label class="add-caption" for="place-add-kind">Type</label>
+          <label class="add-caption" for="place-add-key">Key</label>
+          <label class="add-caption" for="place-add-token">{{ valueLabel() }}</label>
+          <label class="add-caption" *ngIf="addForm().kind === 'and_tag'" for="place-add-extra">Extra</label>
+          <span class="add-caption add-caption-spacer" aria-hidden="true"></span>
+
+          <select
+            id="place-add-kind"
+            class="add-control"
+            [ngModel]="addForm().kind"
+            (ngModelChange)="setAddKind($event)"
+          >
+            <option value="tag">OSM tag</option>
+            <option value="and_tag">Shop + extra flag</option>
+            <option value="name_regex">Name contains</option>
+          </select>
+          <select
+            id="place-add-key"
+            class="add-control"
+            [ngModel]="addForm().key"
+            (ngModelChange)="setAddKey($event)"
+          >
+            <option *ngFor="let k of clauseKeys" [ngValue]="k">{{ k }}</option>
+          </select>
+          <select
+            *ngIf="addForm().kind === 'and_tag'"
+            id="place-add-token"
+            class="add-control"
+            [ngModel]="addForm().token"
+            (ngModelChange)="setAddToken($event)"
+          >
+            <option *ngIf="extraShopOption() as extra" [ngValue]="extra">{{ extra }}</option>
+            <option *ngFor="let v of shopValues" [ngValue]="v">{{ v }}</option>
+          </select>
+          <input
+            *ngIf="addForm().kind !== 'and_tag'"
+            id="place-add-token"
+            class="add-control"
+            type="text"
+            [ngModel]="addForm().token"
+            (ngModelChange)="setAddToken($event)"
+            [placeholder]="valuePlaceholder()"
+          />
+          <select
+            *ngIf="addForm().kind === 'and_tag'"
+            id="place-add-extra"
+            class="add-control"
+            [ngModel]="addForm().andKey"
+            (ngModelChange)="setAddAndKey($event)"
+          >
+            <option *ngFor="let k of andKeys" [ngValue]="k">{{ andKeyLabels[k] }}</option>
+          </select>
+          <div class="add-actions-row">
+            <button type="button" class="btn-add" [disabled]="saving() || !addForm().token.trim()" (click)="addFromForm()">
+              {{ editingId() ? 'Save' : 'Add' }}
+            </button>
+            <button *ngIf="editingId()" type="button" class="btn-cancel" [disabled]="saving()" (click)="cancelEdit()">
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="run-wrap">
+        <button
+          type="button"
+          class="btn-run"
+          [disabled]="saving() || running() || !enabledCount()"
+          (click)="runDiscovery()"
+        >
+          {{ running() ? 'Running…' : 'Run discovery' }}
+        </button>
+      </div>
+    </div>
+  </section>
+</section>
