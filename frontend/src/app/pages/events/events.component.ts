@@ -1,8 +1,7 @@
 import { Component, DestroyRef, inject, signal, computed, AfterViewChecked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
-import { combineLatest } from 'rxjs';
+import { firstValueFrom, combineLatest } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { EventItem, EventsService } from '../../services/events.service';
 import { SearchService } from '../../services/search.service';

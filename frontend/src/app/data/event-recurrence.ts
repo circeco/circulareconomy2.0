@@ -179,17 +179,6 @@ export function expandRecurrenceDates(
   return [...new Set(out)].sort();
 }
 
-/** Merge explicit dates with recurrence expansion. */
-export function mergeOccurrenceDates(
-  explicitDates: string[],
-  startDate: string,
-  recurrence: EventRecurrence | undefined
-): string[] {
-  const fromRule = expandRecurrenceDates(startDate || explicitDates[0] || '', recurrence);
-  const merged = [...new Set([...explicitDates.filter(Boolean), ...fromRule])].sort();
-  return merged.length ? merged : startDate ? [startDate] : [];
-}
-
 /** Heuristic: detect weekly / monthly_nth from a sorted date list. */
 export function inferRecurrenceFromDates(dates: string[]): EventRecurrenceFrequency {
   const unique = [...new Set(dates.filter(Boolean))].sort();

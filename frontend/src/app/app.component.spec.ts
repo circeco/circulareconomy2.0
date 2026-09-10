@@ -4,10 +4,9 @@ import { RouterOutlet } from '@angular/router';
 import { CommonModule } from '@angular/common';
 
 import { AppComponent } from './app.component';
-import { AuthService } from './services/auth.service';
 import { EventFavoritesService } from './services/event-favorites.service';
 import { FavoritesService } from './services/favorites.service';
-import { AuthServiceStub, EventFavoritesServiceStub, FavoritesServiceStub } from './testing/test-doubles';
+import { EventFavoritesServiceStub, FavoritesServiceStub } from './testing/test-doubles';
 
 describe('AppComponent', () => {
   beforeEach(async () => {
@@ -15,7 +14,6 @@ describe('AppComponent', () => {
       imports: [AppComponent],
       providers: [
         provideRouter([]),
-        { provide: AuthService, useClass: AuthServiceStub },
         { provide: FavoritesService, useClass: FavoritesServiceStub },
         { provide: EventFavoritesService, useClass: EventFavoritesServiceStub },
       ],

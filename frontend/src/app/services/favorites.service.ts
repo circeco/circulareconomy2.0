@@ -5,6 +5,7 @@ import { collectionData } from '@angular/fire/firestore';
 import { serverTimestamp } from 'firebase/firestore';
 import { Subscription } from 'rxjs';
 import { AuthService } from './auth.service';
+import { FS_PATHS } from '../data/firestore-paths';
 
 type Coords = { lng: number; lat: number };
 type Place = {
@@ -54,7 +55,7 @@ export class FavoritesService {
 
       if (!user) return;
 
-      const col = collection(this.fs, `users/${user.uid}/favourites`);
+      const col = collection(this.fs, FS_PATHS.userFavourites(user.uid));
       const q = query(col, orderBy('serverCreatedAt', 'desc'));
       this.favSub = collectionData(q, { idField: 'id' }).subscribe({
         next: (docs: any[]) => {
@@ -186,7 +187,7 @@ export class FavoritesService {
       this.pushToMapSource(); this.emitUpdate();
     }
     try {
-      await setDoc(doc(this.fs, `users/${uid}/favourites/${place.key}`), {
+      await setDoc(doc(this.fs, `${FS_PATHS.userFavourites(uid)}/${place.key}`), {
         key: place.key,
         name: place.name,
         address: place.address || '',
@@ -212,7 +213,7 @@ export class FavoritesService {
       this.pushToMapSource(); this.emitUpdate();
     }
     try {
-      await deleteDoc(doc(this.fs, `users/${uid}/favourites/${key}`));
+      await deleteDoc(doc(this.fs, `${FS_PATHS.userFavourites(uid)}/${key}`));
     } catch (e) {
       console.error('[favourites] remove failed', e);
       if (opts.optimistic && prev) {
