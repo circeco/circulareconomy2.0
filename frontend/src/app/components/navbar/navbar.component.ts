@@ -198,6 +198,8 @@ export class NavbarComponent implements AfterViewInit, OnDestroy {
       this.router.navigate(['/'], { queryParamsHandling: 'merge' });
     }
   }
+
+  private scrollToSection(id: string): void {
     const target = document.getElementById(id);
     if (!target) return;
     const rect = target.getBoundingClientRect();
