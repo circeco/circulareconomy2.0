@@ -22,12 +22,15 @@ export type EventQueryOverlay = {
   extraQueries: string[];
   disabledQueries: string[];
   reenabledQueries: string[];
+  removedQueries: string[];
   extraSeeds: string[];
   disabledSeeds: string[];
   reenabledSeeds: string[];
+  removedSeeds: string[];
   extraBlockDomains: string[];
   disabledBlockDomains: string[];
   reenabledBlockDomains: string[];
+  removedBlockDomains: string[];
   queryPenalties: Record<string, number>;
 };
 
@@ -207,6 +210,7 @@ type StringOverlay = {
   extra: string[];
   disabled: string[];
   reenabled: string[];
+  removed: string[];
   penalties: Record<string, number>;
 };
 
@@ -215,6 +219,7 @@ function parseStringOverlay(
   extraKey: string,
   disabledKey: string,
   reenabledKey: string,
+  removedKey: string,
   normalizeFn: (raw: unknown) => string
 ): StringOverlay {
   const src = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
@@ -222,6 +227,7 @@ function parseStringOverlay(
     extra: uniqStrings((Array.isArray(src[extraKey]) ? src[extraKey] : []).map(normalizeFn).filter(Boolean)),
     disabled: uniqStrings((Array.isArray(src[disabledKey]) ? src[disabledKey] : []).map(normalizeFn).filter(Boolean)),
     reenabled: uniqStrings((Array.isArray(src[reenabledKey]) ? src[reenabledKey] : []).map(normalizeFn).filter(Boolean)),
+    removed: uniqStrings((Array.isArray(src[removedKey]) ? src[removedKey] : []).map(normalizeFn).filter(Boolean)),
     penalties: parsePenaltyMap(src['penalties'] || src['queryPenalties']),
   };
 }
@@ -231,31 +237,37 @@ export function emptyEventQueryOverlay(): EventQueryOverlay {
     extraQueries: [],
     disabledQueries: [],
     reenabledQueries: [],
+    removedQueries: [],
     extraSeeds: [],
     disabledSeeds: [],
     reenabledSeeds: [],
+    removedSeeds: [],
     extraBlockDomains: [],
     disabledBlockDomains: [],
     reenabledBlockDomains: [],
+    removedBlockDomains: [],
     queryPenalties: {},
   };
 }
 
 export function parseEventQueryOverlay(raw: unknown): EventQueryOverlay {
   const src = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
-  const queries = parseStringOverlay(src, 'extraQueries', 'disabledQueries', 'reenabledQueries', normalizeEventQuery);
-  const seeds = parseStringOverlay(src, 'extraSeeds', 'disabledSeeds', 'reenabledSeeds', asSeedQueryId);
-  const blocks = parseStringOverlay(src, 'extraBlockDomains', 'disabledBlockDomains', 'reenabledBlockDomains', normalizeBlockDomain);
+  const queries = parseStringOverlay(src, 'extraQueries', 'disabledQueries', 'reenabledQueries', 'removedQueries', normalizeEventQuery);
+  const seeds = parseStringOverlay(src, 'extraSeeds', 'disabledSeeds', 'reenabledSeeds', 'removedSeeds', asSeedQueryId);
+  const blocks = parseStringOverlay(src, 'extraBlockDomains', 'disabledBlockDomains', 'reenabledBlockDomains', 'removedBlockDomains', normalizeBlockDomain);
   return {
     extraQueries: queries.extra,
     disabledQueries: queries.disabled,
     reenabledQueries: queries.reenabled,
+    removedQueries: queries.removed,
     extraSeeds: seeds.extra,
     disabledSeeds: seeds.disabled,
     reenabledSeeds: seeds.reenabled,
+    removedSeeds: seeds.removed,
     extraBlockDomains: blocks.extra,
     disabledBlockDomains: blocks.disabled,
     reenabledBlockDomains: blocks.reenabled,
+    removedBlockDomains: blocks.removed,
     queryPenalties: { ...queries.penalties, ...parsePenaltyMap(src['queryPenalties']) },
   };
 }
@@ -270,9 +282,11 @@ export function overlayFromCityDiscovery(discovery: unknown, cityDoc?: unknown):
     extraQueries: queries.extraQueries,
     disabledQueries: queries.disabledQueries,
     reenabledQueries: queries.reenabledQueries,
+    removedQueries: queries.removedQueries,
     extraSeeds: seeds.extraSeeds,
     disabledSeeds: seeds.disabledSeeds,
     reenabledSeeds: seeds.reenabledSeeds,
+    removedSeeds: seeds.removedSeeds,
     extraBlockDomains: uniqStrings([
       ...blocks.extraBlockDomains,
       ...queries.extraBlockDomains,
@@ -281,6 +295,7 @@ export function overlayFromCityDiscovery(discovery: unknown, cityDoc?: unknown):
     ].map(normalizeBlockDomain).filter(Boolean)),
     disabledBlockDomains: blocks.disabledBlockDomains,
     reenabledBlockDomains: blocks.reenabledBlockDomains,
+    removedBlockDomains: blocks.removedBlockDomains,
     queryPenalties: {
       ...queries.queryPenalties,
       ...seeds.queryPenalties,
@@ -299,16 +314,20 @@ function resolveStringList(
     cityPart.extra.length ||
     cityPart.disabled.length ||
     cityPart.reenabled.length ||
+    cityPart.removed.length ||
     globalPart.extra.length ||
-    globalPart.disabled.length;
+    globalPart.disabled.length ||
+    globalPart.removed.length;
   const base = !hasConfig && legacy.length ? legacy : defaults;
   const disabled = new Set(globalPart.disabled);
   for (const id of cityPart.reenabled) disabled.delete(id);
   for (const id of cityPart.disabled) disabled.add(id);
+  const removed = new Set(globalPart.removed);
+  for (const id of cityPart.removed) removed.add(id);
   const byId = new Map<string, EventQueryItem>();
   for (const item of base) byId.set(item, catalogItem(item, defaults));
   for (const item of globalPart.extra.concat(cityPart.extra)) byId.set(item, catalogItem(item, defaults));
-  const catalog = [...byId.values()];
+  const catalog = [...byId.values()].filter((c) => !removed.has(c.id));
   return {
     enabled: catalog.filter((c) => !disabled.has(c.id)),
     catalog,
@@ -354,12 +373,14 @@ export function resolveEventDiscoveryPlan(
       extra: globalOverlay.extraQueries,
       disabled: globalOverlay.disabledQueries,
       reenabled: globalOverlay.reenabledQueries,
+      removed: globalOverlay.removedQueries,
       penalties: globalOverlay.queryPenalties,
     },
     {
       extra: cityOverlay.extraQueries,
       disabled: cityOverlay.disabledQueries,
       reenabled: cityOverlay.reenabledQueries,
+      removed: cityOverlay.removedQueries,
       penalties: cityOverlay.queryPenalties,
     },
     legacyQueries
@@ -370,12 +391,14 @@ export function resolveEventDiscoveryPlan(
       extra: globalOverlay.extraSeeds,
       disabled: globalOverlay.disabledSeeds,
       reenabled: globalOverlay.reenabledSeeds,
+      removed: globalOverlay.removedSeeds,
       penalties: globalOverlay.queryPenalties,
     },
     {
       extra: cityOverlay.extraSeeds,
       disabled: cityOverlay.disabledSeeds,
       reenabled: cityOverlay.reenabledSeeds,
+      removed: cityOverlay.removedSeeds,
       penalties: cityOverlay.queryPenalties,
     },
     legacySeeds
@@ -387,12 +410,14 @@ export function resolveEventDiscoveryPlan(
       extra: globalOverlay.extraBlockDomains,
       disabled: globalOverlay.disabledBlockDomains,
       reenabled: globalOverlay.reenabledBlockDomains,
+      removed: globalOverlay.removedBlockDomains,
       penalties: {},
     },
     {
       extra: cityOverlay.extraBlockDomains,
       disabled: cityOverlay.disabledBlockDomains,
       reenabled: cityOverlay.reenabledBlockDomains,
+      removed: cityOverlay.removedBlockDomains,
       penalties: {},
     },
     []

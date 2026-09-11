@@ -84,6 +84,7 @@ export class AdminEventDiscoveryComponent {
   readonly extraKeywords = signal<string[]>([]);
   readonly job = signal<DiscoveryJob | null>(null);
   readonly loading = signal(false);
+  readonly loaded = signal(false);
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
   readonly notice = signal<string | null>(null);
@@ -159,10 +160,13 @@ export class AdminEventDiscoveryComponent {
     return `${Math.round(Number(rate) * 100)}%`;
   }
 
-  async reload(): Promise<void> {
+  async reload(opts?: { quiet?: boolean }): Promise<void> {
     const cityId = this.cityContext.cityId();
-    this.loading.set(true);
-    this.error.set(null);
+    const quiet = !!opts?.quiet;
+    if (!quiet) {
+      this.loading.set(true);
+      this.error.set(null);
+    }
     try {
       let globalData: Record<string, unknown> = {};
       try {
@@ -196,7 +200,8 @@ export class AdminEventDiscoveryComponent {
     } catch (e) {
       this.error.set(this.errorMessage(e, 'Could not load event discovery queries.'));
     } finally {
-      this.loading.set(false);
+      if (!quiet) this.loading.set(false);
+      this.loaded.set(true);
     }
   }
 
@@ -283,9 +288,9 @@ export class AdminEventDiscoveryComponent {
     const keys = this.keysFor(kind);
     overlay[keys.extra] = overlay[keys.extra].filter((id) => id !== item.id);
     overlay[keys.reenabled] = overlay[keys.reenabled].filter((id) => id !== item.id);
-    if (item.builtin || this.globalExtra(kind).includes(item.id)) {
-      if (!overlay[keys.disabled].includes(item.id)) overlay[keys.disabled].push(item.id);
-    }
+    if (!overlay[keys.removed].includes(item.id)) overlay[keys.removed].push(item.id);
+    if (!overlay[keys.disabled].includes(item.id)) overlay[keys.disabled].push(item.id);
+    if (this.editingId() === item.id) this.cancelEdit();
     await this.saveOverlay(overlay, `Removed ${item.label}`);
   }
 
@@ -344,6 +349,8 @@ export class AdminEventDiscoveryComponent {
     const overlay = this.editableOverlay();
     if (row.id.startsWith('seed:')) {
       overlay.extraSeeds = overlay.extraSeeds.filter((id) => id !== row.id).concat(row.id);
+      overlay.disabledSeeds = overlay.disabledSeeds.filter((id) => id !== row.id);
+      overlay.removedSeeds = overlay.removedSeeds.filter((id) => id !== row.id);
     } else {
       const id = normalizeEventQuery(row.id);
       if (!id) {
@@ -351,6 +358,8 @@ export class AdminEventDiscoveryComponent {
         return;
       }
       overlay.extraQueries = overlay.extraQueries.filter((q) => q !== id).concat(id);
+      overlay.disabledQueries = overlay.disabledQueries.filter((q) => q !== id);
+      overlay.removedQueries = overlay.removedQueries.filter((q) => q !== id);
     }
     await this.saveOverlay(overlay, `Added ${row.id}`);
   }
@@ -412,7 +421,7 @@ export class AdminEventDiscoveryComponent {
       if (prev && jobIsActive(prev) && job && (job.status === 'done' || job.status === 'failed')) {
         if (job.status === 'done') this.notice.set('Event discovery finished.');
         else this.error.set(job.errorSummary || 'Event discovery failed.');
-        void this.reload();
+        void this.reload({ quiet: true });
       }
     });
   }
@@ -538,14 +547,15 @@ export class AdminEventDiscoveryComponent {
     extra: 'extraQueries' | 'extraSeeds' | 'extraBlockDomains';
     disabled: 'disabledQueries' | 'disabledSeeds' | 'disabledBlockDomains';
     reenabled: 'reenabledQueries' | 'reenabledSeeds' | 'reenabledBlockDomains';
+    removed: 'removedQueries' | 'removedSeeds' | 'removedBlockDomains';
   } {
     switch (kind) {
       case 'search':
-        return { extra: 'extraQueries', disabled: 'disabledQueries', reenabled: 'reenabledQueries' };
+        return { extra: 'extraQueries', disabled: 'disabledQueries', reenabled: 'reenabledQueries', removed: 'removedQueries' };
       case 'seed':
-        return { extra: 'extraSeeds', disabled: 'disabledSeeds', reenabled: 'reenabledSeeds' };
+        return { extra: 'extraSeeds', disabled: 'disabledSeeds', reenabled: 'reenabledSeeds', removed: 'removedSeeds' };
       case 'block':
-        return { extra: 'extraBlockDomains', disabled: 'disabledBlockDomains', reenabled: 'reenabledBlockDomains' };
+        return { extra: 'extraBlockDomains', disabled: 'disabledBlockDomains', reenabled: 'reenabledBlockDomains', removed: 'removedBlockDomains' };
       default: {
         const _never: never = kind;
         return _never;
@@ -568,21 +578,6 @@ export class AdminEventDiscoveryComponent {
     }
   }
 
-  private globalExtra(kind: AddKind): string[] {
-    switch (kind) {
-      case 'search':
-        return this.globalOverlay().extraQueries;
-      case 'seed':
-        return this.globalOverlay().extraSeeds;
-      case 'block':
-        return this.globalOverlay().extraBlockDomains;
-      default: {
-        const _never: never = kind;
-        return _never;
-      }
-    }
-  }
-
   private applyEditedId(
     overlay: EventQueryOverlay,
     kind: AddKind,
@@ -593,11 +588,13 @@ export class AdminEventDiscoveryComponent {
     const keys = this.keysFor(kind);
     if (originalId && originalKind === kind && originalId !== id) {
       overlay[keys.extra] = overlay[keys.extra].filter((q) => q !== originalId);
-      if (!overlay[keys.disabled].includes(originalId)) overlay[keys.disabled].push(originalId);
       overlay[keys.reenabled] = overlay[keys.reenabled].filter((q) => q !== originalId);
+      if (!overlay[keys.removed].includes(originalId)) overlay[keys.removed].push(originalId);
+      if (!overlay[keys.disabled].includes(originalId)) overlay[keys.disabled].push(originalId);
     }
     overlay[keys.extra] = overlay[keys.extra].filter((q) => q !== id).concat(id);
     overlay[keys.disabled] = overlay[keys.disabled].filter((q) => q !== id);
+    overlay[keys.removed] = overlay[keys.removed].filter((q) => q !== id);
   }
 
   private editableOverlay(): EventQueryOverlay {
@@ -606,12 +603,15 @@ export class AdminEventDiscoveryComponent {
       extraQueries: [...src.extraQueries],
       disabledQueries: [...src.disabledQueries],
       reenabledQueries: [...src.reenabledQueries],
+      removedQueries: [...src.removedQueries],
       extraSeeds: [...src.extraSeeds],
       disabledSeeds: [...src.disabledSeeds],
       reenabledSeeds: [...src.reenabledSeeds],
+      removedSeeds: [...src.removedSeeds],
       extraBlockDomains: [...src.extraBlockDomains],
       disabledBlockDomains: [...src.disabledBlockDomains],
       reenabledBlockDomains: [...src.reenabledBlockDomains],
+      removedBlockDomains: [...src.removedBlockDomains],
       queryPenalties: { ...src.queryPenalties },
     };
   }
@@ -625,17 +625,20 @@ export class AdminEventDiscoveryComponent {
         'discovery.eventQueryConfig.extraQueries': overlay.extraQueries,
         'discovery.eventQueryConfig.disabledQueries': overlay.disabledQueries,
         'discovery.eventQueryConfig.reenabledQueries': overlay.reenabledQueries,
+        'discovery.eventQueryConfig.removedQueries': overlay.removedQueries,
         'discovery.eventSeedConfig.extraSeeds': overlay.extraSeeds,
         'discovery.eventSeedConfig.disabledSeeds': overlay.disabledSeeds,
         'discovery.eventSeedConfig.reenabledSeeds': overlay.reenabledSeeds,
+        'discovery.eventSeedConfig.removedSeeds': overlay.removedSeeds,
         'discovery.eventBlockConfig.extraBlockDomains': overlay.extraBlockDomains,
         'discovery.eventBlockConfig.disabledBlockDomains': overlay.disabledBlockDomains,
         'discovery.eventBlockConfig.reenabledBlockDomains': overlay.reenabledBlockDomains,
+        'discovery.eventBlockConfig.removedBlockDomains': overlay.removedBlockDomains,
         'discovery.eventBlockDomains': overlay.extraBlockDomains,
         updatedAt: serverTimestamp(),
       });
+      this.cityOverlay.set(overlay);
       this.notice.set(okMessage);
-      await this.reload();
     } catch (e) {
       this.error.set(this.errorMessage(e, 'Could not save queries.'));
     } finally {

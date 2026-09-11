@@ -51,6 +51,17 @@ describe('osm-discovery-queries', () => {
     expect(ids).toContain('shop:antiques');
   });
 
+  it('lets a city remove a builtin from the catalog', () => {
+    const resolved = resolveOsmClauses(
+      {},
+      { removedClauseIds: ['shop:charity'] }
+    );
+    const catalogIds = resolved.catalog.map((c) => c.id);
+    expect(catalogIds).not.toContain('shop:charity');
+    expect(resolved.enabled.map((c) => c.id)).not.toContain('shop:charity');
+    expect(catalogIds).toContain('shop:second_hand');
+  });
+
   it('reads osmClauses from a queue row and falls back to evidence', () => {
     expect(clausesFromQueueRow({
       osmClauses: ['shop:second_hand'],

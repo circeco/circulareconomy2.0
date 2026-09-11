@@ -27,6 +27,20 @@ describe('event-discovery-defaults', () => {
     expect(plan.seeds.enabled.map((c) => c.id)).toContain(asSeedQueryId('https://example.org/events'));
   });
 
+  it('lets a city remove a builtin search query from the list', () => {
+    const plan = resolveEventDiscoveryPlan(
+      'stockholm',
+      emptyEventQueryOverlay(),
+      overlayFromCityDiscovery({
+        eventQueryConfig: {
+          removedQueries: ['circular economy event Stockholm'],
+        },
+      })
+    );
+    expect(plan.queries.catalog.map((c) => c.id)).not.toContain('circular economy event Stockholm');
+    expect(plan.queries.enabled.map((c) => c.id)).not.toContain('circular economy event Stockholm');
+  });
+
   it('lets a city turn a builtin blocked host off and add extras', () => {
     const plan = resolveEventDiscoveryPlan(
       'stockholm',

@@ -24,7 +24,6 @@ import {
 } from '../../data/discovery-jobs';
 import { FS_PATHS } from '../../data/firestore-paths';
 import {
-  DEFAULT_OSM_CLAUSES,
   OSM_AND_KEY_LABELS,
   OSM_AND_KEYS,
   OSM_AND_SHOP_VALUES,
@@ -102,6 +101,7 @@ export class AdminDiscoveryComponent {
   readonly radiusKm = signal(radiusKmFromM(OSM_LOCAL_RADIUS_M));
   readonly job = signal<DiscoveryJob | null>(null);
   readonly loading = signal(false);
+  readonly loaded = signal(false);
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
   readonly notice = signal<string | null>(null);
@@ -151,10 +151,13 @@ export class AdminDiscoveryComponent {
     return `${Math.round(Number(rate) * 100)}%`;
   }
 
-  async reload(): Promise<void> {
+  async reload(opts?: { quiet?: boolean }): Promise<void> {
     const cityId = this.cityContext.cityId();
-    this.loading.set(true);
-    this.error.set(null);
+    const quiet = !!opts?.quiet;
+    if (!quiet) {
+      this.loading.set(true);
+      this.error.set(null);
+    }
     try {
       let globalData: Record<string, unknown> = {};
       try {
@@ -193,7 +196,8 @@ export class AdminDiscoveryComponent {
     } catch (e) {
       this.error.set(this.errorMessage(e, 'Could not load discovery queries.'));
     } finally {
-      this.loading.set(false);
+      if (!quiet) this.loading.set(false);
+      this.loaded.set(true);
     }
   }
 
@@ -313,13 +317,9 @@ export class AdminDiscoveryComponent {
     const overlay = this.editableOverlay();
     overlay.extraClauses = overlay.extraClauses.filter((c) => c.id !== clause.id);
     overlay.reenabledClauseIds = overlay.reenabledClauseIds.filter((id) => id !== clause.id);
-    const persists =
-      clause.builtin
-      || DEFAULT_OSM_CLAUSES.some((c) => c.id === clause.id)
-      || this.globalOverlay().extraClauses.some((c) => c.id === clause.id);
-    if (persists && !overlay.disabledClauseIds.includes(clause.id)) {
-      overlay.disabledClauseIds.push(clause.id);
-    }
+    if (!overlay.removedClauseIds.includes(clause.id)) overlay.removedClauseIds.push(clause.id);
+    if (!overlay.disabledClauseIds.includes(clause.id)) overlay.disabledClauseIds.push(clause.id);
+    if (this.editingId() === clause.id) this.cancelEdit();
     await this.saveOverlay(overlay, `Removed ${clause.label}`);
   }
 
@@ -336,11 +336,13 @@ export class AdminDiscoveryComponent {
     const originalId = this.editingId();
     if (originalId && originalId !== clause.id) {
       overlay.extraClauses = overlay.extraClauses.filter((c) => c.id !== originalId);
-      if (!overlay.disabledClauseIds.includes(originalId)) overlay.disabledClauseIds.push(originalId);
       overlay.reenabledClauseIds = overlay.reenabledClauseIds.filter((id) => id !== originalId);
+      if (!overlay.removedClauseIds.includes(originalId)) overlay.removedClauseIds.push(originalId);
+      if (!overlay.disabledClauseIds.includes(originalId)) overlay.disabledClauseIds.push(originalId);
     }
     overlay.extraClauses = overlay.extraClauses.filter((c) => c.id !== clause.id).concat(clause);
     overlay.disabledClauseIds = overlay.disabledClauseIds.filter((id) => id !== clause.id);
+    overlay.removedClauseIds = overlay.removedClauseIds.filter((id) => id !== clause.id);
     await this.saveOverlay(overlay, originalId ? `Updated ${clause.label}` : `Added ${clause.label}`);
     this.cancelEdit();
   }
@@ -362,6 +364,8 @@ export class AdminDiscoveryComponent {
     }
     const overlay = this.editableOverlay();
     overlay.extraClauses = overlay.extraClauses.filter((c) => c.id !== clause.id).concat(clause);
+    overlay.disabledClauseIds = overlay.disabledClauseIds.filter((id) => id !== clause.id);
+    overlay.removedClauseIds = overlay.removedClauseIds.filter((id) => id !== clause.id);
     await this.saveOverlay(overlay, `Added ${clause.label}`);
   }
 
@@ -439,7 +443,7 @@ export class AdminDiscoveryComponent {
       if (prev && jobIsActive(prev) && job && (job.status === 'done' || job.status === 'failed')) {
         if (job.status === 'done') this.notice.set('Place discovery finished.');
         else this.error.set(job.errorSummary || 'Place discovery failed.');
-        void this.reload();
+        void this.reload({ quiet: true });
       }
     });
   }
@@ -568,6 +572,7 @@ export class AdminDiscoveryComponent {
     return {
       disabledClauseIds: [...src.disabledClauseIds],
       reenabledClauseIds: [...src.reenabledClauseIds],
+      removedClauseIds: [...src.removedClauseIds],
       extraClauses: src.extraClauses.map((c) => ({ ...c })),
       clausePenalties: { ...src.clausePenalties },
     };
@@ -581,11 +586,12 @@ export class AdminDiscoveryComponent {
       await updateDoc(doc(this.fs, FS_PATHS.cities, this.cityContext.cityId()), {
         'discovery.osmQueries.disabledClauseIds': overlay.disabledClauseIds,
         'discovery.osmQueries.reenabledClauseIds': overlay.reenabledClauseIds,
+        'discovery.osmQueries.removedClauseIds': overlay.removedClauseIds,
         'discovery.osmQueries.extraClauses': overlay.extraClauses.map((c) => this.clauseToFirestore(c)),
         updatedAt: serverTimestamp(),
       });
+      this.cityOverlay.set(overlay);
       this.notice.set(okMessage);
-      await this.reload();
     } catch (e) {
       this.error.set(this.errorMessage(e, 'Could not save queries.'));
     } finally {

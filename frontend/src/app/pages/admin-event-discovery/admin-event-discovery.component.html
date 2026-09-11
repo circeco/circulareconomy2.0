@@ -16,9 +16,9 @@
       {{ enabledCount() }} of {{ fetchRows().length }} search and seed queries are on for the next run.
     </p>
 
-    <p *ngIf="loading()" class="loading">Loading queries…</p>
+    <p *ngIf="loading() && !loaded()" class="loading">Loading queries…</p>
 
-    <div class="section-block" *ngIf="!loading()">
+    <div class="section-block" *ngIf="loaded()">
       <h2 class="section-title">Last run</h2>
       <ng-container *ngIf="lastEventRun() as run; else noEventRun">
         <p class="run-copy">
@@ -41,7 +41,7 @@
       </p>
     </div>
 
-    <div class="section-block" *ngIf="!loading()">
+    <div class="section-block" *ngIf="loaded()">
       <h2 class="section-title">Discovery Learning</h2>
       <p class="hint" *ngIf="fetchRows().length && !enabledCount()">
         All search and seed queries are off. Turn at least one on before running discovery.

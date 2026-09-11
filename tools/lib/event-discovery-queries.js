@@ -130,13 +130,14 @@ function parsePenaltyMap(raw) {
   return out;
 }
 
-function parseStringOverlay(raw, extraKey, disabledKey, reenabledKey, normalizeFn) {
+function parseStringOverlay(raw, extraKey, disabledKey, reenabledKey, removedKey, normalizeFn) {
   const src = raw && typeof raw === 'object' ? raw : {};
   const asList = (value) => (Array.isArray(value) ? value : []);
   return {
     extra: uniqStrings(asList(src[extraKey]).map(normalizeFn).filter(Boolean)),
     disabled: uniqStrings(asList(src[disabledKey]).map(normalizeFn).filter(Boolean)),
     reenabled: uniqStrings(asList(src[reenabledKey]).map(normalizeFn).filter(Boolean)),
+    removed: uniqStrings(asList(src[removedKey]).map(normalizeFn).filter(Boolean)),
     penalties: parsePenaltyMap(src.penalties || src.queryPenalties),
   };
 }
@@ -226,17 +227,17 @@ function overlayFromCityDoc(cityDoc) {
   const queries = d.eventQueryConfig || {};
   const seeds = d.eventSeedConfig || {};
   const blocks = d.eventBlockConfig || {};
-  const queryOverlay = parseStringOverlay(queries, 'extraQueries', 'disabledQueries', 'reenabledQueries', normalizeQuery);
+  const queryOverlay = parseStringOverlay(queries, 'extraQueries', 'disabledQueries', 'reenabledQueries', 'removedQueries', normalizeQuery);
   queryOverlay.penalties = {
     ...queryOverlay.penalties,
     ...parsePenaltyMap(d.eventQueryPenalties),
   };
-  const seedOverlay = parseStringOverlay(seeds, 'extraSeeds', 'disabledSeeds', 'reenabledSeeds', asSeedId);
+  const seedOverlay = parseStringOverlay(seeds, 'extraSeeds', 'disabledSeeds', 'reenabledSeeds', 'removedSeeds', asSeedId);
   seedOverlay.penalties = {
     ...seedOverlay.penalties,
     ...parsePenaltyMap(d.eventQueryPenalties),
   };
-  const blockOverlay = parseStringOverlay(blocks, 'extraBlockDomains', 'disabledBlockDomains', 'reenabledBlockDomains', normalizeBlockDomain);
+  const blockOverlay = parseStringOverlay(blocks, 'extraBlockDomains', 'disabledBlockDomains', 'reenabledBlockDomains', 'removedBlockDomains', normalizeBlockDomain);
   blockOverlay.extra = uniqStrings(
     blockOverlay.extra.concat(
       extraBlockDomainsFrom({
@@ -256,10 +257,10 @@ function overlayFromCityDoc(cityDoc) {
 
 function parseGlobalOverlay(raw) {
   const src = raw && typeof raw === 'object' ? raw : {};
-  const blocks = parseStringOverlay(src, 'extraBlockDomains', 'disabledBlockDomains', 'reenabledBlockDomains', normalizeBlockDomain);
+  const blocks = parseStringOverlay(src, 'extraBlockDomains', 'disabledBlockDomains', 'reenabledBlockDomains', 'removedBlockDomains', normalizeBlockDomain);
   return {
-    queries: parseStringOverlay(src, 'extraQueries', 'disabledQueries', 'reenabledQueries', normalizeQuery),
-    seeds: parseStringOverlay(src, 'extraSeeds', 'disabledSeeds', 'reenabledSeeds', asSeedId),
+    queries: parseStringOverlay(src, 'extraQueries', 'disabledQueries', 'reenabledQueries', 'removedQueries', normalizeQuery),
+    seeds: parseStringOverlay(src, 'extraSeeds', 'disabledSeeds', 'reenabledSeeds', 'removedSeeds', asSeedId),
     blocks,
     extraBlockDomains: blocks.extra,
   };
@@ -274,18 +275,22 @@ function resolveStringList(defaults, globalPart, cityPart, legacy) {
     cityPart.extra.length ||
     cityPart.disabled.length ||
     cityPart.reenabled.length ||
+    cityPart.removed.length ||
     globalPart.extra.length ||
-    globalPart.disabled.length;
+    globalPart.disabled.length ||
+    globalPart.removed.length;
   const base = !hasConfig && legacy.length ? legacy : defaults;
   const disabled = new Set(globalPart.disabled);
   for (const id of cityPart.reenabled) disabled.delete(id);
   for (const id of cityPart.disabled) disabled.add(id);
+  const removed = new Set(globalPart.removed);
+  for (const id of cityPart.removed) removed.add(id);
   const byId = new Map();
   for (const item of base) byId.set(item, catalogItem(item, defaults));
   for (const item of globalPart.extra.concat(cityPart.extra)) {
     byId.set(item, catalogItem(item, defaults));
   }
-  const catalog = [...byId.values()];
+  const catalog = [...byId.values()].filter((c) => !removed.has(c.id));
   return {
     enabled: catalog.filter((c) => !disabled.has(c.id)),
     catalog,

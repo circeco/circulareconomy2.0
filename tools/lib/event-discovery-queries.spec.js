@@ -71,6 +71,23 @@ test('city overlay can disable a builtin blocked host and add extras', () => {
   assert.ok(plan.blocks.catalog.some((c) => c.id === 'facebook.com' && c.builtin));
 });
 
+test('city overlay can remove a builtin search query from the catalog', () => {
+  const plan = resolveEventDiscoveryPlan(
+    'stockholm',
+    {},
+    {
+      discovery: {
+        eventQueryConfig: {
+          removedQueries: ['circular economy event Stockholm'],
+        },
+      },
+    }
+  );
+  const catalogIds = plan.queries.catalog.map((c) => c.id);
+  assert.ok(!catalogIds.includes('circular economy event Stockholm'));
+  assert.ok(!plan.queries.enabled.map((c) => c.id).includes('circular economy event Stockholm'));
+});
+
 test('legacy eventSearchQueries still replace defaults when no overlay is set', () => {
   const plan = resolveEventDiscoveryPlan('milan', {}, {
     discovery: { eventSearchQueries: ['swap party Milano'] },

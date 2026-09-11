@@ -172,6 +172,7 @@ function parseOverlay(raw) {
   return {
     disabledClauseIds: uniqStrings(src.disabledClauseIds),
     reenabledClauseIds: uniqStrings(src.reenabledClauseIds),
+    removedClauseIds: uniqStrings(src.removedClauseIds),
     extraClauses,
     clausePenalties: parsePenaltyMap(src.clausePenalties),
   };
@@ -182,6 +183,7 @@ function overlayFromCityDoc(cityDoc) {
   return parseOverlay({
     disabledClauseIds: d.osmQueries?.disabledClauseIds || d.osmDisabledClauseIds,
     reenabledClauseIds: d.osmQueries?.reenabledClauseIds || d.osmReenabledClauseIds,
+    removedClauseIds: d.osmQueries?.removedClauseIds || d.osmRemovedClauseIds,
     extraClauses: d.osmQueries?.extraClauses || d.osmExtraClauses,
     clausePenalties: d.osmClausePenalties || d.osmQueries?.clausePenalties,
   });
@@ -193,13 +195,15 @@ function resolveOsmClauses(globalOverlay, cityOverlay) {
   const disabled = new Set(global.disabledClauseIds);
   for (const id of city.reenabledClauseIds) disabled.delete(id);
   for (const id of city.disabledClauseIds) disabled.add(id);
+  const removed = new Set(global.removedClauseIds);
+  for (const id of city.removedClauseIds) removed.add(id);
 
   const byId = new Map();
   for (const c of DEFAULT_OSM_CLAUSES) byId.set(c.id, { ...c });
   for (const c of global.extraClauses) byId.set(c.id, { ...c, builtin: false });
   for (const c of city.extraClauses) byId.set(c.id, { ...c, builtin: false });
 
-  const catalog = [...byId.values()];
+  const catalog = [...byId.values()].filter((c) => !removed.has(c.id));
   const enabled = catalog.filter((c) => !disabled.has(c.id));
   const penalties = { ...global.clausePenalties, ...city.clausePenalties };
   return {

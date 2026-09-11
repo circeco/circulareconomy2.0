@@ -16,9 +16,9 @@
       {{ enabledCount() }} of {{ learningRows().length }} queries are on for the next run.
     </p>
 
-    <p *ngIf="loading()" class="loading">Loading queries…</p>
+    <p *ngIf="loading() && !loaded()" class="loading">Loading queries…</p>
 
-    <div class="section-block" *ngIf="!loading()">
+    <div class="section-block" *ngIf="loaded()">
       <h2 class="section-title">Last run</h2>
       <p class="run-copy run-with-radius" *ngIf="searchCenter() as c">
         <span>
@@ -62,7 +62,7 @@
       </p>
     </div>
 
-    <div class="section-block" *ngIf="!loading()">
+    <div class="section-block" *ngIf="loaded()">
       <h2 class="section-title">Discovery Learning</h2>
       <p class="hint" *ngIf="learningRows().length && !enabledCount()">
         All queries are off. Turn at least one on before running discovery.

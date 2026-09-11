@@ -74,6 +74,13 @@ test('city disable removes a builtin from Overpass', () => {
   assert.ok(q.includes('second_hand'));
 });
 
+test('city overlay can remove a builtin from the catalog', () => {
+  const resolved = resolveOsmClauses({}, { removedClauseIds: ['shop:charity'] });
+  assert.ok(!resolved.catalog.some((c) => c.id === 'shop:charity'));
+  assert.ok(!resolved.enabled.some((c) => c.id === 'shop:charity'));
+  assert.ok(resolved.catalog.some((c) => c.id === 'shop:second_hand'));
+});
+
 test('book and variety queries require second_hand on Overpass, not a post-filter', () => {
   const { shops } = splitClausesByGroup(resolveOsmClauses({}, {}).enabled);
   const q = buildOverpassQuery(shops, 45.46, 9.19, 9000);
