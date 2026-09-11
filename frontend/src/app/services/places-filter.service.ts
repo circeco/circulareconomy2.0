@@ -73,7 +73,7 @@ export class PlacesFilter {
   setCategories(set: Set<string>) { this.enabledCats$.next(new Set(set)); }
   setActionTags(set: Set<string>) { this.enabledActionTags$.next(new Set(set)); }
 
-  buildIndex(fc: FeatureCollection) {
+  private buildIndex(fc: FeatureCollection) {
     this.placesIndexByNameAddr.clear();
     this.placesIndexByCoord.clear();
     try { (fc.features||[]).forEach(f => this.indexFeature(f)); this.placesIndexReady = true; }

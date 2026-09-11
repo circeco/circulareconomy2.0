@@ -32,8 +32,6 @@ export class FeaturedPlacesService {
   private cityContext = inject(CityContextService);
   private unknownActionTagsLogged = false;
 
-  private readonly ATLAS_ACTION_TAGS = ['refuse', 'reuse', 'repair', 'repurpose', 'recycle', 'reduce'] as const;
-
   private toAtlasCategories(raw: unknown): string[] {
     return canonicalizeSectorCategories(Array.isArray(raw) ? (raw as string[]) : []);
   }
@@ -44,10 +42,7 @@ export class FeaturedPlacesService {
   }
 
   private toAtlasActionTag(raw: unknown): string | null {
-    const canonical = canonicalizeActionTag(String(raw ?? ''));
-    if (!canonical) return null;
-    if ((this.ATLAS_ACTION_TAGS as readonly string[]).includes(canonical)) return canonical;
-    return null;
+    return canonicalizeActionTag(String(raw ?? ''));
   }
 
   private deriveActionTagsFromText(raw: unknown): string[] {
@@ -91,10 +86,6 @@ export class FeaturedPlacesService {
     }
 
     return Array.from(out);
-  }
-
-  getFeaturedPlaces(): Observable<FeaturedPlace[]> {
-    return this.getAllPlaces().pipe(map((places) => places.slice(0, 4)));
   }
 
   /** Approved catalogue places for the current city only (no static GeoJSON merge). */

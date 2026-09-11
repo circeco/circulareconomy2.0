@@ -122,10 +122,6 @@ export class CalendarComponent {
     return Array.from(this._selectedDates()).map((t) => new Date(t));
   }
 
-  clearSelection(): void {
-    this._selectedDates.set(new Set());
-  }
-
   setSelectedDates(dates: Date[]): void {
     this._selectedDates.set(new Set(dates.map((d) => d.getTime())));
   }

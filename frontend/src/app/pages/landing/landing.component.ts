@@ -1,20 +1,14 @@
 import { FooterComponent } from '../../components/footer/footer.component';
-import { Component, DestroyRef, inject, signal } from '@angular/core';
-import { AfterViewInit, AfterViewChecked } from '@angular/core';
-import { OnDestroy } from '@angular/core';
-import { NgZone } from '@angular/core';
-import { ElementRef } from '@angular/core';
-import { ViewChild } from '@angular/core';
+import { AfterViewChecked, AfterViewInit, Component, computed, DestroyRef, ElementRef, inject, NgZone, OnDestroy, signal, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { combineLatest, firstValueFrom } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DEMO_VIDEO_URL } from '../../config/media';
 import { EventsService, EventItem } from '../../services/events.service';
 import { FeaturedPlacesService, FeaturedPlace } from '../../services/featured-places.service';
 import { AuthService } from '../../services/auth.service';
 import { EventFavoritesService } from '../../services/event-favorites.service';
-import { FavoritesService } from '../../services/favorites.service';
 import { SearchService } from '../../services/search.service';
 import { CityContextService } from '../../services/city-context.service';
 import { CitiesService } from '../../services/cities.service';
@@ -27,6 +21,8 @@ import {
   canonicalizeSectorCategories,
 } from '../../data/taxonomy';
 import { websiteDisplayLabel as formatWebsiteDisplayLabel } from '../../utils/website-display';
+import { resolveCityDisplayName } from '../../utils/city-display-name';
+import { CLEAR_FOCUS_QUERY_PARAMS } from '../../utils/clear-focus-query-params';
 
 @Component({
   selector: 'landing-page',
@@ -42,7 +38,15 @@ export class LandingComponent implements AfterViewInit, AfterViewChecked, OnDest
   demoUrl = DEMO_VIDEO_URL;
   events: EventItem[] = [];
   eventsLoaded = false;
-  cityName = '';
+  /** Same fallback as PhoneTopBar: cached list, then stored name, then formatted cityId. */
+  readonly cityName = computed(() => {
+    const id = this.cityContext.cityId();
+    return resolveCityDisplayName(
+      id,
+      this.cities.list().find((c) => c.id === id)?.name,
+      this.cityContext.cityName()
+    );
+  });
   featuredPlaces: FeaturedPlace[] = [];
   allPlaces: FeaturedPlace[] = [];
   allEvents: EventItem[] = [];
@@ -66,7 +70,6 @@ export class LandingComponent implements AfterViewInit, AfterViewChecked, OnDest
     private featuredPlacesService: FeaturedPlacesService,
     public auth: AuthService,
     public eventFavorites: EventFavoritesService,
-    private favoritesService: FavoritesService,
     public searchService: SearchService,
     private cityContext: CityContextService,
     private cities: CitiesService,
@@ -80,19 +83,14 @@ export class LandingComponent implements AfterViewInit, AfterViewChecked, OnDest
       this.eventsLoaded = true;
       this.lastClampMeasureKey = '';
     });
-    combineLatest([this.cityContext.cityId$, this.cities.cities$])
+    this.featuredPlacesService.getAllPlaces()
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(([cityId, cities]) => {
-        this.cityName = cities.find((c) => c.id === cityId)?.name || '';
+      .subscribe((places) => {
+        this.allPlaces = places;
+        this.featuredPlaces = places.slice(0, 4);
+        this.lastClampMeasureKey = '';
+        setTimeout(() => this.mountPlaceHearts(), 0);
       });
-    this.featuredPlacesService.getFeaturedPlaces().subscribe((places) => {
-      this.featuredPlaces = places;
-      this.lastClampMeasureKey = '';
-      setTimeout(() => this.mountPlaceHearts(), 0);
-    });
-    this.featuredPlacesService.getAllPlaces().subscribe((places) => {
-      this.allPlaces = places;
-    });
   }
 
   ngAfterViewInit(): void {
@@ -206,7 +204,10 @@ export class LandingComponent implements AfterViewInit, AfterViewChecked, OnDest
   }
 
   goToMapPage(): void {
-    this.router.navigate(['/atlas'], { queryParamsHandling: 'merge' });
+    this.router.navigate(['/atlas'], {
+      queryParams: CLEAR_FOCUS_QUERY_PARAMS,
+      queryParamsHandling: 'merge',
+    });
   }
 
   toggleActionCard(id: string): void {
@@ -214,21 +215,33 @@ export class LandingComponent implements AfterViewInit, AfterViewChecked, OnDest
   }
 
   goToMapWithPlace(placeId: string): void {
-    this.router.navigate(['/atlas'], { queryParams: { place: placeId }, queryParamsHandling: 'merge' });
+    this.router.navigate(['/atlas'], {
+      queryParams: { place: placeId, event: null },
+      queryParamsHandling: 'merge',
+    });
   }
 
   goToEventsPage(): void {
-    this.router.navigate(['/events'], { queryParamsHandling: 'merge' });
+    this.router.navigate(['/events'], {
+      queryParams: CLEAR_FOCUS_QUERY_PARAMS,
+      queryParamsHandling: 'merge',
+    });
   }
 
   goToEventPage(event: EventItem): void {
     const d = event.date;
     if (!(d instanceof Date) || Number.isNaN(d.getTime())) {
-      this.router.navigate(['/events'], { queryParams: { event: event.id }, queryParamsHandling: 'merge' });
+      this.router.navigate(['/events'], {
+        queryParams: { event: event.id, place: null },
+        queryParamsHandling: 'merge',
+      });
       return;
     }
     const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    this.router.navigate(['/events'], { queryParams: { date: dateStr, event: event.id }, queryParamsHandling: 'merge' });
+    this.router.navigate(['/events'], {
+      queryParams: { date: dateStr, event: event.id, place: null },
+      queryParamsHandling: 'merge',
+    });
   }
 
   actionTagLabel(tag: string): string {

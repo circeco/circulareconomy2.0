@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { signal } from '@angular/core';
-import { of } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 
 import { EventsComponent } from './events.component';
 import { EventsService, EventItem } from '../../services/events.service';
@@ -36,6 +36,7 @@ describe('EventsComponent empty copy', () => {
     cityId?: string;
     events?: EventItem[];
     cities?: { id: string; name: string }[];
+    cachedCityName?: string;
   }): Promise<{ fixture: ComponentFixture<EventsComponent>; component: EventsComponent }> {
     const cityId = opts?.cityId ?? 'stockholm';
     const cities = opts?.cities ?? [
@@ -53,9 +54,13 @@ describe('EventsComponent empty copy', () => {
         { provide: EventFavoritesService, useClass: EventFavoritesServiceStub },
         {
           provide: CityContextService,
-          useValue: { cityId$: of(cityId), cityId: signal(cityId) },
+          useValue: {
+            cityId$: of(cityId),
+            cityId: signal(cityId),
+            cityName: signal(opts?.cachedCityName ?? ''),
+          },
         },
-        { provide: CitiesService, useValue: { cities$: of(cities) } },
+        { provide: CitiesService, useValue: { cities$: of(cities), list: signal(cities) } },
       ],
     }).compileComponents();
 
@@ -77,6 +82,20 @@ describe('EventsComponent empty copy', () => {
   it('uses the CitiesService display name for the selected cityId', async () => {
     const { fixture } = await createComponent({ cityId: 'milan' });
     expect(emptyText(fixture)).toBe('No upcoming circular events in Milan.');
+  });
+
+  it('falls back to the cached cityContext name when the cities list is empty', async () => {
+    const { fixture } = await createComponent({
+      cityId: 'stockholm',
+      cities: [],
+      cachedCityName: 'Stockholm',
+    });
+    expect(emptyText(fixture)).toBe('No upcoming circular events in Stockholm.');
+  });
+
+  it('formats cityId for display when the list and cached name are empty', async () => {
+    const { fixture } = await createComponent({ cityId: 'stockholm', cities: [] });
+    expect(emptyText(fixture)).toBe('No upcoming circular events in Stockholm.');
   });
 
   it('keeps the filters sentence when a date is selected and nothing matches', async () => {
@@ -112,5 +131,49 @@ describe('EventsComponent empty copy', () => {
     component.favoritesFilterActive.set(true);
     fixture.detectChanges();
     expect(emptyText(fixture)).toBe('No events saved as favourite');
+  });
+});
+
+describe('EventsComponent event query param', () => {
+  it('clears selectedEventId when event is absent even if date remains', async () => {
+    const queryParams$ = new BehaviorSubject<Record<string, string>>({
+      date: '2026-09-15',
+      event: 'e1',
+    });
+
+    await TestBed.configureTestingModule({
+      imports: [EventsComponent],
+      providers: [
+        provideRouter([]),
+        { provide: EventsService, useValue: { events$: of([sampleEvent()]) } },
+        { provide: ActivatedRoute, useValue: { queryParams: queryParams$.asObservable() } },
+        { provide: AuthService, useClass: AuthServiceStub },
+        { provide: EventFavoritesService, useClass: EventFavoritesServiceStub },
+        {
+          provide: CityContextService,
+          useValue: {
+            cityId$: of('stockholm'),
+            cityId: signal('stockholm'),
+            cityName: signal('Stockholm'),
+          },
+        },
+        {
+          provide: CitiesService,
+          useValue: {
+            cities$: of([{ id: 'stockholm', name: 'Stockholm' }]),
+            list: signal([{ id: 'stockholm', name: 'Stockholm' }]),
+          },
+        },
+      ],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(EventsComponent);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+    expect(component.selectedEventId()).toBe('e1');
+
+    queryParams$.next({ date: '2026-09-15' });
+    expect(component.selectedEventId()).toBeNull();
+    expect(component.selectedDateTimes().size).toBe(1);
   });
 });

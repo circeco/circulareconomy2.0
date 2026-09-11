@@ -5,6 +5,7 @@ import { filter, map, startWith } from 'rxjs/operators';
 import { toSignal } from '@angular/core/rxjs-interop';
 
 import { AuthService } from '../../services/auth.service';
+import { CLEAR_FOCUS_QUERY_PARAMS } from '../../utils/clear-focus-query-params';
 
 @Component({
   selector: 'app-phone-tab-bar',
@@ -25,6 +26,8 @@ export class PhoneTabBarComponent {
     ),
     { initialValue: this.pathOf(this.router.url) }
   );
+
+  readonly clearFocusQueryParams = CLEAR_FOCUS_QUERY_PARAMS;
 
   readonly tabs = [
     { id: 'action', label: 'Search places and events', link: '/', exact: true, disabled: false },

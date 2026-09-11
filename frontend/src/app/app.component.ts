@@ -4,7 +4,6 @@ import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { filter, map, startWith } from 'rxjs/operators';
 import { toSignal } from '@angular/core/rxjs-interop';
 
-import { AuthService } from './services/auth.service';
 import { EventFavoritesService } from './services/event-favorites.service';
 import { FavoritesService } from './services/favorites.service';
 import { ViewportService } from './services/viewport.service';
@@ -15,13 +14,6 @@ import { CitySwitcherComponent } from './components/city-switcher/city-switcher.
 import { PhoneTopBarComponent } from './components/phone-top-bar/phone-top-bar.component';
 import { PhoneTabBarComponent } from './components/phone-tab-bar/phone-tab-bar.component';
 import { CityListComponent } from './components/city-list/city-list.component';
-
-declare global {
-  interface Window {
-    myFunction?: () => void;
-    sendMail?: (form: HTMLFormElement) => boolean;
-  }
-}
 
 @Component({
   selector: 'app-root',
@@ -45,7 +37,6 @@ export class AppComponent {
   readonly chrome = inject(PhoneChromeService);
 
   constructor(
-    public auth: AuthService,
     private _favorites: FavoritesService,
     private _eventFavorites: EventFavoritesService
   ) {}
@@ -61,9 +52,6 @@ export class AppComponent {
 
   readonly isAdmin = computed(() => this.path().startsWith('/admin'));
   readonly phoneShell = computed(() => this.viewport.isPhone() && !this.isAdmin());
-
-  openLogin() { this.auth.openModal(); }
-  async logout() { await this.auth.signOutOnce(); }
 
   private pathOf(url: string): string {
     return String(url || '').split('?')[0].split('#')[0];

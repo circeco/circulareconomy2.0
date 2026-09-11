@@ -1,9 +1,9 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { NgIf } from '@angular/common';
 import { NavigationEnd, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { filter } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { CitiesService } from '../../services/cities.service';
 import { CityContextService } from '../../services/city-context.service';
@@ -11,7 +11,7 @@ import { CityContextService } from '../../services/city-context.service';
 @Component({
   selector: 'app-city-switcher',
   standalone: true,
-  imports: [CommonModule, NgIf, FormsModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './city-switcher.component.html',
   styleUrls: ['./city-switcher.component.scss'],
 })
@@ -27,7 +27,10 @@ export class CitySwitcherComponent {
     public cityContext: CityContextService
   ) {
     this.router.events
-      .pipe(filter((e) => e instanceof NavigationEnd))
+      .pipe(
+        filter((e) => e instanceof NavigationEnd),
+        takeUntilDestroyed()
+      )
       .subscribe(() => this.currentPath.set(this.pathOf(this.router.url)));
   }
 

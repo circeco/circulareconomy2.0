@@ -6,19 +6,20 @@ import {
   NgZone,
   signal
 } from '@angular/core';
-import { CommonModule, AsyncPipe, NgIf } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { Router, NavigationEnd, RouterLink } from '@angular/router';
 import { filter } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Observable } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
-import { SearchService } from '../../services/search.service';
 import { ViewportService } from '../../services/viewport.service';
 import { GeolocationService } from '../../services/geolocation.service';
+import { CLEAR_FOCUS_QUERY_PARAMS } from '../../utils/clear-focus-query-params';
 
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [CommonModule, NgIf, AsyncPipe, RouterLink],
+  imports: [CommonModule, RouterLink],
   templateUrl: './navbar.component.html',
   styleUrls: ['./navbar.component.scss'],
 })
@@ -39,7 +40,6 @@ export class NavbarComponent implements AfterViewInit, OnDestroy {
 
   constructor(
     public auth: AuthService,
-    public searchService: SearchService,
     public geo: GeolocationService,
     private zone: NgZone,
     private router: Router,
@@ -48,7 +48,10 @@ export class NavbarComponent implements AfterViewInit, OnDestroy {
     this.admin$ = this.auth.isAdmin();
     // Watch route changes to toggle landing/atlas mode and (re)wire scrollspy
     this.router.events
-      .pipe(filter(e => e instanceof NavigationEnd))
+      .pipe(
+        filter(e => e instanceof NavigationEnd),
+        takeUntilDestroyed()
+      )
       .subscribe(() => {
         this.updateModeFromUrl();
         this.destroyScrollSpy();
@@ -137,14 +140,14 @@ export class NavbarComponent implements AfterViewInit, OnDestroy {
 
   goToFromLogo(id: string): void {
     if (id === 'circular_events') {
-      this.router.navigate(['/events'], { queryParamsHandling: 'merge' });
+      this.navigateKeepingCity(['/events']);
       return;
     }
     if (id === 'circular_atlas_demo') {
-      this.router.navigate(['/atlas'], { queryParamsHandling: 'merge' });
+      this.navigateKeepingCity(['/atlas']);
       return;
     }
-    this.router.navigate(['/'], { queryParamsHandling: 'merge' }).then(() => {
+    this.navigateKeepingCity(['/']).then(() => {
       const tryScroll = (attempts = 0) => {
         if (document.getElementById('circular_action')) {
           this.scrollToSection('circular_action');
@@ -160,7 +163,7 @@ export class NavbarComponent implements AfterViewInit, OnDestroy {
   goTo(id: string): void {
     if (!this.isLanding()) {
       // If clicked from atlas for any reason, just send home
-      this.router.navigate(['/'], { queryParamsHandling: 'merge' });
+      this.navigateKeepingCity(['/']);
       return;
     }
 
@@ -169,13 +172,13 @@ export class NavbarComponent implements AfterViewInit, OnDestroy {
 
     // Circular Events / Circular Atlas should route to dedicated pages.
     if (id === 'circular_events') {
-      this.router.navigate(['/events'], { queryParamsHandling: 'merge' });
+      this.navigateKeepingCity(['/events']);
       return;
     }
 
     // Circular Atlas should route to the atlas page, not scroll on landing
     if (id === 'circular_atlas_demo') {
-      this.router.navigate(['/atlas'], { queryParamsHandling: 'merge' });
+      this.navigateKeepingCity(['/atlas']);
       return;
     }
 
@@ -193,8 +196,16 @@ export class NavbarComponent implements AfterViewInit, OnDestroy {
     if (this.isLanding()) {
       this.goTo('title_section');
     } else {
-      this.router.navigate(['/'], { queryParamsHandling: 'merge' });
+      this.navigateKeepingCity(['/']);
     }
+  }
+
+  /** Keep `city`; drop stale `place` / `event` so Atlas/Events do not reuse a deep-link. */
+  private navigateKeepingCity(commands: string[]): Promise<boolean> {
+    return this.router.navigate(commands, {
+      queryParams: CLEAR_FOCUS_QUERY_PARAMS,
+      queryParamsHandling: 'merge',
+    });
   }
 
   private scrollToSection(id: string): void {
@@ -223,15 +234,6 @@ export class NavbarComponent implements AfterViewInit, OnDestroy {
     }
     if (url.startsWith('/admin')) return 'CIRCECO';
     return 'CIRCULAR ATLAS: Find circular solutions in your area!';
-  }
-
-  showSearchBar(): boolean {
-    return false;
-  }
-
-  onSearchInput(ev: Event): void {
-    const value = (ev.target as HTMLInputElement)?.value ?? '';
-    this.searchService.setQuery(value);
   }
 
   openLogin(): void { this.auth.openModal(); }

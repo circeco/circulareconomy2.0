@@ -1,11 +1,27 @@
 import { inject, Injectable, signal } from '@angular/core';
-import { NavigationEnd, Router } from '@angular/router';
+import { NavigationEnd, Params, Router } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { toObservable } from '@angular/core/rxjs-interop';
 
 const LS_KEY = 'circeco.cityId';
 const LS_NAME_KEY = 'circeco.cityName';
 const DEFAULT_CITY_ID = 'stockholm';
+
+/**
+ * Merge `city` into query params. Switching city drops stale `place`/`event`.
+ * Adding `city` when it was missing keeps an intentional deep-link.
+ * Returns `null` when the URL already has this city.
+ */
+export function mergeCityQueryParams(current: Params, cityId: string): Params | null {
+  const prevCity = current['city'];
+  if (prevCity === cityId) return null;
+  const next: Params = { ...current, city: cityId };
+  if (prevCity) {
+    delete next['place'];
+    delete next['event'];
+  }
+  return next;
+}
 
 function readStoredCityId(): string {
   try {
@@ -58,8 +74,9 @@ export class CityContextService {
    */
   private mergeCityIntoCurrentUrl(cityId: string): void {
     const tree = this.router.parseUrl(this.router.url);
-    if (tree.queryParams['city'] === cityId) return;
-    tree.queryParams = { ...tree.queryParams, city: cityId };
+    const next = mergeCityQueryParams(tree.queryParams, cityId);
+    if (!next) return;
+    tree.queryParams = next;
     this.router.navigateByUrl(tree, { replaceUrl: true });
   }
 

@@ -1,5 +1,5 @@
 <header class="phone-top-bar">
-  <a class="phone-logo" routerLink="/" queryParamsHandling="merge" aria-label="Circeco home"></a>
+  <a class="phone-logo" routerLink="/" [queryParams]="clearFocusQueryParams" queryParamsHandling="merge" aria-label="Circeco home"></a>
 
   <button
     *ngIf="showCity()"

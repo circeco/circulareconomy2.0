@@ -85,5 +85,4 @@ export class PlacesFilterStub implements Partial<PlacesFilter> {
   setFavoriteKeys(_keys: Set<string>) {}
   setFavoritesOnly(_on: boolean) {}
   enrichForUI(_feature: any) { return {} as any; }
-  buildIndex(_fc: any) {}
 }

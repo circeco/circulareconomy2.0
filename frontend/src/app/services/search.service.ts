@@ -1,4 +1,4 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 
 @Injectable({ providedIn: 'root' })
 export class SearchService {
@@ -8,9 +8,5 @@ export class SearchService {
 
   setQuery(value: string): void {
     this.searchQuery.set(value.trim());
-  }
-
-  clearQuery(): void {
-    this.searchQuery.set('');
   }
 }

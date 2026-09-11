@@ -1,8 +1,7 @@
 import { Component, DestroyRef, inject, signal, computed, AfterViewChecked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
-import { combineLatest } from 'rxjs';
+import { firstValueFrom, combineLatest } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { EventItem, EventsService } from '../../services/events.service';
 import { SearchService } from '../../services/search.service';
@@ -21,6 +20,7 @@ import {
   canonicalizeSectorCategories,
 } from '../../data/taxonomy';
 import { websiteDisplayLabel as formatWebsiteDisplayLabel } from '../../utils/website-display';
+import { resolveCityDisplayName } from '../../utils/city-display-name';
 
 interface EventCategoryOption {
   id: string;
@@ -61,7 +61,15 @@ export class EventsComponent implements AfterViewChecked {
 
   events = signal<EventItem[]>([]);
   eventDatesForCalendar: Date[] = [];
-  readonly cityName = signal('');
+  /** Same fallback as PhoneTopBar: cached list, then stored name, then formatted cityId. */
+  readonly cityName = computed(() => {
+    const id = this.cityContext.cityId();
+    return resolveCityDisplayName(
+      id,
+      this.cities.list().find((c) => c.id === id)?.name,
+      this.cityContext.cityName()
+    );
+  });
   private lastEventsCityId = '';
 
   readonly favoriteEventDatesForCalendar = computed(() => {
@@ -86,10 +94,9 @@ export class EventsComponent implements AfterViewChecked {
     private router: Router,
     private route: ActivatedRoute
   ) {
-    combineLatest([this.cityContext.cityId$, this.cities.cities$])
+    this.cityContext.cityId$
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(([cityId, cities]) => {
-        this.cityName.set(cities.find((c) => c.id === cityId)?.name || '');
+      .subscribe((cityId) => {
         // New city → clear date filter so we don't show an empty day from the previous city.
         if (this.lastEventsCityId && this.lastEventsCityId !== cityId) {
           this.selectedDateTimes.set(new Set());
@@ -131,6 +138,8 @@ export class EventsComponent implements AfterViewChecked {
               hasExplicitDateFilter = true;
             }
           }
+        } else {
+          this.selectedEventId.set(null);
         }
         if (hasExplicitDateFilter && dateToUse) {
           const dayStart = new Date(dateToUse.getFullYear(), dateToUse.getMonth(), dateToUse.getDate());
@@ -142,7 +151,6 @@ export class EventsComponent implements AfterViewChecked {
           this.selectedDateTimes.set(new Set());
           this.initialCalendarSelection = [];
           this.initialCalendarViewDate = null;
-          if (!eventId) this.selectedEventId.set(null);
         }
       });
 
