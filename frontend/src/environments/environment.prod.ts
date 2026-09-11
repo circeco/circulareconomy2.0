@@ -1,6 +1,6 @@
-/** Dev / `ng serve` config. Production builds replace this file with `environment.prod.ts`. */
+/** Production replacement for `environments.ts` (`angular.json` fileReplacements). */
 export const environment = {
-  production: false,
+  production: true,
   mapboxToken: 'pk.eyJ1IjoiY2lyY2VjbyIsImEiOiJjazczN3docmowNjMwM2ZwZGFkand4YTUxIn0.0pNRz0t74QkAc6y5shG0BA',
   mapStyle: 'mapbox://styles/circeco/ck5zjodry0ujw1ioaiqvk9kjs',
   firebase: {

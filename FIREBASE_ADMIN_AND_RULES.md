@@ -99,5 +99,15 @@ After that, Firebase Auth issues a **new** ID token that includes `admin: true`,
 
 - **Firestore** always enforces **`firestore.rules`**.  
   Approve/Reject needs a signed-in user **with** `admin: true`.
-- The **localhost-only route bypass** on `/admin/review` only skips the **Angular** `adminGuard`; it does **not** bypass Firestore.  
+- **Production / hosted builds always require** the `admin` claim in `adminGuard`. The **localhost-only route bypass** (`localhost` / `127.0.0.1` during `ng serve`) only skips the **Angular** guard; it does **not** bypass Firestore.  
   So you still need the claim + deploy rules for writes to succeed.
+
+## Hosting security headers
+
+`firebase.json` sets `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, and `Content-Security-Policy: frame-ancestors 'none'` (clickjacking only). A full CSP (`script-src` / `connect-src` covering Mapbox, Firebase, Bootstrap, Font Awesome, Formspree) is a follow-up after measuring the live app — too easy to break tiles or auth without that pass.
+
+## Ops follow-ups (not in this change)
+
+- **Formspree reCAPTCHA**: `recaptchaSiteKey` is empty on purpose until a real site key is created.
+- **Mapbox**: restrict the public token by HTTP referrer in the Mapbox account.
+- **Firebase Auth**: confirm authorized domains; consider App Check for the web app.

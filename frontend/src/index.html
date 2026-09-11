@@ -25,13 +25,21 @@
   <!-- Apple iOS home screen (Add to Home Screen does not use the web manifest) -->
   <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
 
-  <!-- Bootstrap & Font Awesome (CDN) -->
-  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" />
+  <!-- Bootstrap & Font Awesome (CDN). SRI for these exact URLs; bumping versions requires recomputing hashes. -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+    integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T"
+    crossorigin="anonymous" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
+    integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN"
+    crossorigin="anonymous" />
 
-  <!-- Mapbox CSS/JS (CDN) — load before Angular boots -->
-  <link rel="stylesheet" href="https://api.tiles.mapbox.com/mapbox-gl-js/v1.7.0/mapbox-gl.css" />
-  <script src="https://api.tiles.mapbox.com/mapbox-gl-js/v1.7.0/mapbox-gl.js"></script>
+  <!-- Mapbox GL v1.7.0 pinned (no upgrade in this pass). Recompute SRI if the URL changes. -->
+  <link rel="stylesheet" href="https://api.tiles.mapbox.com/mapbox-gl-js/v1.7.0/mapbox-gl.css"
+    integrity="sha384-yMryWNNBRLW/F2CV1w06DGkYId9vjirkhvpIE5mQgs7ujjh0nQ7NxKwQsxb9sq0J"
+    crossorigin="anonymous" />
+  <script src="https://api.tiles.mapbox.com/mapbox-gl-js/v1.7.0/mapbox-gl.js"
+    integrity="sha384-zVRHxyDGsSsTI5sRxAWGOdADIejjWSr5UcdSQ9CTL0+xTg1qWp1ESnmuVBCOggrG"
+    crossorigin="anonymous"></script>
 
 </head>
 
