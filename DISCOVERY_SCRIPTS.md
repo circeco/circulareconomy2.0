@@ -348,7 +348,7 @@ This is the primary weekly path so the queue can fill without manually pasting e
 
 ## Admin review UI (`/admin/review`)
 
-- **Route guard**: `adminGuard` allows **localhost** / **127.0.0.1** in dev without the admin claim; other hosts need Firebase Auth custom claim `admin: true`.
+- **Route guard**: production / hosted builds always require Firebase Auth custom claim `admin: true`. `adminGuard` allows **localhost** / **127.0.0.1** during local `ng serve` without the claim; other hosts still need the claim.
 - **Firestore**: reads/writes on `reviewQueue` still require **`admin: true`** in the token. After `npm run admin:set-claim -- <email>`, have the user **sign out and sign in** (or wait for token refresh) so `getIdTokenResult` includes the claim; otherwise you may see `permission-denied` in the browser console.
 - **Bugfix**: `AuthService.isAdmin()` must not use `takeUntilDestroyed()` inside a service method (it broke the observable). Fixed so non-localhost admin checks work reliably.
 
