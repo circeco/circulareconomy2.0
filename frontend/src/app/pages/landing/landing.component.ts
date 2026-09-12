@@ -4,7 +4,6 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { DEMO_VIDEO_URL } from '../../config/media';
 import { EventsService, EventItem } from '../../services/events.service';
 import { FeaturedPlacesService, FeaturedPlace } from '../../services/featured-places.service';
 import { AuthService } from '../../services/auth.service';
@@ -35,7 +34,6 @@ export class LandingComponent implements AfterViewInit, AfterViewChecked, OnDest
   @ViewChild('titleList', { static: true })
   titleList!: ElementRef<HTMLUListElement>;
 
-  demoUrl = DEMO_VIDEO_URL;
   events: EventItem[] = [];
   eventsLoaded = false;
   /** Same fallback as PhoneTopBar: cached list, then stored name, then formatted cityId. */

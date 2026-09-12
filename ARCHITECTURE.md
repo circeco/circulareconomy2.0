@@ -17,14 +17,14 @@ This repository hosts two generations of the Circeco front end: legacy build scr
 ## MVC mapping summary
 | Layer | Responsibility | Key modules |
 | --- | --- | --- |
-| **Model** | Own business state, persistence, and domain logic (map data, filters, favorites, auth, media config). | `services/places-filter.service.ts`, `services/map.service.ts`, `services/favorites.service.ts`, `services/auth.service.ts`, `config/media.ts`, `environments/`. |
+| **Model** | Own business state, persistence, and domain logic (map data, filters, favorites, auth). | `services/places-filter.service.ts`, `services/map.service.ts`, `services/favorites.service.ts`, `services/auth.service.ts`, `environments/`. |
 | **View** | Present UI state with HTML/CSS and respond to bindings. | `*.component.html`, `*.component.scss`, `frontend/src/styles.scss`, assets under `src/assets/`. |
 | **Controller** | Mediate user input, update the model, and select views. | Component classes in `pages/` & `components/`, router config (`app.routes.ts`), bootstrap logic (`main.ts`, `app.component.ts`). |
 
 ### Model layer details
 - **Places + filtering domain**: `places-filter.service.ts` (model) ingests map features, dedupes them, provides category and free-text filtering streams, and enriches favorite features by rehydrating metadata from the GeoJSON index. `map.service.ts` encapsulates Mapbox GL JS, exposes observables such as `onReady()` and `onFeatureClick()`, and provides mutation APIs (`setCategoryFilter`, `openPopup`, favorites visibility). These two services form the core model for the atlas regardless of which controller requests the data.
 - **User identity + favorites**: `auth.service.ts` wraps Firebase Auth and exposes `user$` plus UI state signals for the login modal. `favorites.service.ts` listens to `user$`, synchronizes Firestore favourites, maintains an in-memory cache, updates the Mapbox `favorites` source, and surfaces imperative helpers (`mountHeartButton`, `computePlaceKey`) to both Angular controllers and legacy DOM hooks via `window.circeco`. By dispatching DOM events such as `favorites:update` and `favorites:auth`, it keeps controllers decoupled from persistence.
-- **Static configuration**: `environments/environments.ts` and `config/media.ts` act as read-only models for secrets (Mapbox token, Firebase, EmailJS) and media URLs. Assets like `assets/data/circular_places.geojson` and icon packs represent serialized model data that feed the services above.
+- **Static configuration**: `environments/environments.ts` acts as a read-only model for secrets (Mapbox token, Firebase, EmailJS). Assets like `assets/data/circular_places.geojson` and icon packs represent serialized model data that feed the services above.
 
 ### View layer details
 - **Angular templates + styling**: Every component exposes its view via `*.component.html` and localized SCSS. Examples include `pages/landing/landing.component.html` for the hero + action cards, `components/map/map.component.html` for the atlas overlay, and `components/footer/footer.component.html` for the EmailJS contact form UI. Templates bind to controller properties (`listOpen`, `filteredList`, `auth.modalOpen()`, etc.) and render data emitted by the model layer.

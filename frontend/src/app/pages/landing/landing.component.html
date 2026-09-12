@@ -32,7 +32,7 @@
       </div>
     </div>
   </div>
-  <div class="row" id="red-wood"></div>
+  <div class="row photo-band" id="red-wood"></div>
 </section>
 
 <!-- CIRCULAR EVENTS -->
@@ -357,17 +357,19 @@
 
 <section id="circular_atlas_demo" class="section scroll" >
     <h3>
-      <span class="atlas-demo-kicker">CIRCULAR ATLAS:</span>
       <span class="atlas-demo-line">
-        Find circular solutions in your area!
+        Find circular events and places in your area!
         <a (click)="goToMapPage()">
           <img class="arrow" [src]="'assets/img/arrowto.png'" alt="arrow" />
         </a>
       </span>
     </h3>
-    <video controls preload="metadata" autoplay loop playsinline>
-      <source [src]="demoUrl" type="video/mp4"/>
-    </video>
+    <div class="atlas-demo-mockups">
+      <img src="assets/img/demo/mockup-home.png" alt="Circeco home on a phone" />
+      <img src="assets/img/demo/mockup-atlas.png" alt="Circular Atlas on a phone" />
+      <img src="assets/img/demo/mockup-events.png" alt="Circular events on a phone" />
+      <img src="assets/img/demo/mockup-login.png" alt="Sign in on a phone" />
+    </div>
 </section>
 
 <contact-footer></contact-footer>

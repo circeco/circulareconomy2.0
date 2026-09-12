@@ -18,11 +18,14 @@
   --safe-bottom: env(safe-area-inset-bottom);
   --header-offset: 60px; /* keep in sync with headerOffset in the navbar TS */
   --tabbar-height: 0px;
+  /* 300px at 1280px wide; shrinks with viewport, floor so the crop stays readable. */
+  --photo-band-height: clamp(160px, 23.4375vw, 300px);
 }
 
 body.layout-phone {
   --header-offset: calc(52px + env(safe-area-inset-top, 0px));
   --tabbar-height: calc(56px + env(safe-area-inset-bottom, 0px));
+  --photo-band-height: 30dvh;
   scroll-snap-type: none;
 }
 
@@ -159,9 +162,9 @@ p {
   line-height: 0.8;
 }
 
-#red-wood {
+.photo-band {
   position: relative;
-  height: 300px;
+  height: var(--photo-band-height);
   width: 100%;
   overflow: hidden;
   margin: 0;
@@ -177,8 +180,28 @@ p {
     inset: 0;
     z-index: -1;
     pointer-events: none;
-    background: url('/assets/img/red-wood.jpg') center / cover no-repeat;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
   }
+}
+
+#red-wood::before {
+  background-image: url('/assets/img/forest-loop.jpg');
+}
+
+#footer-band::before {
+  background-image: url('/assets/img/recycle-shop.jpg');
+}
+
+@media screen and (max-width: 1023px) {
+  #footer-band::before {
+    background-image: url('/assets/img/warehouse-mobile.jpg');
+  }
+}
+
+body.layout-phone #footer-band::before {
+  background-image: url('/assets/img/warehouse-mobile.jpg');
 }
 
 

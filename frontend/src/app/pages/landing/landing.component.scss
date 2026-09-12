@@ -597,8 +597,19 @@
     &:hover { transform: scale(0.9, 0.9); }
   }
 
-  video {
+  .atlas-demo-mockups {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: clamp(8px, 1.5vw, 24px);
     width: 100%;
+    align-items: end;
+
+    img {
+      width: 100%;
+      height: auto;
+      max-height: 70vh;
+      display: block;
+    }
   }
 }
 
@@ -623,13 +634,14 @@
     height: auto;
     max-height: none;
     margin-top: var(--header-offset);
-    overflow: hidden;
+    overflow-x: hidden;
     box-sizing: border-box;
   }
 
   #title_section {
     flex: 1 1 auto;
-    height: 80vh;
+    height: auto;
+    min-height: 0;
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
@@ -698,11 +710,11 @@
   }
 
   #red-wood {
-    flex: 0 0 220px;
+    flex: 0 0 var(--photo-band-height);
     width: 100%;
-    height: 220px;
-    min-height: 220px;
-    max-height: 220px;
+    height: var(--photo-band-height);
+    min-height: var(--photo-band-height);
+    max-height: var(--photo-band-height);
     margin: 0;
   }
 
