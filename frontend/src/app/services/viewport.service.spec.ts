@@ -22,6 +22,7 @@ describe('ViewportService', () => {
   afterEach(() => {
     document.documentElement.classList.remove('layout-phone', 'layout-desktop');
     document.body.classList.remove('layout-phone', 'layout-desktop');
+    document.documentElement.style.removeProperty('--vv-width');
   });
 
   it('treats widths under 1024 as phone layout', () => {
@@ -38,5 +39,30 @@ describe('ViewportService', () => {
     expect(viewport.isPhone()).toBeFalse();
     expect(document.body.classList.contains('layout-desktop')).toBeTrue();
     expect(document.documentElement.classList.contains('layout-desktop')).toBeTrue();
+  });
+
+  it('records visual viewport width and resets sideways scroll on phone', () => {
+    mockMatchMedia(true);
+    const scrollTo = spyOn(window, 'scrollTo');
+    spyOnProperty(window, 'scrollX', 'get').and.returnValue(18);
+    const vv = {
+      width: 350,
+      offsetLeft: 18,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    };
+    spyOnProperty(window, 'visualViewport', 'get').and.returnValue(vv as unknown as VisualViewport);
+    const viewport = new ViewportService();
+    expect(document.documentElement.style.getPropertyValue('--vv-width')).toBe('350px');
+    expect(scrollTo).toHaveBeenCalledWith(0, window.scrollY);
+    viewport.pinHorizontal();
+    expect(document.documentElement.style.getPropertyValue('--vv-width')).toBe('350px');
+  });
+
+  it('clears the visual viewport width token on desktop', () => {
+    mockMatchMedia(false);
+    document.documentElement.style.setProperty('--vv-width', '390px');
+    new ViewportService();
+    expect(document.documentElement.style.getPropertyValue('--vv-width')).toBe('');
   });
 });

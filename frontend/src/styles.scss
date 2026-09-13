@@ -41,8 +41,10 @@ html.layout-phone,
 html.layout-phone body {
   height: 100%;
   height: 100dvh;
-  max-width: 100%;
+  width: 100%;
+  max-width: min(100%, var(--vv-width, 100%));
   overflow: hidden;
+  overflow-x: hidden;
   overscroll-behavior: none;
 }
 

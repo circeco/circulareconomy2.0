@@ -89,19 +89,30 @@
     &::placeholder {
       color: #718096;
     }
+
+    &::-webkit-search-cancel-button,
+    &::-webkit-search-decoration {
+      -webkit-appearance: none;
+      appearance: none;
+    }
   }
 }
 
-.search-cancel {
+.search-clear {
   display: none;
   flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
   border: 0;
   background: transparent;
   color: $brand-deep;
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 1;
   cursor: pointer;
-  padding: 4px 0;
+  padding: 0;
+  width: 32px;
+  height: 32px;
 }
 
 .listings {
@@ -414,6 +425,8 @@
     padding: 0 !important;
     margin: 0;
     overflow: hidden;
+    overflow-x: hidden;
+    max-width: min(100%, var(--vv-width, 100%));
   }
 
   #map {
@@ -429,7 +442,7 @@
     top: auto;
     bottom: 0;
     width: auto;
-    max-width: 100%;
+    max-width: min(100%, var(--vv-width, 100%));
     box-sizing: border-box;
     height: var(--sheet-h, 55%);
     max-height: 92%;
@@ -472,8 +485,12 @@
     background: #c4c4c4;
   }
 
-  .search-cancel {
-    display: block;
+  .search-input {
+    font-size: 16px;
+  }
+
+  .search-clear {
+    display: inline-flex;
   }
 
   .filter-section,
