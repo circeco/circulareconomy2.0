@@ -428,7 +428,9 @@
     right: 0;
     top: auto;
     bottom: 0;
-    width: 100%;
+    width: auto;
+    max-width: 100%;
+    box-sizing: border-box;
     height: var(--sheet-h, 55%);
     max-height: 92%;
     z-index: 3;
@@ -475,6 +477,12 @@
   }
 
   .filter-section,
+  .category-filters.phone-search-cats,
+  .listings-section {
+    min-width: 0;
+  }
+
+  .filter-section,
   .category-filters.phone-search-cats {
     flex-shrink: 0;
   }
@@ -487,6 +495,8 @@
     right: auto;
     bottom: auto;
     width: 100%;
+    max-width: 100%;
+    min-width: 0;
     padding: 4px 0 8px;
     gap: 6px;
     overflow-x: auto;
@@ -566,6 +576,7 @@
   #circular_atlas .listings .stockholmlist {
     line-height: 1.05;
     margin: 0;
+    overflow-wrap: anywhere;
   }
 
   #circular_atlas .listings .address {
@@ -574,6 +585,7 @@
     margin: 0;
     padding: 0;
     color: #5f6770;
+    overflow-wrap: anywhere;
   }
 
   .listing-row .heart-btn {

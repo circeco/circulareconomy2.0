@@ -13,6 +13,13 @@
 @tailwind components;
 @tailwind utilities;
 
+/* First-party box model (Tailwind preflight is off; do not rely on Bootstrap CDN). */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 /* Mobile safe-area we’ll use later */
 :root {
   --safe-bottom: env(safe-area-inset-bottom);
@@ -34,6 +41,7 @@ html.layout-phone,
 html.layout-phone body {
   height: 100%;
   height: 100dvh;
+  max-width: 100%;
   overflow: hidden;
   overscroll-behavior: none;
 }
