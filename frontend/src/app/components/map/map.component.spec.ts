@@ -194,4 +194,24 @@ describe('MapComponent', () => {
     });
     expect(component.searchOpen).toBeFalse();
   });
+
+  it('clears typed search text from the X without closing the sheet', () => {
+    const filter = TestBed.inject(PlacesFilter);
+    const setFilter = spyOn(filter, 'setFilter');
+    component.openSearch();
+    fixture.detectChanges();
+    const input = fixture.nativeElement.querySelector('#feature-filter') as HTMLInputElement;
+    const clearBtn = fixture.nativeElement.querySelector('.search-clear') as HTMLButtonElement;
+    expect(clearBtn).toBeTruthy();
+    expect(clearBtn.getAttribute('aria-label')).toBe('Clear search');
+    expect(clearBtn.textContent?.trim()).toBe('×');
+    input.value = 'shoes';
+    input.dispatchEvent(new Event('input'));
+    expect(setFilter).toHaveBeenCalledWith('shoes');
+    clearBtn.click();
+    fixture.detectChanges();
+    expect(input.value).toBe('');
+    expect(setFilter).toHaveBeenCalledWith('');
+    expect(component.searchOpen).toBeTrue();
+  });
 });

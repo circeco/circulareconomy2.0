@@ -44,6 +44,7 @@ import { websiteDisplayLabel } from '../../utils/website-display';
 })
 export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   @ViewChild('mapHost', { static: true }) mapHost!: ElementRef<HTMLDivElement>;
+  @ViewChild('searchInput') searchInput?: ElementRef<HTMLInputElement>;
   @ViewChildren('heartBtn') heartButtons!: QueryList<ElementRef<HTMLButtonElement>>;
 
   // --- UI state ---
@@ -279,10 +280,31 @@ export class MapComponent implements AfterViewInit, OnInit, OnDestroy {
   }
 
   // ---------- Host listeners ----------
-  @HostListener('window:resize') onWindowResize() { this.map.resize(); }
+  @HostListener('window:resize') onWindowResize() {
+    this.map.resize();
+    this.pinPhoneViewportX();
+  }
 
   // ---------- UI handlers ----------
   onFilter(ev: Event) { this.filter.setFilter((ev.target as HTMLInputElement).value); }
+
+  onSearchFieldFocus(): void {
+    this.pinPhoneViewportX();
+  }
+
+  clearSearch(): void {
+    const input = this.searchInput?.nativeElement;
+    if (input) input.value = '';
+    this.filter.setFilter('');
+    input?.focus();
+    this.pinPhoneViewportX();
+    this.cdr.markForCheck();
+  }
+
+  private pinPhoneViewportX(): void {
+    if (typeof window === 'undefined') return;
+    if (window.scrollX !== 0) window.scrollTo(0, window.scrollY);
+  }
 
   trackListing = (_index: number, item: Feature): string => {
     const p = this.propsOf(item);

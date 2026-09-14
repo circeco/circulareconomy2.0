@@ -20,17 +20,20 @@
         <span class="search-icon" aria-hidden="true"></span>
         <input
           id="feature-filter"
+          #searchInput
           type="search"
           class="search-input"
           placeholder="Search places..."
           (input)="onFilter($event)"
+          (focus)="onSearchFieldFocus()"
           aria-label="Search places"
         />
         <button
           type="button"
-          class="search-cancel"
-          (click)="closeSearch()"
-        >Cancel</button>
+          class="search-clear"
+          aria-label="Clear search"
+          (click)="clearSearch()"
+        >×</button>
       </div>
     </div>
 
