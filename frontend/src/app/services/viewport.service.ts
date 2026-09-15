@@ -56,7 +56,10 @@ export class ViewportService {
       return;
     }
     if (vv) {
-      root.style.setProperty('--vv-width', `${Math.max(0, Math.round(vv.width))}px`);
+      root.style.setProperty(
+        '--vv-width',
+        `${Math.max(0, Math.round(Math.min(vv.width, window.innerWidth)))}px`
+      );
     }
     if (this.pinningScroll) return;
     const offsetLeft = vv?.offsetLeft ?? 0;

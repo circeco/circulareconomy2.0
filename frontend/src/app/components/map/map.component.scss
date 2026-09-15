@@ -493,6 +493,10 @@
     display: inline-flex;
   }
 
+  .search-input:placeholder-shown ~ .search-clear {
+    display: none;
+  }
+
   .filter-section,
   .category-filters.phone-search-cats,
   .listings-section {

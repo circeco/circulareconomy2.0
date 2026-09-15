@@ -59,6 +59,20 @@ describe('ViewportService', () => {
     expect(document.documentElement.style.getPropertyValue('--vv-width')).toBe('350px');
   });
 
+  it('caps --vv-width to window.innerWidth so a leftover keyboard width cannot exceed layout', () => {
+    mockMatchMedia(true);
+    spyOnProperty(window, 'innerWidth', 'get').and.returnValue(390);
+    const vv = {
+      width: 480,
+      offsetLeft: 0,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    };
+    spyOnProperty(window, 'visualViewport', 'get').and.returnValue(vv as unknown as VisualViewport);
+    new ViewportService();
+    expect(document.documentElement.style.getPropertyValue('--vv-width')).toBe('390px');
+  });
+
   it('clears the visual viewport width token on desktop', () => {
     mockMatchMedia(false);
     document.documentElement.style.setProperty('--vv-width', '390px');
