@@ -67,6 +67,7 @@
 
   .hero-search-input {
     flex: 1;
+    min-width: 0;
     border: none;
     background: transparent;
     font-size: 16px;
@@ -699,13 +700,14 @@
   .hero-search-row,
   .hero-search-bar {
     max-width: 100%;
+    min-width: 0;
   }
 
   .hero-search-bar {
     padding: 10px 14px;
 
     .hero-search-input {
-      font-size: 15px;
+      font-size: 16px;
     }
   }
 
