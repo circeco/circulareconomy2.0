@@ -16,6 +16,7 @@ describe('CityListComponent', () => {
   let chrome: PhoneChromeService;
 
   beforeEach(async () => {
+    cityId.set('stockholm');
     chrome = new PhoneChromeService();
     chrome.openCityPicker();
     await TestBed.configureTestingModule({
