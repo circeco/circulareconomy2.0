@@ -9,7 +9,6 @@
       <button
         type="button"
         class="city-card"
-        [class.selected]="city.id === cityContext.cityId()"
         [attr.data-city]="city.id"
         [attr.aria-pressed]="city.id === cityContext.cityId()"
         [attr.aria-label]="city.name"
@@ -22,11 +21,6 @@
           alt=""
         />
         <span class="city-card-name">{{ city.name }}</span>
-        <span
-          *ngIf="city.id === cityContext.cityId()"
-          class="city-card-check"
-          aria-hidden="true"
-        >✓</span>
       </button>
     </li>
   </ul>

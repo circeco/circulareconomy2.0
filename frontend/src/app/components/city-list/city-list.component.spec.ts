@@ -59,7 +59,8 @@ describe('CityListComponent', () => {
     expect(cards[1].querySelector('.city-card-photo')?.getAttribute('src')).toBe(
       'assets/cities/milan.jpg'
     );
-    expect(cards[0].classList.contains('selected')).toBeTrue();
+    expect(fixture.nativeElement.querySelector('.city-card-check')).toBeNull();
+    expect(cards[0].classList.contains('selected')).toBeFalse();
     expect(cards[1].classList.contains('selected')).toBeFalse();
   });
 

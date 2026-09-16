@@ -50,6 +50,11 @@
   grid-template-columns: 1fr;
   gap: 12px;
   align-content: start;
+
+  > li {
+    border-radius: 16px;
+    box-shadow: $light-shadow;
+  }
 }
 
 .city-card {
@@ -60,14 +65,10 @@
   padding: 0;
   overflow: hidden;
   border-radius: 16px;
-  border: 2px solid transparent;
-  background: $brand-mid;
+  border: 0;
+  background: transparent;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-
-  &.selected {
-    border-color: $color-accent;
-  }
 
   &::after {
     content: '';
@@ -101,15 +102,4 @@
   line-height: 1;
   text-align: left;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
-}
-
-.city-card-check {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  z-index: 1;
-  color: #ffffff;
-  font-size: 16px;
-  font-weight: 700;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.75);
 }
