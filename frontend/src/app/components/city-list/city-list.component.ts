@@ -5,6 +5,16 @@ import { CitiesService } from '../../services/cities.service';
 import { CityContextService } from '../../services/city-context.service';
 import { PhoneChromeService } from '../../services/phone-chrome.service';
 
+/** Phone picker tiles only — desktop city-switcher is unchanged. */
+export const CITY_LIST_PHOTOS: Readonly<Record<string, string>> = {
+  stockholm: 'assets/cities/stockholm.jpg',
+  milan: 'assets/cities/milan.jpg',
+};
+
+export function cityListPhotoSrc(cityId: string): string | null {
+  return CITY_LIST_PHOTOS[cityId] ?? null;
+}
+
 @Component({
   selector: 'app-city-list',
   standalone: true,
@@ -17,7 +27,12 @@ export class CityListComponent {
   readonly cityContext = inject(CityContextService);
   readonly chrome = inject(PhoneChromeService);
 
-  readonly rows = computed(() => this.cities.list());
+  readonly rows = computed(() =>
+    this.cities.list().map((city) => ({
+      ...city,
+      photo: cityListPhotoSrc(city.id),
+    }))
+  );
 
   select(id: string, name: string): void {
     this.cityContext.setCityId(id);

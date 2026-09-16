@@ -15,17 +15,18 @@
   align-items: center;
   min-height: calc(var(--header-offset, 52px) + env(safe-area-inset-top, 0px));
   padding: env(safe-area-inset-top, 0px) 8px 0;
-  border-bottom: 1px solid #ececec;
+}
 
-  h1 {
-    flex: 1;
-    margin: 0;
-    text-align: center;
-    font-family: $font-bebas;
-    font-size: 22px;
-    font-weight: 400;
-    padding-right: 44px;
-  }
+.city-list-title {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .city-list-back {
@@ -39,30 +40,84 @@
   cursor: pointer;
 }
 
-.city-list-rows {
+.city-list-grid {
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: 8px 16px 20px;
   overflow-y: auto;
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  align-content: start;
 }
 
-.city-list-row {
+.city-card {
+  position: relative;
+  display: block;
   width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 52px;
-  padding: 12px 20px;
-  border: 0;
-  border-bottom: 1px solid #ececec;
-  background: #ffffff;
-  font-size: 17px;
-  color: #222;
-  text-align: left;
+  aspect-ratio: 4 / 5;
+  padding: 0;
+  overflow: hidden;
+  border-radius: 16px;
+  border: 2px solid transparent;
+  background: $brand-mid;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+
+  &.selected {
+    border-color: $color-accent;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 46%;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.62), transparent);
+    pointer-events: none;
+  }
 }
 
-.city-list-check {
-  color: $brand-deep;
+.city-card-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+.city-card[data-city='stockholm'] .city-card-photo {
+  object-position: 22% 42%;
+}
+
+.city-card[data-city='milan'] .city-card-photo {
+  object-position: 78% 45%;
+}
+
+.city-card-name {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  z-index: 1;
+  color: #ffffff;
+  font-family: $font-bebas;
+  font-size: 22px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  text-align: left;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+}
+
+.city-card-check {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 1;
+  color: #ffffff;
+  font-size: 16px;
   font-weight: 700;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.75);
 }
