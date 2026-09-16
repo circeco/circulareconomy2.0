@@ -43,12 +43,13 @@ describe('CityListComponent', () => {
     expect(cityListPhotoSrc('turin')).toBeNull();
   });
 
-  it('renders a two-column photo-card grid', () => {
+  it('renders stacked full-width photo cards', () => {
     const fixture = TestBed.createComponent(CityListComponent);
     fixture.detectChanges();
     const grid = fixture.nativeElement.querySelector('.city-list-grid') as HTMLElement;
     const cards = fixture.nativeElement.querySelectorAll('.city-card') as NodeListOf<HTMLButtonElement>;
     expect(grid).toBeTruthy();
+    expect(getComputedStyle(grid).gridTemplateColumns.split(' ').length).toBe(1);
     expect(cards.length).toBe(2);
     expect(cards[0].getAttribute('aria-label')).toBe('Stockholm');
     expect(cards[1].getAttribute('aria-label')).toBe('Milan');

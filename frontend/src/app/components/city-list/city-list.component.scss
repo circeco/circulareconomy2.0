@@ -47,7 +47,7 @@
   overflow-y: auto;
   flex: 1;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 12px;
   align-content: start;
 }
@@ -56,7 +56,7 @@
   position: relative;
   display: block;
   width: 100%;
-  aspect-ratio: 4 / 5;
+  aspect-ratio: 2 / 1;
   padding: 0;
   overflow: hidden;
   border-radius: 16px;
@@ -85,14 +85,6 @@
   object-fit: cover;
   object-position: center;
   display: block;
-}
-
-.city-card[data-city='stockholm'] .city-card-photo {
-  object-position: 22% 42%;
-}
-
-.city-card[data-city='milan'] .city-card-photo {
-  object-position: 78% 45%;
 }
 
 .city-card-name {
