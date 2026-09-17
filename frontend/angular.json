@@ -32,7 +32,7 @@
               },
               "src/assets",
               {
-                "glob": "apple-touch-icon.png",
+                "glob": "apple-touch-icon-v2.png",
                 "input": "src/assets/icons",
                 "output": "/"
               }
