@@ -26,6 +26,7 @@ EXACT_COPIES = (
 )
 
 LANCZOS_SIZES = (
+    (180, "apple-touch-icon-v2.png"),
     (180, "apple-touch-icon.png"),
     (192, "android-chrome-192x192.png"),
     (192, "icon-192-maskable.png"),
