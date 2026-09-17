@@ -4,6 +4,8 @@
  *
  * Usage:
  *   node tools/process-discovery-jobs.js
+ *
+ * Production: GitHub Action "Queued Admin Discovery" (workflow_dispatch).
  */
 const path = require('path');
 const { readFileSync, existsSync } = require('fs');

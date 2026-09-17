@@ -189,6 +189,26 @@ function overlayFromCityDoc(cityDoc) {
   });
 }
 
+const MIN_PLACE_RADIUS_M = 1000;
+const DEFAULT_PLACE_RADIUS_M = 9000;
+
+function asPlaceRadiusM(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n < MIN_PLACE_RADIUS_M) return 0;
+  return Math.trunc(n);
+}
+
+/**
+ * Admin `cities/{id}.discovery.radiusM` wins when set.
+ * `--radius=` / monthly workflow value is only a fallback.
+ */
+function resolvePlaceDiscoveryRadius(cityDoc, fallbackRadiusM) {
+  const stored = asPlaceRadiusM(cityDoc && cityDoc.discovery && cityDoc.discovery.radiusM);
+  if (stored) return { radiusM: stored, source: 'admin' };
+  const fallback = asPlaceRadiusM(fallbackRadiusM);
+  return { radiusM: fallback || DEFAULT_PLACE_RADIUS_M, source: 'fallback' };
+}
+
 function resolveOsmClauses(globalOverlay, cityOverlay) {
   const global = parseOverlay(globalOverlay);
   const city = parseOverlay(cityOverlay);
@@ -456,11 +476,12 @@ module.exports = {
   matchClause,
   normalizeClause,
   overlayFromCityDoc,
-  parseOverlay,
   parseOsmRunSummary,
+  parseOverlay,
   recommendClauseAdditions,
   recommendClauseRemovals,
   resolveOsmClauses,
+  resolvePlaceDiscoveryRadius,
   splitClausesByGroup,
   tagsToClauseIds,
 };

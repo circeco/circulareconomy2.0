@@ -45,9 +45,16 @@ These only appear **after you run** the discovery script against production (or 
 | Event feed discovery | `npm run discover:events -- --city=<id> [opts]` | Fetches RSS/Atom/ICS feeds and writes circular event candidates into `reviewQueue`. |
 | Event web agent | `npm run discover:events:agent -- --city=<id> [opts]` | Searches the open web for circular events, extracts candidates, applies memory gates, writes `reviewQueue`. |
 | Scheduled multi-city discovery | `npm run discover:monthly -- [opts]` | Runs place and/or event discovery for enabled cities and logs each run to `discoveryRuns`. |
-| Process queued admin jobs | `npm run discover:jobs` | Picks up `discoveryJobs` written by **Admin → Discovery Queries → Run discovery**. |
+| Process queued admin jobs | `npm run discover:jobs` | Picks up `discoveryJobs` written by **Admin → Discovery Queries → Run discovery**. Production: GitHub Action **Queued Admin Discovery** (`workflow_dispatch` only). |
 | Monthly learning report | `npm run learning:report -- --period=YYYY-MM [--city=<id>]` | Aggregates moderation outcomes and writes per-city stats to `learningStats`. |
 | Admin claim | `npm run admin:set-claim -- <email>` | Sets Firebase Auth custom claim `admin: true` for the review UI. |
+
+### Admin Run discovery (manual)
+
+1. In **Admin → Discovery Queries**, click **Run discovery**. That only writes `discoveryJobs/{city}_{places|events}`.
+2. Start the worker yourself: GitHub → Actions → **Queued Admin Discovery** → **Run workflow**, or from the repo root `npm run discover:jobs`.
+
+Weekly events and monthly places crons are unchanged. There is no 10-minute poller.
 
 ### Credentials
 
@@ -277,7 +284,7 @@ npm run learning:report -- --period=2026-03
 ```
 
 - **`--dry-run`**: calls Overpass, prints a sample of what would be written; **no Firestore writes**.
-- **`--radius`**: meters around city center (default `9000`).
+- **`--radius`**: meters around city center. Used only when that city has **no** Admin radius (`cities/{id}.discovery.radiusM`). Admin radius applies to monthly OSM as well as Admin **Run**.
 - **`--limit`**: max documents to write after dedupe (default `100`).
 - **`--max-past-days`** (`discover:events`): include events that started up to N days ago (default `0`, so only today/future).
 - **`--sources`** (`discover:monthly`): `places`, `events`, or both.
@@ -292,7 +299,7 @@ Optional env: `OVERPASS_URL` (single endpoint) or `OVERPASS_URLS` (comma-separat
 Public Overpass servers can time out under load or reject anonymous clients.
 
 - Uses **two smaller queries** per run (shops vs amenities/craft) instead of one huge query.
-- Defaults to a **smaller radius** (9000 m) to reduce work; increase with `--radius=` if needed.
+- Defaults to a **smaller radius** (9000 m, or the Admin city radius when set) to reduce work.
 - Sends an identifying **User-Agent** + `Accept: application/json` (required; missing agent often returns **HTTP 406**).
 - **Retries** transient 502/503/504 and rotates **public mirrors** (`overpass-api.de`, `lz4`, `z`, `kumi.systems`) unless you set `OVERPASS_URL` or `OVERPASS_URLS`.
 - **406 / 403 / 429** switch to the next mirror immediately (not treated as a network flake).
@@ -387,6 +394,8 @@ This is the primary weekly path so the queue can fill without manually pasting e
 | 2026-09-10 | Discovery page: last OSM run + radius, fetched/queued per clause (`discovery.lastPlaceRun`), silent filters. |
 | 2026-09-10 | Event discovery queries page at `/admin/discovery/events`: same enable/disable/add overlay, `eventQueries` attribution, last-run yield, monthly down-rank + disable suggestions. |
 | 2026-09-10 | Admin **Run discovery** queues `discoveryJobs/{city}_{places|events}`. Local processor: `npm run discover:jobs`. Production: `queued-discovery.yml` (every 10 min) after push + Firestore rules deploy. |
+| 2026-09-17 | Stopped 10-minute `queued-discovery.yml` polling. Admin Run still writes `discoveryJobs`; start the worker with GitHub **Run workflow** or `npm run discover:jobs`. |
+| 2026-09-17 | Monthly OSM uses Admin `cities/{id}.discovery.radiusM` when set; `--radius=` is fallback only. |
 | 2026-09-10 | Stopped querying all `shop=books` / `shop=variety_store`. Overpass now asks for those tags **and** `second_hand=yes|only`, plus Libraccio by name. Removed post-Overpass silent filters. |
 | 2026-09-10 | Place queries: `shop=antiques`; combined extras `second_hand` / `vintage` / `rental` / `repair` with a shop-type dropdown at `/admin/discovery/places`. |
 

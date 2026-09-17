@@ -17,6 +17,7 @@ const {
   tagsToClauseIds,
   parseOsmRunSummary,
   clauseYieldToObject,
+  resolvePlaceDiscoveryRadius,
 } = require('./osm-discovery-queries');
 
 test('default catalog still includes the current Overpass tags', () => {
@@ -147,4 +148,23 @@ test('parses the OSM run-summary log line', () => {
   assert.deepEqual(clauseYieldToObject(new Map([['shop:books', { fetched: 8, queued: 1 }]])), {
     'shop:books': { fetched: 8, queued: 1 },
   });
+});
+
+test('admin city radius wins over CLI / monthly fallback', () => {
+  assert.deepEqual(
+    resolvePlaceDiscoveryRadius({ discovery: { radiusM: 4000 } }, 6000),
+    { radiusM: 4000, source: 'admin' }
+  );
+  assert.deepEqual(
+    resolvePlaceDiscoveryRadius({ discovery: {} }, 6000),
+    { radiusM: 6000, source: 'fallback' }
+  );
+  assert.deepEqual(
+    resolvePlaceDiscoveryRadius({ discovery: { radiusM: 500 } }, 6000),
+    { radiusM: 6000, source: 'fallback' }
+  );
+  assert.deepEqual(
+    resolvePlaceDiscoveryRadius({}, null),
+    { radiusM: 9000, source: 'fallback' }
+  );
 });

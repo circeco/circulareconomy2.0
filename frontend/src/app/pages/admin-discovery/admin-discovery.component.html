@@ -58,7 +58,7 @@
         <p class="run-copy">No place discovery run stored yet.</p>
       </ng-template>
       <p class="run-copy" *ngIf="job() as j">
-        Job {{ j.status }}<ng-container *ngIf="j.errorSummary"> — {{ j.errorSummary }}</ng-container>.
+        {{ jobStatusCopy(j) }}
       </p>
     </div>
 
@@ -231,11 +231,28 @@
         <button
           type="button"
           class="btn-run"
-          [disabled]="saving() || running() || !enabledCount()"
+          [disabled]="saving() || running() || queueing() || !enabledCount()"
           (click)="runDiscovery()"
         >
-          {{ running() ? 'Running…' : 'Run discovery' }}
+          {{ queueing() ? 'Starting…' : runButtonLabel() }}
         </button>
+        <p *ngIf="runNotice() as ok" class="catalog-ok run-feedback" role="status">{{ ok }}</p>
+        <p *ngIf="job()?.status === 'queued'" class="hint run-hint">
+          Next:
+          <a [href]="queuedWorkflowUrl" target="_blank" rel="noopener noreferrer">run the GitHub Action</a>
+          or run <code>npm run discover:jobs</code>.
+        </p>
+        <p *ngIf="job()?.status === 'running'" class="hint run-hint">
+          Discovery is running. This page updates when it finishes.
+        </p>
+        <p *ngIf="job()?.status === 'done' && runNotice()" class="hint run-hint">
+          <a routerLink="/admin/review/places">Open the places review queue</a>
+        </p>
+        <p *ngIf="!runNotice() && job()?.status !== 'queued' && job()?.status !== 'running'" class="hint run-hint">
+          This queues a job for this city. It does not start until you
+          <a [href]="queuedWorkflowUrl" target="_blank" rel="noopener noreferrer">run the GitHub Action</a>
+          or run <code>npm run discover:jobs</code> locally.
+        </p>
       </div>
     </div>
   </section>

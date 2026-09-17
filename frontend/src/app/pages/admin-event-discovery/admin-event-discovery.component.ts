@@ -17,8 +17,14 @@ import {
 } from 'firebase/firestore';
 
 import {
+  discoveryFinishedNotice,
+  discoveryJobStatusCopy,
+  discoveryRunButtonLabel,
+  discoveryWorkerBusy,
   jobIsActive,
   queueDiscoveryJob,
+  queuedDiscoveryNotice,
+  QUEUED_DISCOVERY_WORKFLOW_URL,
   watchDiscoveryJob,
   type DiscoveryJob,
 } from '../../data/discovery-jobs';
@@ -83,17 +89,21 @@ export class AdminEventDiscoveryComponent {
   readonly lastEventRun = signal<LastEventRun | null>(null);
   readonly extraKeywords = signal<string[]>([]);
   readonly job = signal<DiscoveryJob | null>(null);
+  readonly queuedWorkflowUrl = QUEUED_DISCOVERY_WORKFLOW_URL;
   readonly loading = signal(false);
   readonly loaded = signal(false);
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
   readonly notice = signal<string | null>(null);
+  readonly runNotice = signal<string | null>(null);
+  readonly queueing = signal(false);
   readonly editingId = signal<string | null>(null);
   readonly editingKind = signal<AddKind>('search');
   readonly addKind = signal<AddKind>('search');
   readonly addToken = signal('');
 
-  readonly running = computed(() => jobIsActive(this.job()));
+  readonly running = computed(() => discoveryWorkerBusy(this.job()));
+  readonly runButtonLabel = computed(() => discoveryRunButtonLabel(this.job()));
 
   readonly plan = computed(() =>
     resolveEventDiscoveryPlan(
@@ -146,6 +156,7 @@ export class AdminEventDiscoveryComponent {
     this.cityContext.cityId$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((cityId) => {
       this.attachJobWatch(cityId);
       this.notice.set(null);
+      this.runNotice.set(null);
       this.cancelEdit();
       void this.reload();
     });
@@ -213,6 +224,8 @@ export class AdminEventDiscoveryComponent {
     }
     this.error.set(null);
     this.notice.set(null);
+    this.runNotice.set(null);
+    this.queueing.set(true);
     try {
       await queueDiscoveryJob({
         fs: this.fs,
@@ -220,10 +233,16 @@ export class AdminEventDiscoveryComponent {
         source: 'events',
         uid,
       });
-      this.notice.set('Event discovery queued. It starts within a few minutes.');
+      this.runNotice.set(queuedDiscoveryNotice('events'));
     } catch (e) {
       this.error.set(this.errorMessage(e, 'Could not queue discovery.'));
+    } finally {
+      this.queueing.set(false);
     }
+  }
+
+  jobStatusCopy(job: DiscoveryJob): string {
+    return discoveryJobStatusCopy(job);
   }
 
   kindLabel(kind: AddKind): string {
@@ -419,9 +438,16 @@ export class AdminEventDiscoveryComponent {
       const prev = this.job();
       this.job.set(job);
       if (prev && jobIsActive(prev) && job && (job.status === 'done' || job.status === 'failed')) {
-        if (job.status === 'done') this.notice.set('Event discovery finished.');
-        else this.error.set(job.errorSummary || 'Event discovery failed.');
-        void this.reload({ quiet: true });
+        if (job.status === 'failed') {
+          this.runNotice.set(null);
+          this.error.set(job.errorSummary || 'Event discovery failed.');
+          void this.reload({ quiet: true });
+          return;
+        }
+        void this.reload({ quiet: true }).then(() => {
+          this.error.set(null);
+          this.runNotice.set(discoveryFinishedNotice('events', this.lastEventRun()));
+        });
       }
     });
   }

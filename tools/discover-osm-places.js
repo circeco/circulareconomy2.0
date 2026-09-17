@@ -8,6 +8,8 @@
  *   node tools/discover-osm-places.js --city=turin --radius=12000 --limit=80
  *   node tools/discover-osm-places.js --city=stockholm --dry-run
  *
+ * `--radius` is a fallback when the city has no Admin discovery.radiusM.
+ *
  * Requires firebase-admin (repo root) and credentials like seed-firestore.js.
  */
 
@@ -22,6 +24,7 @@ const {
   matchingClauseIds,
   overlayFromCityDoc,
   resolveOsmClauses,
+  resolvePlaceDiscoveryRadius,
   splitClausesByGroup,
   clauseYieldToObject,
 } = require('./lib/osm-discovery-queries');
@@ -101,7 +104,6 @@ function parseArgs() {
     city: '',
     /** Smaller default radius reduces Overpass load (504 timeouts on busy servers). */
     radiusM: 9000,
-    radiusFromCli: false,
     limit: 100,
     dryRun: false,
   };
@@ -110,7 +112,6 @@ function parseArgs() {
     else if (a.startsWith('--city=')) out.city = a.slice('--city='.length).trim().toLowerCase();
     else if (a.startsWith('--radius=')) {
       out.radiusM = Math.max(1000, parseInt(a.slice('--radius='.length), 10) || 9000);
-      out.radiusFromCli = true;
     }
     else if (a.startsWith('--limit=')) out.limit = Math.max(1, parseInt(a.slice('--limit='.length), 10) || 100);
   }
@@ -861,13 +862,9 @@ async function main() {
   const compacted = await compactExpiredRejectedMemory(db);
   const center = await fetchCityCenter(db, city);
   const { cityDoc, resolved } = await loadOsmQueryPlan(db, city);
-  let radiusM = args.radiusM;
-  if (!args.radiusFromCli) {
-    const stored = Number(cityDoc?.discovery?.radiusM);
-    if (Number.isFinite(stored) && stored >= 1000) radiusM = Math.trunc(stored);
-  }
+  const { radiusM, source: radiusSource } = resolvePlaceDiscoveryRadius(cityDoc, args.radiusM);
 
-  console.log(`[discover-osm] city=${city} radius=${radiusM}m limit=${limit} dryRun=${dryRun}`);
+  console.log(`[discover-osm] city=${city} radius=${radiusM}m source=${radiusSource} limit=${limit} dryRun=${dryRun}`);
   console.log(`[discover-osm] projectId=${PROJECT_ID} mirrors=${overpassMirrorUrls().join(' | ')}`);
   const enabledClauses = resolved.enabled;
   const clauseYield = new Map(enabledClauses.map((c) => [c.id, { fetched: 0, queued: 0 }]));

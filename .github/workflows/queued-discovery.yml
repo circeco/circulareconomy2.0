@@ -1,13 +1,11 @@
 name: Queued Admin Discovery
 
-# Picks up discoveryJobs written from Admin → Discovery Queries.
+# Starts only when you push it: GitHub → Actions → Queued Admin Discovery → Run workflow.
+# Admin → Run discovery writes discoveryJobs; this job processes those docs.
 # Local: npm run discover:jobs
 
 on:
   workflow_dispatch:
-  schedule:
-    # Frequent enough that the admin Run button does not sit for long.
-    - cron: '*/10 * * * *'
 
 permissions:
   contents: read

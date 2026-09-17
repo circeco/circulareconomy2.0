@@ -158,6 +158,7 @@ function runNodeScript(scriptFile, scriptArgs) {
 }
 
 function runCityPlaceDiscovery(cityId, args) {
+  // --radius is a fallback; cities/{id}.discovery.radiusM wins when set in Admin.
   const cmdArgs = [`--city=${cityId}`, `--radius=${args.radiusM}`, `--limit=${args.limit}`];
   if (args.dryRun) cmdArgs.push('--dry-run');
   return runNodeScript('discover-osm-places.js', cmdArgs);

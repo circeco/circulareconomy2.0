@@ -11,7 +11,7 @@ on:
         required: false
         default: milan,stockholm
       radius:
-        description: Discovery radius in meters
+        description: Fallback radius in meters when the city has no Admin discovery radius
         required: false
         default: '6000'
       limit:

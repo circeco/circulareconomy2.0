@@ -17,8 +17,14 @@ import {
 } from 'firebase/firestore';
 
 import {
+  discoveryFinishedNotice,
+  discoveryJobStatusCopy,
+  discoveryRunButtonLabel,
+  discoveryWorkerBusy,
   jobIsActive,
   queueDiscoveryJob,
+  queuedDiscoveryNotice,
+  QUEUED_DISCOVERY_WORKFLOW_URL,
   watchDiscoveryJob,
   type DiscoveryJob,
 } from '../../data/discovery-jobs';
@@ -100,15 +106,19 @@ export class AdminDiscoveryComponent {
   readonly searchCenter = signal<{ lat: number; lng: number } | null>(null);
   readonly radiusKm = signal(radiusKmFromM(OSM_LOCAL_RADIUS_M));
   readonly job = signal<DiscoveryJob | null>(null);
+  readonly queuedWorkflowUrl = QUEUED_DISCOVERY_WORKFLOW_URL;
   readonly loading = signal(false);
   readonly loaded = signal(false);
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
   readonly notice = signal<string | null>(null);
+  readonly runNotice = signal<string | null>(null);
+  readonly queueing = signal(false);
   readonly editingId = signal<string | null>(null);
   readonly addForm = signal<DraftForm>({ kind: 'tag', key: 'shop', token: '', andKey: 'second_hand' });
 
-  readonly running = computed(() => jobIsActive(this.job()));
+  readonly running = computed(() => discoveryWorkerBusy(this.job()));
+  readonly runButtonLabel = computed(() => discoveryRunButtonLabel(this.job()));
 
   readonly resolved = computed(() =>
     resolveOsmClauses(this.globalOverlay(), this.cityOverlay())
@@ -137,6 +147,7 @@ export class AdminDiscoveryComponent {
     this.cityContext.cityId$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((cityId) => {
       this.attachJobWatch(cityId);
       this.notice.set(null);
+      this.runNotice.set(null);
       this.cancelEdit();
       void this.reload();
     });
@@ -229,6 +240,8 @@ export class AdminDiscoveryComponent {
     }
     this.error.set(null);
     this.notice.set(null);
+    this.runNotice.set(null);
+    this.queueing.set(true);
     try {
       await queueDiscoveryJob({
         fs: this.fs,
@@ -237,10 +250,16 @@ export class AdminDiscoveryComponent {
         radiusM: radiusMFromKm(this.radiusKm()),
         uid,
       });
-      this.notice.set('Place discovery queued. It starts within a few minutes.');
+      this.runNotice.set(queuedDiscoveryNotice('places'));
     } catch (e) {
       this.error.set(this.errorMessage(e, 'Could not queue discovery.'));
+    } finally {
+      this.queueing.set(false);
     }
+  }
+
+  jobStatusCopy(job: DiscoveryJob): string {
+    return discoveryJobStatusCopy(job);
   }
 
   startEdit(clause: OsmClause): void {
@@ -441,9 +460,16 @@ export class AdminDiscoveryComponent {
       const prev = this.job();
       this.job.set(job);
       if (prev && jobIsActive(prev) && job && (job.status === 'done' || job.status === 'failed')) {
-        if (job.status === 'done') this.notice.set('Place discovery finished.');
-        else this.error.set(job.errorSummary || 'Place discovery failed.');
-        void this.reload({ quiet: true });
+        if (job.status === 'failed') {
+          this.runNotice.set(null);
+          this.error.set(job.errorSummary || 'Place discovery failed.');
+          void this.reload({ quiet: true });
+          return;
+        }
+        void this.reload({ quiet: true }).then(() => {
+          this.error.set(null);
+          this.runNotice.set(discoveryFinishedNotice('places', this.lastPlaceRun()));
+        });
       }
     });
   }

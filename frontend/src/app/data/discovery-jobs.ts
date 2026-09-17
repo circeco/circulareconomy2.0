@@ -22,6 +22,90 @@ export type DiscoveryJob = {
   requestedAtMs: number;
 };
 
+/** GitHub Action that processes `discoveryJobs`. Manual Run workflow only. */
+export const QUEUED_DISCOVERY_WORKFLOW_URL =
+  'https://github.com/circeco/circulareconomy2.0/actions/workflows/queued-discovery.yml';
+
+export function queuedDiscoveryNotice(source: DiscoveryJobSource): string {
+  switch (source) {
+    case 'places':
+      return 'Queued. Place discovery starts after you start the worker.';
+    case 'events':
+      return 'Queued. Event discovery starts after you start the worker.';
+    default: {
+      const _never: never = source;
+      return _never;
+    }
+  }
+}
+
+export type DiscoveryRunCounts = {
+  fetchedCount: number;
+  queuedCount: number;
+};
+
+export function discoveryFinishedNotice(
+  source: DiscoveryJobSource,
+  counts: DiscoveryRunCounts | null
+): string {
+  const fetched = Number(counts?.fetchedCount);
+  const queued = Number(counts?.queuedCount);
+  const hasCounts = Number.isFinite(fetched) && Number.isFinite(queued);
+  switch (source) {
+    case 'places':
+      return hasCounts
+        ? `Place discovery finished. OSM returned ${fetched} features; ${queued} added to the review queue.`
+        : 'Place discovery finished. Check the review queue for new candidates.';
+    case 'events':
+      return hasCounts
+        ? `Event discovery finished. Fetched ${fetched}; ${queued} added to the review queue.`
+        : 'Event discovery finished. Check the review queue for new candidates.';
+    default: {
+      const _never: never = source;
+      return _never;
+    }
+  }
+}
+
+export function discoveryJobStatusCopy(job: DiscoveryJob): string {
+  switch (job.status) {
+    case 'queued':
+      return 'Queued — waiting for the worker.';
+    case 'running':
+      return 'Running — this can take a few minutes.';
+    case 'done':
+      return 'Last job finished successfully.';
+    case 'failed':
+      return job.errorSummary || 'Last job failed.';
+    default: {
+      const _never: never = job.status;
+      return _never;
+    }
+  }
+}
+
+export function discoveryRunButtonLabel(job: DiscoveryJob | null): string {
+  if (!job) return 'Run discovery';
+  switch (job.status) {
+    case 'queued':
+      return 'Queued…';
+    case 'running':
+      return 'Running…';
+    case 'done':
+    case 'failed':
+      return 'Run discovery';
+    default: {
+      const _never: never = job.status;
+      return _never;
+    }
+  }
+}
+
+/** True only while GitHub/local worker is in progress — not while waiting to be started. */
+export function discoveryWorkerBusy(job: DiscoveryJob | null): boolean {
+  return job?.status === 'running';
+}
+
 export function discoveryJobId(cityId: string, source: DiscoveryJobSource): string {
   return `${cityId}_${source}`;
 }

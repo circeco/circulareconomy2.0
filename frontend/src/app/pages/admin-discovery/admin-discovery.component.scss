@@ -197,6 +197,27 @@
   margin: 1.35rem 0 0.25rem;
 }
 
+.run-hint {
+  max-width: 28rem;
+  text-align: center;
+  font-size: 0.85rem;
+
+  a {
+    font-weight: 700;
+    color: #0c343d;
+  }
+
+  code {
+    font-size: 0.82em;
+  }
+}
+
+.run-feedback {
+  margin: 0.15rem 0 0;
+  max-width: 28rem;
+  text-align: center;
+}
+
 .btn-run {
   height: 2.5rem;
   padding: 0.45rem 1.5rem;
