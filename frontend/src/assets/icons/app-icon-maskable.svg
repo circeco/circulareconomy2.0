@@ -1,9 +1,18 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
-  <!-- Circeco maskable master: same mark, logo inside the 80% safe circle (side H 54.7%).
-       Coral still fills the square so a circle/squircle crop leaves a coral rim. -->
-  <rect width="1024" height="1024" fill="#FF5252"/>
-  <rect x="232" y="232" width="280" height="280" fill="#0c343c"/>
-  <rect x="512" y="232" width="280" height="280" fill="#144f5d"/>
-  <rect x="232" y="512" width="280" height="280" fill="#46818f"/>
-  <rect x="512" y="512" width="280" height="280" fill="#76a4b1"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Same mark as app-icon.svg. The designer silhouette already reaches the
+       canvas mid-edges (10% coral frame), so a circle/squircle crop keeps a
+       coral rim and the 2×2 stays inside the 80% maskable safe circle.
+       Raster exports copy/scale app-icon.png — do not use a tighter logo inset. -->
+  <defs>
+    <clipPath id="logo">
+      <rect x="52" y="52" width="408" height="408" rx="61.3" ry="61.3"/>
+    </clipPath>
+  </defs>
+  <rect width="512" height="512" rx="113.3" ry="113.3" fill="#FF5252"/>
+  <g clip-path="url(#logo)">
+    <rect x="52" y="52" width="204" height="204" fill="#0c343c"/>
+    <rect x="256" y="52" width="204" height="204" fill="#144f5d"/>
+    <rect x="52" y="256" width="204" height="204" fill="#46818f"/>
+    <rect x="256" y="256" width="204" height="204" fill="#76a4b1"/>
+  </g>
 </svg>
