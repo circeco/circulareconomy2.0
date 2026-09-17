@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- Circeco home-screen master (any / iOS): full-bleed coral, sharp 2x2, ~10% inset.
+       Rasterize with tools/export-app-icons.sh. Do not pre-round  OS masks apply the silhouette. -->
+  <rect width="1024" height="1024" fill="#FF5252"/>
+  <rect x="102" y="102" width="410" height="410" fill="#0c343c"/>
+  <rect x="512" y="102" width="410" height="410" fill="#144f5d"/>
+  <rect x="102" y="512" width="410" height="410" fill="#46818f"/>
+  <rect x="512" y="512" width="410" height="410" fill="#76a4b1"/>
+</svg>
