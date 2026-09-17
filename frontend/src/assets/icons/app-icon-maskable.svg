@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- Circeco maskable master: same mark, logo inside the 80% safe circle (side H 54.7%).
+       Coral still fills the square so a circle/squircle crop leaves a coral rim. -->
+  <rect width="1024" height="1024" fill="#FF5252"/>
+  <rect x="232" y="232" width="280" height="280" fill="#0c343c"/>
+  <rect x="512" y="232" width="280" height="280" fill="#144f5d"/>
+  <rect x="232" y="512" width="280" height="280" fill="#46818f"/>
+  <rect x="512" y="512" width="280" height="280" fill="#76a4b1"/>
+</svg>

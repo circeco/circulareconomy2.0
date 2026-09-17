@@ -30,7 +30,12 @@
                 "glob": "**/*",
                 "input": "public"
               },
-              "src/assets"
+              "src/assets",
+              {
+                "glob": "apple-touch-icon.png",
+                "input": "src/assets/icons",
+                "output": "/"
+              }
             ],
             "styles": ["src/styles.scss"],
             "stylePreprocessorOptions": {
