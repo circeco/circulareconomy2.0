@@ -206,13 +206,27 @@
 }
 
 .event-card {
-  background: white;
+  --event-card-border: 1px solid rgba(0, 0, 0, 0.08);
+  --event-card-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  background: #fff;
+  border: var(--event-card-border);
   border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--event-card-shadow);
   overflow: hidden;
   display: flex;
   flex-direction: column;
   cursor: pointer;
+
+  /* Favourite heart / nested controls can focus the card (tabindex=0). Keep chrome. */
+  &:focus,
+  &:focus-visible,
+  &:focus-within,
+  &:has(.heart-btn[aria-pressed='true']),
+  &:has(.fav-btn.favorited) {
+    background: #fff;
+    border: var(--event-card-border);
+    box-shadow: var(--event-card-shadow) !important;
+  }
 }
 
 .event-card-content {
@@ -728,6 +742,9 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
   }
 
   .events-header {
@@ -751,16 +768,26 @@
   .places-container,
   .search-results-container {
     display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    align-items: stretch;
     grid-template-columns: none;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0; /* flex item default min-width:auto expands to content and kills swipe */
     overflow-x: auto;
     overflow-y: hidden;
     gap: 12px;
-    padding: 8px 0 28px;
+    padding: 8px 16px 28px;
     margin: 0 0 36px;
-    max-width: none;
     scroll-snap-type: x mandatory;
     scroll-padding-inline: 16px;
+    scroll-snap-stop: always;
     -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    touch-action: pan-x pan-y;
     scrollbar-width: none;
 
     &::-webkit-scrollbar {
@@ -781,17 +808,14 @@
   }
 
   .event-card {
+    box-sizing: border-box;
     flex: 0 0 min(78vw, 280px);
-    scroll-snap-align: start;
+    width: min(78vw, 280px);
+    min-width: min(78vw, 280px);
     max-width: min(78vw, 280px);
-
-    &:first-child {
-      margin-left: 16px;
-    }
-
-    &:last-child {
-      margin-right: 16px;
-    }
+    margin: 0;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
   }
 
   .event-title {

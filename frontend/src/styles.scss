@@ -116,6 +116,27 @@ summary:focus-visible,
 .mapboxgl-ctrl button:focus,
 .mapboxgl-ctrl button:focus-visible {
   outline: none !important;
+}
+
+/* Strip UA/utility focus shadows on controls — not on home/event cards.
+   Cards use tabindex=0 and nest the favourite heart; :focus/:focus-within
+   must not drop their border/drop-shadow chrome. */
+button:focus,
+button:focus-visible,
+a:focus,
+a:focus-visible,
+input:focus,
+input:focus-visible,
+textarea:focus,
+textarea:focus-visible,
+select:focus,
+select:focus-visible,
+summary:focus,
+summary:focus-visible,
+[tabindex]:not(.event-card):focus,
+[tabindex]:not(.event-card):focus-visible,
+.mapboxgl-ctrl button:focus,
+.mapboxgl-ctrl button:focus-visible {
   box-shadow: none !important;
 }
 
