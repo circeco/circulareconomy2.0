@@ -1,13 +1,8 @@
 # Discovery scripts and review queue
 
-**Living ops doc** for discovery: how to run scripts, limitations, **current learning behaviour**, and a short dev log.
+How to run discovery, what it writes, and how approve/reject teaches the next run. Schema: [`DATA_MODEL_AND_PIPELINE.md`](DATA_MODEL_AND_PIPELINE.md). Stack: [`ARCHITECTURE.md`](ARCHITECTURE.md).
 
-| Doc | Role |
-|-----|------|
-| **This file** | How it works today (commands, memory collections, gates) |
-| [`SCHEDULED_DISCOVERY_LEARNING_PLAN.md`](SCHEDULED_DISCOVERY_LEARNING_PLAN.md) | Cadence, phases, KPIs, roadmap |
-| [`LEARNING_V1_SPEC.md`](LEARNING_V1_SPEC.md) | Target contracts / auto-policy guardrails (not all implemented) |
-| [`DATA_MODEL_AND_PIPELINE.md`](DATA_MODEL_AND_PIPELINE.md) | Schema / pipeline overview |
+Nothing here publishes to `places` / `events`. Humans approve in `/admin/review`.
 
 ---
 
@@ -136,13 +131,11 @@ Extraction guardrails (adjacent to learning): circular signal preferably in **ti
 | Structured reject reasons in UI | No | No |
 | Auto policy from monthly report | Clause down-rank + suggestions; no auto-disable | No |
 
-### Improve along the way
+### How to use learning
 
-1. Edit name/address/tags before approve so catalogue boosts use clean signals.  
-2. Watch `discoveryRuns` counters (`skippedMemoryHard` / `skippedMemorySoft` / approval boosts in OSM logs).  
-3. Read `learningStats` / `/admin/discovery/places` or `/admin/discovery/events` suggestions → add or disable queries by hand.  
-4. Later: structured reject reasons; series re-open after materialization window; guarded auto soft-penalties (`LEARNING_V1_SPEC.md`).  
-5. ML re-ranker only in shadow mode, still behind human review.
+1. Edit name/address/tags before approve so catalogue boosts use clean signals.
+2. Watch `discoveryRuns` counters (`skippedMemoryHard` / `skippedMemorySoft` / approval boosts in OSM logs).
+3. Read `learningStats` and the Discovery Queries pages, then add or disable queries by hand. The monthly report down-ranks noisy clauses and **suggests** add/disable; it does not auto-edit the allowlist.
 
 ---
 
@@ -217,29 +210,24 @@ Each queued place stores `osmClauses` (which query lines matched). Discovery log
 
 #### Mapping to app fields
 
-- `actionTags` inference:
-  - `reuse`: `shop=second_hand|charity|vintage|antiques`
-  - `reuse` for bookstores (`shop=books`) **only** when second-hand signals are present
-    (e.g. `second_hand=yes|only`, or strong text markers such as `Libraccio`, `used books`, `libri usati`)
-  - `reuse` for `shop=variety_store` **only** when used/vintage signals are present
-  - `reuse` for trusted reuse-brand signal (`humana*`)
-  - `rental`: `shop=rental` or `rental=yes` (dedicated action tag, not `share`)
-  - `repair`: `repair=yes`
-  - `refurbish`: when text signals indicate refurbished/reconditioned offers
-    (e.g. `refurbish`, `refurbished`, `ricondizionato`)
-  - `recycle`: `amenity=recycling|recycling_centre`
-  - `vintage` signal (e.g. `shop=vintage` or name contains `vintage`) adds `reuse`
-- `sectorCategories`: up to 3 values from this controlled list:
-  - `books`
-  - `music`
-  - `electronics`
-  - `clothing` (includes bags/accessories/shoes in current mapping)
-  - `accessories`
-  - `furniture`
-  - `antiques`
-  - `sport` (includes cycling in current mapping)
-- `rental` uses its own action tag (`rental`) and is not used as a sector category.
-- `evidence[0].snippet`: compact tag evidence such as `shop=books`
+`inferActionTags` / `inferSector` in `tools/discover-osm-places.js` write **queue candidate** tags. The public UI and admin save path run `canonicalizeActionTags` / `canonicalizeSectorCategories` (`taxonomy.ts`): `rental`/`share` → `reuse`, `refurbish` → `repair`, `books` → `books-comics-magazines`, `clothing`/`accessories` → `apparel`, `furniture`/`antiques` → `home-garden`, `sport` → `cycling-sports`. Prefer canonical slugs when approving.
+
+Action inference (as written on the candidate):
+
+- `reuse`: `shop=second_hand|charity|vintage|antiques`
+- `reuse` for `shop=books` **only** with second-hand signals (`second_hand=yes|only`, Libraccio, used-books text)
+- `reuse` for `shop=variety_store` **only** with used/vintage signals
+- `reuse` for trusted reuse-brand signal (`humana*`)
+- `rental`: `shop=rental` or `rental=yes` (alias; UI treats as `reuse`)
+- `repair`: `repair=yes`
+- `refurbish`: refurbished/reconditioned text (alias; UI treats as `repair`)
+- `recycle`: `amenity=recycling|recycling_centre`
+- vintage signal also adds `reuse`
+- if nothing matches and the shop is not a bare rental, default `reuse`
+
+Sectors (up to 3, OSM-oriented slugs): `books`, `music`, `electronics`, `clothing`, `accessories`, `furniture`, `antiques`, `sport`. Recycling usually has empty sectors. `rental` is not a sector.
+
+`evidence[0].snippet`: compact tag evidence such as `shop=books`.
 
 #### Confidence score (current)
 
@@ -254,19 +242,9 @@ Base score is `0.45`, then:
 Candidates are sorted by confidence (desc), deduped by doc id (`osm_{city}_{type}_{id}`), then capped by `--limit`.
 Memory soft-penalties are applied before sorting/capping and logged per run.
 
-#### Why a chain like Feltrinelli is picked
+#### Why generic bookstores used to appear
 
-Previously this happened because criteria were **tag-driven**, not brand-driven.
-
-Example from Milan queue:
-
-- `id`: `osm_milan_node_10137737859`
-- `name`: `Feltrinelli`
-- `evidence.snippet`: `shop=books`
-- `actionTags`: historically `["reuse"]` (older policy mapped `shop=books` to reuse)
-- `confidence`: `0.80` (name + address + website + opening-hours-related metadata when present)
-
-Now this has been tightened: generic `shop=books` entries are skipped unless they show second-hand evidence. So mainstream bookstores without second-hand signals should no longer be added by discovery.
+Older policy mapped every `shop=books` to `reuse`, so chains such as Feltrinelli entered the queue. Discovery now requires second-hand evidence for bookstores, so mainstream shops without that signal are not enqueued.
 
 ### Common options
 
@@ -356,12 +334,13 @@ This is the primary weekly path so the queue can fill without manually pasting e
 ## Admin review UI (`/admin/review`)
 
 - **Route guard**: production / hosted builds always require Firebase Auth custom claim `admin: true`. `adminGuard` allows **localhost** / **127.0.0.1** during local `ng serve` without the claim; other hosts still need the claim.
-- **Firestore**: reads/writes on `reviewQueue` still require **`admin: true`** in the token. After `npm run admin:set-claim -- <email>`, have the user **sign out and sign in** (or wait for token refresh) so `getIdTokenResult` includes the claim; otherwise you may see `permission-denied` in the browser console.
-- **Bugfix**: `AuthService.isAdmin()` must not use `takeUntilDestroyed()` inside a service method (it broke the observable). Fixed so non-localhost admin checks work reliably.
+- **Firestore**: reads/writes on `reviewQueue` still require **`admin: true`** in the token. After `npm run admin:set-claim -- <email>`, sign out and sign in so `getIdTokenResult` includes the claim; otherwise you may see `permission-denied`.
 
 ---
 
-## Dev log (update as we go)
+## Changelog
+
+Historical ops notes. Current behaviour is in the sections above.
 
 | Date | Change |
 |------|--------|

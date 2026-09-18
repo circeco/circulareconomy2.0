@@ -31,6 +31,12 @@ export const routes: Routes = [
     title: 'Account'
   },
   {
+    path: 'privacy',
+    loadComponent: () =>
+      import('./pages/privacy/privacy.component').then(m => m.PrivacyComponent),
+    title: 'Privacy policy'
+  },
+  {
     path: 'admin/review',
     redirectTo: 'admin/review/places',
     pathMatch: 'full',

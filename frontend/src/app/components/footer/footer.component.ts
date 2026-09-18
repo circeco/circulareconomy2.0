@@ -1,6 +1,7 @@
 import { AfterViewInit, Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { environment } from '../../../environments/environments';
 
 declare global { interface Window { grecaptcha?: any; } }
@@ -8,7 +9,7 @@ declare global { interface Window { grecaptcha?: any; } }
 @Component({
   selector: 'contact-footer',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './footer.component.html',
   styleUrls: ['./footer.component.scss'],
 })

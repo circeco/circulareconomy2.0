@@ -29,7 +29,7 @@ Default: **implement locally and stop**. Do not commit, push, deploy, or write p
 Call out and wait before:
 
 - `git push` to `main` (GitHub Actions run from default branch)
-- `firebase deploy` (rules, hosting, functions)
+- `firebase deploy` (Firestore rules, Hosting)
 - Discovery scripts **without** `--dry-run` against production Firestore (`reviewQueue`, etc.)
 - Manually dispatching GitHub Actions workflows
 - Enabling/re-enabling scheduled workflows on GitHub
@@ -45,5 +45,6 @@ Before commit/push/deploy, summarize:
 ## Circeco-specific
 
 - Scheduled discovery: `.github/workflows/monthly-discovery-learning.yml`, `weekly-events-discovery.yml`
+- Manual admin discovery worker: `.github/workflows/queued-discovery.yml` (`workflow_dispatch` only)
 - Production writes: `reviewQueue`, `discoveryRuns`, `learningStats`, `eventReviewMemory*`
 - Prefer `--dry-run` for `discover:events:agent` and `discover:monthly` until Piero approves a live run

@@ -35,8 +35,10 @@ export class CitySwitcherComponent {
   }
 
   readonly visible = computed(() => {
-    const isLanding = this.currentPath() === '/' || this.currentPath() === '';
+    const path = this.currentPath();
+    const isLanding = path === '/' || path === '';
     if (this.variant() === 'inline') return isLanding;
+    if (path.startsWith('/privacy')) return false;
     return !isLanding; // floating on all non-landing pages (atlas/events/admin/etc.)
   });
 

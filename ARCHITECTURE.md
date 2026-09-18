@@ -1,49 +1,188 @@
-# Circeco MVC Architecture
+# Circeco architecture
 
-## Overview
-This repository hosts two generations of the Circeco front end: legacy build scripts in the repo root and the active Angular single-page app in `frontend/`. The Angular app is composed entirely of standalone components and RxJS-driven services. Because Angular already mixes view + controller ideas, this document explains how the existing folders map cleanly to a classic Model–View–Controller mental model so the team can reason about ownership boundaries while iterating.
+How the product is put together **today**. There is no app server and no Cloud Functions. The browser talks to Firebase; discovery jobs run as Node scripts on GitHub Actions.
 
-## Directory quick map
+**Firebase project:** `circeco-bf511`  
+**Public site:** [circeco.org](https://circeco.org)  
+**GitHub:** [circeco/circulareconomy2.0](https://github.com/circeco/circulareconomy2.0)
+
+Related docs: [`DATA_MODEL_AND_PIPELINE.md`](DATA_MODEL_AND_PIPELINE.md), [`DISCOVERY_SCRIPTS.md`](DISCOVERY_SCRIPTS.md), [`FIREBASE_ADMIN_AND_RULES.md`](FIREBASE_ADMIN_AND_RULES.md), [`CIRCULAR_TAXONOMY.md`](CIRCULAR_TAXONOMY.md), [`DIAGRAMS.md`](DIAGRAMS.md).
+
+---
+
+## Stack
+
+| Piece | What it is |
+|---|---|
+| **Angular 18** | Standalone SPA in `frontend/`. Landing, atlas, events, account, admin. |
+| **Firebase Auth** | Email/password. Admin is custom claim `admin: true`. |
+| **Cloud Firestore** | Canonical data: cities, places, events, review queue, learning memory, user favourites. |
+| **Firebase Hosting** | Serves the Angular production build. SPA rewrite to `index.html`. |
+| **Mapbox GL JS v1.7** | Atlas map (CDN in `frontend/src/index.html`). Style + public token in `frontend/src/environments/`. |
+| **GitHub Actions** | Hosting deploy on push to `main`; monthly/weekly discovery; optional queued admin discovery. |
+| **Formspree** | Landing contact form. Not stored in Firestore. |
+| **OpenStreetMap** | Place discovery via Overpass; admin geocode via Nominatim. |
+
+**Not in this system:** Cloud Functions, Firebase Storage, a REST API, EmailJS, Mapbox Directions, Capacitor / native apps.
+
+Local `ng serve` still uses the **production** Firebase project unless you set `FIRESTORE_EMULATOR_HOST` for the Node tools.
+
+---
+
+## Repository layout
+
 | Path | Role |
-| --- | --- |
-| `frontend/src/main.ts` | Boots the Angular app, router, HTTP client, and Firebase providers. |
-| `frontend/src/app/app.routes.ts` | Defines lazy-routed pages (`/` landing, `/atlas`). |
-| `frontend/src/app/pages/*` | Page-level controllers + templates that orchestrate feature components. |
-| `frontend/src/app/components/*` | Reusable feature controllers/views (map, navbar, footer, login, etc.). |
-| `frontend/src/app/services/*` | Model layer services that manage data, Firebase, map state, and filtering. |
-| `frontend/src/assets/data/*` | Source data (GeoJSON) consumed by the model layer. |
-| `frontend/src/styles.scss` & `frontend/src/app/**/*.scss` | Global + scoped view styles. |
+|---|---|
+| `frontend/` | The product UI (Angular). |
+| `frontend/src/app/pages/` | Screens: `/`, `/atlas`, `/events`, `/account`, `/admin/*`. |
+| `frontend/src/app/components/` | Map, navbar, phone chrome, login, calendar, city switcher, footer. |
+| `frontend/src/app/services/` | Auth, Firestore reads, map, city, filters, favourites, geolocation. |
+| `frontend/src/app/data/` | Taxonomy, Firestore path names, models, discovery query catalogs. |
+| `frontend/src/environments/` | Mapbox, Firebase web config, Formspree. Prod file replaces this on `ng build`. |
+| `tools/` | Node CLI: seed, OSM/event discovery, learning report, admin claim. Uses **firebase-admin**. |
+| `firestore.rules` | Who can read/write each collection. |
+| `firebase.json` | Hosting public dir, headers, SPA rewrite. |
+| `.github/workflows/` | Deploy + discovery crons. |
+| `secrets/` | Local Admin SDK JSON only. Gitignored except `secrets/README.md`. |
 
-## MVC mapping summary
-| Layer | Responsibility | Key modules |
-| --- | --- | --- |
-| **Model** | Own business state, persistence, and domain logic (map data, filters, favorites, auth). | `services/places-filter.service.ts`, `services/map.service.ts`, `services/favorites.service.ts`, `services/auth.service.ts`, `environments/`. |
-| **View** | Present UI state with HTML/CSS and respond to bindings. | `*.component.html`, `*.component.scss`, `frontend/src/styles.scss`, assets under `src/assets/`. |
-| **Controller** | Mediate user input, update the model, and select views. | Component classes in `pages/` & `components/`, router config (`app.routes.ts`), bootstrap logic (`main.ts`, `app.component.ts`). |
+Root `package.json` is the **ops CLI**. `frontend/package.json` is the **app**.
 
-### Model layer details
-- **Places + filtering domain**: `places-filter.service.ts` (model) ingests map features, dedupes them, provides category and free-text filtering streams, and enriches favorite features by rehydrating metadata from the GeoJSON index. `map.service.ts` encapsulates Mapbox GL JS, exposes observables such as `onReady()` and `onFeatureClick()`, and provides mutation APIs (`setCategoryFilter`, `openPopup`, favorites visibility). These two services form the core model for the atlas regardless of which controller requests the data.
-- **User identity + favorites**: `auth.service.ts` wraps Firebase Auth and exposes `user$` plus UI state signals for the login modal. `favorites.service.ts` listens to `user$`, synchronizes Firestore favourites, maintains an in-memory cache, updates the Mapbox `favorites` source, and surfaces imperative helpers (`mountHeartButton`, `computePlaceKey`) to both Angular controllers and legacy DOM hooks via `window.circeco`. By dispatching DOM events such as `favorites:update` and `favorites:auth`, it keeps controllers decoupled from persistence.
-- **Static configuration**: `environments/environments.ts` acts as a read-only model for secrets (Mapbox token, Firebase, EmailJS). Assets like `assets/data/circular_places.geojson` and icon packs represent serialized model data that feed the services above.
+```bash
+cd frontend && npm install && npm start   # http://localhost:4200
+```
 
-### View layer details
-- **Angular templates + styling**: Every component exposes its view via `*.component.html` and localized SCSS. Examples include `pages/landing/landing.component.html` for the hero + action cards, `components/map/map.component.html` for the atlas overlay, and `components/footer/footer.component.html` for the EmailJS contact form UI. Templates bind to controller properties (`listOpen`, `filteredList`, `auth.modalOpen()`, etc.) and render data emitted by the model layer.
-- **Global presentation rules**: `frontend/src/styles.scss` sets typography, layout primitives, and scroll-snap utilities that controllers toggle (e.g., `NavbarComponent` adds the `snap-landing` class to `<body>`). Additional shared styles live in `assets/styles/` and component-level SCSS files to keep the View concerns separate from business logic.
-- **Static media**: Images, icons, demo videos, and the GeoJSON dataset under `src/assets/` are consumed directly by templates or by the Mapbox layer definitions and therefore belong to the View layer when they drive presentation and to the Model layer when treated as data (e.g., `circular_places.geojson`).
+---
 
-### Controller layer details
-- **Application shell**: `main.ts` bootstraps Angular with router, HTTP, and Firebase providers. `app.component.ts` injects `AuthService` and `FavoritesService` so their model side effects (Firebase init, global event bridges) run once, and it renders `NavbarComponent`, the login modal, and the active routed page. Together they act as the global controller.
-- **Routing controllers**: `app.routes.ts` decides which page controller to activate. `pages/landing/landing.component.ts` manages scroll animations, CTA navigation, and Footer composition, while `pages/atlas/atlas.component.ts` simply hosts the atlas feature component.
-- **Feature controllers**: Components under `components/` mediate between user input and services. `NavbarComponent.ts` tracks the current section, toggles responsive menus, and decides whether to route or smooth-scroll. `MapComponent.ts` listens to `MapService` observables, pushes filtering decisions into `PlacesFilter`, translates DOM events into model updates (category toggles, favorites visibility), and reacts to global `favorites:*` events. `FooterComponent.ts` handles contact form submission, driving EmailJS via injected environment values. `LoginComponent.ts` drives reactive forms and delegates credential flow to `AuthService`.
+## Hosting and deploy
 
-### Cross-layer flow
-1. The router loads `LandingComponent` or `AtlasComponent`, instantiating their controllers and associated views.
-2. Controllers compose feature components (e.g., `MapComponent` + `FooterComponent` on Landing) and subscribe to model services.
-3. User gestures captured in controllers (filter toggles, scroll, nav clicks, auth actions) call the relevant service methods. Services mutate their internal model state (RxJS subjects, Firebase cache, Mapbox sources) and emit new values.
-4. View templates react automatically through Angular change detection—list items update, buttons enable/disable, map overlays refresh—and services broadcast back to controllers via observables or DOM events when asynchronous work completes.
+Push to `main` runs `.github/workflows/firebase-hosting.yml`:
 
-### Working within this MVC map
-- To add features that touch business logic or persistence, create/extend services in `app/services/` (Model) and expose observable state or command APIs for controllers to use.
-- To modify how data is presented, edit the relevant template/SCSS without leaking business logic into the view.
-- To introduce new interactions, implement or update a component class (Controller) that binds to the appropriate services and templates.
-- Global concerns (routing, Firebase bootstrapping, body classes) live in the shell controllers (`main.ts`, `app.component.ts`, `NavbarComponent.ts`) so the Model layer remains reusable.
+1. `npm --prefix frontend ci`
+2. `npm --prefix frontend run build`
+3. Deploy `frontend/dist/frontend/browser` to Hosting project `circeco-bf511` (live channel)
+
+Secret: `FIREBASE_SERVICE_ACCOUNT_CIRCECO_BF511`.
+
+`firebase.json` rewrites `**` → `/index.html` so client routes work.
+
+**Firestore rules are not part of that workflow.** Publish them with `firebase deploy --only firestore:rules` (or paste in the Console). See [`FIREBASE_ADMIN_AND_RULES.md`](FIREBASE_ADMIN_AND_RULES.md).
+
+Production builds register a service worker (`ngsw-config.json`, `frontend/public/manifest.webmanifest`). The installable shell can cache; **map tiles and Firestore stay network-only**.
+
+---
+
+## Runtime: how a page gets data
+
+City is global (`CityContextService`): `?city=` in the URL plus `localStorage`. `CitiesService` reads `cities` and shows only `enabled !== false`. Default city is `stockholm`. Seeded enabled cities: **Stockholm** and **Milan**. Uppsala, Malmö, Göteborg, Lund, Turin exist in Firestore but are paused.
+
+Every public catalogue query is **this city** and `status == 'approved'` (required by security rules).
+
+| Route | Guard | Data |
+|---|---|---|
+| `/` | — | `FeaturedPlacesService` → `places`; `EventsService` → `events`; Formspree in the footer |
+| `/atlas` | — | Same places query, mapped to GeoJSON in the browser → Mapbox |
+| `/events` | — | Approved events + calendar |
+| `/account` | `authGuard` | Profile, password, “use my location” |
+| `/admin` and children | `adminGuard` | Review queues, catalogues, discovery query editors |
+
+Phone layout (`< 1024px`): top bar + bottom tabs. Admin keeps desktop chrome.
+
+**Atlas path**
+
+1. `FeaturedPlacesService` queries `places` (`status==approved`, `cityId==current`, limit 500).
+2. Docs with coordinates become a GeoJSON FeatureCollection in memory.
+3. `MapComponent` passes that to `MapService` as the Mapbox `places` source.
+4. Dots colour by primary action tag (`taxonomy.ts`).
+5. `PlacesFilter` drives the list, search, action-tag filters, optional distance sort.
+6. `GeolocationService` is one-shot browser GPS (no `watchPosition`). It never mixes catalogues or auto-switches city.
+7. Favourites live at `users/{uid}/favourites`. Event hearts at `users/{uid}/eventFavourites`.
+
+Events are a **list/calendar**. Event `coords` exist on the model; they are not map markers yet.
+
+`frontend/src/assets/data/circular_places.geojson` is unused leftover. The atlas does not merge a static GeoJSON file.
+
+---
+
+## Database (Firestore)
+
+Canonical types: `frontend/src/app/data/models.ts`. Collection names: `frontend/src/app/data/firestore-paths.ts`.
+
+### Public (read approved / city metadata)
+
+| Collection | Writes |
+|---|---|
+| `cities/{cityId}` | Admin |
+| `places/{placeId}` | Admin (approve or catalogue CRUD) |
+| `events/{eventId}` | Admin |
+
+### Signed-in owner only
+
+- `users/{uid}/favourites/{docId}`
+- `users/{uid}/eventFavourites/{docId}`
+
+### Admin only
+
+| Collection | Role |
+|---|---|
+| `reviewQueue` | Discovery + manual candidates. Nothing is public until approve. |
+| `reviewMemory*` | Place skip / penalty / boost for the next OSM run |
+| `eventReviewMemory*` | Same for events |
+| `discoveryConfig` | Shared OSM / event query overlays |
+| `discoveryJobs` | Admin “Run discovery” (`{cityId}_places` / `{cityId}_events`) |
+| `discoveryRuns` | Per-run telemetry |
+| `learningStats` | Monthly aggregation |
+
+Admin **routes** on localhost `ng serve` may skip the Angular claim check. **Firestore still requires `admin: true`.** Grant with `npm run admin:set-claim -- you@email`, then sign out and in.
+
+---
+
+## Content pipeline
+
+Scripts never publish to `places` / `events`. Humans approve in `/admin/review`.
+
+```text
+Overpass (OSM places)          ── monthly cron / admin Run ──┐
+Event web agent + RSS/ICS      ── weekly cron / admin Run ──┤
+Manual add in admin            ────────────────────────────────┤
+                                                               ▼
+                                                    reviewQueue (needs_review)
+                                                               │
+                                          Admin approve / reject / edit
+                                                               │
+                         ┌─────────────────────────────────────┴──────────────────────────┐
+                         ▼                                                                ▼
+              places / events (status: approved)                     review memory collections
+                         │                                                                │
+                         ▼                                                                ▼
+                 Public atlas / events                                      Next discovery skip/boost
+```
+
+**Admin → Run discovery** only writes `discoveryJobs/{city}_{places|events}`. Start the worker yourself: GitHub → Actions → **Queued Admin Discovery**, or `npm run discover:jobs` locally. There is no 10-minute poller.
+
+**Scheduled (GitHub Actions, same service account)**
+
+| When | Workflow | What |
+|---|---|---|
+| 1st of month 03:00 UTC | `monthly-discovery-learning.yml` | OSM places for Milan + Stockholm, then `learning:report` |
+| Monday 03:00 UTC | `weekly-events-discovery.yml` | Event web agent + feeds |
+| 15th 04:00 UTC | `schedule-keepalive.yml` | Empty commit so public-repo crons stay enabled |
+| Manual | `queued-discovery.yml` | Drain `discoveryJobs` |
+
+Commands, Overpass tags, and learning gates: [`DISCOVERY_SCRIPTS.md`](DISCOVERY_SCRIPTS.md).
+
+---
+
+## Where to change what
+
+| Change | Look here |
+|---|---|
+| Public screen | `frontend/src/app/pages/` |
+| Map dots, locate, list | `map.component.*`, `map.service.ts`, `places-filter.service.ts`, `geolocation.service.ts` |
+| Atlas query | `featured-places.service.ts` |
+| Calendar query | `events.service.ts` |
+| City / `?city=` | `city-context.service.ts`, `cities.service.ts` |
+| Tags and colours | `frontend/src/app/data/taxonomy.ts` |
+| Firestore access | `firestore.rules` |
+| OSM / event crawl | `tools/discover-*.js`, `tools/lib/` |
+| Cron / hosting deploy | `.github/workflows/` |
+| Grant admin | `tools/set-admin-claim.js` |

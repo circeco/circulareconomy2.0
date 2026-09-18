@@ -1,9 +1,10 @@
-# Circular Taxonomy (Main Page)
+# Circular taxonomy
 
-This document defines the canonical circular taxonomy used on the landing page cards.
-It is intended to keep titles, order, descriptions, and colors consistent across content and UI.
+Canonical actions, order, copy, and colours for landing cards, atlas dots, and filters.
 
-## Canonical Order (Hierarchy)
+**Code:** `frontend/src/app/data/taxonomy.ts` (`ACTION_TAGS`, `ACTION_TAG_LABELS`, `ACTION_TAG_COLORS`, `SECTOR_CATEGORIES`, canonicalize helpers).
+
+## Action tags (order)
 
 1. Refuse
 2. Reuse
@@ -12,33 +13,43 @@ It is intended to keep titles, order, descriptions, and colors consistent across
 5. Recycle
 6. Reduce
 
-## Action Tag Definitions
+Store the lowercase slug (`refuse`, `reuse`, …). Visitor-facing spelling is **Repurpose**. Historic `reporpouse` canonicalizes to `repurpose`.
 
-### 1) Refuse
-- Description: Refuse ownership towards sharing systems. Remove redundancy. Make overconsumption unappealing and unnecessary. Make product use more intensive with multifunctional products and long-lasting design.
-- Card color: `#0c343dff` (`$brand-deep`)
+### Refuse — `#0c343d`
 
-### 2) Reuse
-- Description: Extend usage time by one or several users until the product or material reaches the end of its service-life and its condition does not allow to fulfil the product or material original function.
-- Card color: `#134f5cff` (`$brand-mid`)
+Refuse ownership towards sharing systems. Remove redundancy. Make overconsumption unappealing and unnecessary. Make product use more intensive with multifunctional products and long-lasting design.
 
-### 3) Repair
-- Description: Maintain product functionality for longer through repairing and refurbishing so that the product or material can be used in its original function.
-- Card color: `#45818eff` (`$brand-teal`)
+### Reuse — `#134f5c`
 
-### 4) Repurpose
-- Description: Use a product or its part for a new product with a different function, also upcycling. Use materials from a discarded product for remanufacturing new products that have same function, removing the need of new material.
-- Card color: `#76a5afff`
+Extend usage time by one or several users until the product or material reaches the end of its service-life and its condition does not allow it to fulfil the original function.
 
-### 5) Recycle
-- Description: Process material from a discarded product that in part can be used to create a new product with a function that has a lower or same quality, also downcycling.
-- Card color: `#a2c4c9ff`
+### Repair — `#45818e`
 
-### 6) Reduce
-- Description: Phase-out waste, harmful emissions and the use of non-renewable resources throughout the supply chain, while increasing efficiency in product manufacturing, distribution and use.
-- Card color: `#d0e0e3ff` (`$blue-gray`)
+Maintain product functionality for longer through repairing and refurbishing so that the product or material can be used in its original function.
 
-## Notes
+### Repurpose — `#76a5af`
 
-- This taxonomy is the source of truth for landing page circular cards.
-- Visitor-facing spelling is **Repurpose**. Historic `reporpouse` still canonicalizes to the `repurpose` data key.
+Use a product or its part for a new product with a different function, also upcycling. Use materials from a discarded product for remanufacturing new products that have the same function, removing the need of new material.
+
+### Recycle — `#a2c4c9`
+
+Process material from a discarded product that in part can be used to create a new product with a function that has a lower or same quality, also downcycling.
+
+### Reduce — `#d0e0e3`
+
+Phase-out waste, harmful emissions and the use of non-renewable resources throughout the supply chain, while increasing efficiency in product manufacturing, distribution and use.
+
+## Sector categories
+
+Used on places and events (multi-select). Labels are UI copy; keys are stored.
+
+| Key | Label |
+|---|---|
+| `apparel` | Clothing & Accessories |
+| `home-garden` | Home & Garden |
+| `cycling-sports` | Cycling & Sports |
+| `electronics` | Electronics |
+| `books-comics-magazines` | Books - Comics - Magazines |
+| `music` | Music |
+
+Aliases (canonicalize on read/write): `clothing` / `accessories` → `apparel`; `furniture` / `antiques` → `home-garden`; `books` → `books-comics-magazines`; `sport` / `cycling` → `cycling-sports`. Action aliases: `rental` / `share` → `reuse`; `refurbish` → `repair`.

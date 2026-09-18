@@ -1,113 +1,63 @@
-# Firebase rules (point 1) and admin access (points 2 & 3)
+# Firebase rules and admin access
 
-## Point 1 — Are the rules implemented well?
+Hosting, project id, and how the app uses Firestore: [`ARCHITECTURE.md`](ARCHITECTURE.md). Schema: [`DATA_MODEL_AND_PIPELINE.md`](DATA_MODEL_AND_PIPELINE.md).
 
-**Yes, for this app’s current shape**, with these intentions:
+## Rules
+
+`firestore.rules` is what is deployed. `firebase.json` points at that file.
 
 | Collection | Read | Write |
-|------------|------|--------|
-| `events` | Anyone can read documents where **`status == 'approved'`** | Only users with **`admin: true` custom claim** |
-| `places` | Same pattern (for when the map reads from Firestore) | Admin only |
-| `cities` | Public read | Admin only |
-| `reviewQueue` | Admin only | Admin only |
-| `users/{uid}/favourites/{docId}` | Only that signed-in user | Only that user |
-| `users/{uid}/eventFavourites/{docId}` | Only that signed-in user | Only that user |
+|---|---|---|
+| `events`, `places` | Anyone if `status == 'approved'`; admins can read all | `admin: true` custom claim |
+| `cities` | Public | Admin |
+| `reviewQueue` | Admin | Admin |
+| `reviewMemory*` | Admin | Admin |
+| `eventReviewMemory*` | Admin | Admin |
+| `discoveryRuns`, `learningStats`, `discoveryConfig`, `discoveryJobs` | Admin | Admin |
+| `users/{uid}/favourites/*` | That user | That user |
+| `users/{uid}/eventFavourites/*` | That user | That user |
 | Everything else | Denied | Denied |
 
-**Why the events query uses `where('status','==','approved')` in the app**
+Public queries must use `where('status','==','approved')`. Firestore rejects a query that could return documents the caller is not allowed to read.
 
-Firestore requires that a **query cannot return documents the user is not allowed to read**.  
-If we only allowed `read` when `status == 'approved'` but the client queried **all** events, the query could fail.  
-So the frontend queries **only approved** events, which matches the rule.
+### Deploy rules
 
-**Deploy the rules**
-
-Rules live in **`firestore.rules`**; **`firebase.json`** references them.
-
-1. Install CLI if needed: `npm i -g firebase-tools` (or use `npx firebase ...`).
-2. Log in: `firebase login`
-3. Select project: `firebase use circeco-bf511` (or your project id)
-4. Deploy: `firebase deploy --only firestore:rules`
-
-Or copy-paste the contents of **`firestore.rules`** into **Firebase Console → Firestore Database → Rules → Publish**.
-
----
-
-## Point 2 — Grant the `admin` claim (not in the Console UI)
-
-Firebase **does not** let you tick “admin” in the Console for custom claims.  
-You set **`admin: true`** on the **Auth user** with the **Admin SDK** (server-side).
-
-**Why a file “in the repo folder” but not “in git”?**
-
-The key lives **on your computer** next to the project so scripts can find it.  
-The **`secrets/`** folder is **git-ignored** (except `secrets/README.md`), so `git push` **never** uploads the JSON.  
-GitHub only gets code; your laptop keeps the private key.
-
-**One-time setup**
-
-1. **Download the service account key**  
-   Firebase Console → **Project settings** (gear) → **Service accounts** → **Generate new private key**.
-
-2. **Put it in the repo’s ignored secrets folder**  
-   Copy/rename the file to:
-
-   **`secrets/firebase-adminsdk.json`**
-
-   (See **`secrets/README.md`** in this repo.)
-
-3. **Run the helper** (from **repo root**):
-
-   ```bash
-   npm run admin:set-claim -- your.email@example.com
-   ```
-
-   The script uses `secrets/firebase-adminsdk.json` automatically.  
-   Optional override: `export GOOGLE_APPLICATION_CREDENTIALS="/other/path.json"`.
-
-To remove admin later:
+Rules are **not** published by the Hosting GitHub Action. From the repo root:
 
 ```bash
+npx firebase login
+npx firebase use circeco-bf511
+npx firebase deploy --only firestore:rules
+```
+
+Or paste `firestore.rules` into Firebase Console → Firestore → Rules → Publish.
+
+## Grant the `admin` claim
+
+Firebase Console has no “admin” tick box. Set `admin: true` on the Auth user with the Admin SDK.
+
+The service account JSON lives on your machine in gitignored `secrets/firebase-adminsdk.json` (see [`secrets/README.md`](secrets/README.md)). GitHub Actions uses the same key as secret `FIREBASE_SERVICE_ACCOUNT_CIRCECO_BF511`.
+
+```bash
+npm run admin:set-claim -- your.email@example.com
 npm run admin:set-claim -- your.email@example.com --remove
 ```
 
----
+Uses `secrets/firebase-adminsdk.json`, or `GOOGLE_APPLICATION_CREDENTIALS` if set.
 
-## Point 3 — Why sign out / sign in again?
+After changing claims, **sign out and sign in** so the browser ID token includes `admin`. Then:
 
-After you change custom claims, the **ID token** the browser already has is **old** and does **not** include `admin` yet.
+- `request.auth.token.admin == true` passes in rules
+- `AuthService.isAdmin()` is true (required on production builds by `adminGuard`)
 
-**Do this:**
+`adminGuard` may skip the claim on **localhost / 127.0.0.1** during `ng serve` only. Hosted builds always require the claim. Firestore never skips it.
 
-1. Open your app (e.g. `http://localhost:4200`).
-2. **Sign out** (if you use account / auth UI).
-3. **Sign in again** with the **same** email you used in the script.
+## Hosting headers
 
-After that, Firebase Auth issues a **new** ID token that includes `admin: true`, so:
+`firebase.json` sets `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, and `Content-Security-Policy: frame-ancestors 'none'`. There is no full `script-src` / `connect-src` CSP (Mapbox, Firebase, Bootstrap, Font Awesome, Formspree would all need listing).
 
-- `request.auth.token.admin == true` passes in **Firestore rules**
-- `AuthService.isAdmin()` in the Angular app can return **true** (used on production builds where the route guard checks admin)
+## Config notes (current)
 
-**If it still fails**
-
-- Wait a few seconds and sign out/in once more.
-- In DevTools → Network, confirm you are not using an old cached session only; a full sign-out clears the old token.
-
----
-
-## How this fits the review page
-
-- **Firestore** always enforces **`firestore.rules`**.  
-  Approve/Reject needs a signed-in user **with** `admin: true`.
-- **Production / hosted builds always require** the `admin` claim in `adminGuard`. The **localhost-only route bypass** (`localhost` / `127.0.0.1` during `ng serve`) only skips the **Angular** guard; it does **not** bypass Firestore.  
-  So you still need the claim + deploy rules for writes to succeed.
-
-## Hosting security headers
-
-`firebase.json` sets `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, and `Content-Security-Policy: frame-ancestors 'none'` (clickjacking only). A full CSP (`script-src` / `connect-src` covering Mapbox, Firebase, Bootstrap, Font Awesome, Formspree) is a follow-up after measuring the live app — too easy to break tiles or auth without that pass.
-
-## Ops follow-ups (not in this change)
-
-- **Formspree reCAPTCHA**: `recaptchaSiteKey` is empty on purpose until a real site key is created.
-- **Mapbox**: restrict the public token by HTTP referrer in the Mapbox account.
-- **Firebase Auth**: confirm authorized domains; consider App Check for the web app.
+- Formspree `recaptchaSiteKey` in environments is empty; the contact form posts without reCAPTCHA.
+- Mapbox token is a public client token in environments; restrict it by HTTP referrer in the Mapbox account.
+- Firebase Auth authorized domains must include `circeco.org` and `localhost`.

@@ -1,6 +1,6 @@
-# Review-queue place enrichment — progress
+# Review-queue place enrichment — snapshot progress
 
-Snapshot: `needs_review_places.snapshot.json` (175 `reviewQueue` places, status `needs_review`, exported 2026-09-01).
+One-off 2026-09-01 export (`needs_review_places.snapshot.json`, 175 `reviewQueue` places). Not the live discovery pipeline.
 
 Patches apply only to `reviewQueue/{id}.candidate` (+ `updatedAt`). Never the live `places` collection.
 

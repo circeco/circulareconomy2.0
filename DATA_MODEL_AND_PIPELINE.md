@@ -1,54 +1,43 @@
-## Data model and ingestion pipeline (draft)
+# Data model and ingestion pipeline
 
-This document defines the **canonical database schema** and the **human-in-the-loop ingestion workflow** for Circeco, optimized for:
+Canonical schema as stored in Firestore and typed in `frontend/src/app/data/models.ts`. Collection names: `frontend/src/app/data/firestore-paths.ts`.
 
-- Multi-city expansion (first targets: **Milan**, **Turin**, **Uppsala**)
-- **Free sources only** for discovery
-- Single reviewer cadence: **weekly events**, **monthly places**
-- Shared taxonomy for places and events (sector categories + circular action tags)
-- Future support for **events as map markers** (coords optional now, supported later)
+- **Canonical truth** is Firestore (`places`, `events`, `cities`).
+- The atlas builds a **city-scoped GeoJSON object in the browser** from approved places. Nothing publishes a GeoJSON file to Storage.
+- Discovery writes **candidates** to `reviewQueue`. Humans approve before anything is public.
 
-### Goals
-
-- **Canonical truth** lives in the database (e.g. Firestore).
-- The map consumes **city-scoped GeoJSON snapshots** for performance/cost control.
-- Discovery automation produces **candidates** that require **human review** before publishing.
+Discovery how-to: [`DISCOVERY_SCRIPTS.md`](DISCOVERY_SCRIPTS.md). Stack: [`ARCHITECTURE.md`](ARCHITECTURE.md).
 
 ---
 
-## Taxonomy (shared by places and events)
+## Taxonomy (places and events)
 
-Source of truth for action descriptions and colours: [`CIRCULAR_TAXONOMY.md`](CIRCULAR_TAXONOMY.md).  
-Canonical slugs and aliases are implemented in `frontend/src/app/data/taxonomy.ts`.
+Source for action copy and colours: [`CIRCULAR_TAXONOMY.md`](CIRCULAR_TAXONOMY.md).  
+Slugs, aliases, and sector list: `frontend/src/app/data/taxonomy.ts`.
 
-### Circular action tags (controlled list)
+### Circular action tags
 
-Canonical keys (store in DB as lowercase slugs):
+Store lowercase slugs. A place/event may have one or more.
 
-- `refuse`
-- `reuse`
-- `repair`
-- `repurpose`
-- `recycle`
-- `reduce`
+- `refuse`, `reuse`, `repair`, `repurpose`, `recycle`, `reduce`
 
-Notes:
+Landing copy uses **Repurpose**; the data key is `repurpose`.
 
-- A place/event may have **one or more** action tags (multi-select in admin).
-- A reviewer may fill or correct tags during moderation.
-- Landing UI copy uses **Repurpose**; the **data key remains `repurpose`**.
-- Legacy / discovery aliases are canonicalized on write and read, for example:
-  - `reporpouse` → `repurpose`
-  - `rethink` → `refuse`
-  - `refurbish` → `repair`
-  - `remanufacture` → `repurpose`
-  - `share` / `rental` → `reuse`
+`canonicalizeActionTag` / `canonicalizeActionTags` run on read and on admin save. Aliases:
 
-Do **not** store the older 10-tag set (`rethink`, `share`, `refurbish`, `remanufacture`, …) as primary keys.
+- `reporpouse` → `repurpose`
+- `rethink` → `refuse`
+- `refurbish` → `repair`
+- `remanufacture` / `remanifacture` → `repurpose`
+- `share` / `rental` → `reuse`
 
-### Sector categories (controlled vocabulary)
+OSM discovery may still **write** `rental` or `refurbish` on queue candidates. The public UI maps those to `reuse` / `repair`. Prefer canonical slugs when approving.
 
-Canonical keys:
+Do not store the old 10-tag set (`rethink`, `share`, `refurbish`, `remanufacture`, …) as primary keys on published docs.
+
+### Sector categories
+
+Canonical keys (`sectorCategories: string[]`):
 
 - `apparel`
 - `home-garden`
@@ -57,217 +46,111 @@ Canonical keys:
 - `books-comics-magazines`
 - `music`
 
-Rules:
+`canonicalizeSectorCategories` maps aliases such as `clothing` / `accessories` → `apparel`, `furniture` / `antiques` → `home-garden`, `books` → `books-comics-magazines`, `sport` → `cycling-sports`.
 
-- Stored as an array of slugs: `sectorCategories: string[]`
-- Optional at ingestion; reviewer may fill when unclear.
-- Common aliases (e.g. `clothing` → `apparel`, `furniture` → `home-garden`, `books` → `books-comics-magazines`) are normalized via `canonicalizeSectorCategories`.
+OSM discovery still infers short slugs (`books`, `clothing`, `furniture`, `sport`, …). Canonicalize on approve.
 
 ---
 
 ## Canonical entities
 
-Field naming convention: camelCase in DB documents.
+Field names: camelCase.
 
 ### `cities/{cityId}`
 
-Required:
+Required: `name`, `countryCode`, `center: { lat, lng }`.
 
-- `name`: string (display name)
-- `countryCode`: string (e.g. `SE`, `IT`)
-- `center`: `{ lat: number; lng: number }`
+Also used: `bounds`, `timezone`, `enabled` (UI hides the city when `enabled === false`), `discovery.*` (OSM/event query overlays, last-run stats, learning penalties/suggestions), `createdAt`, `updatedAt`.
 
-Recommended:
-
-- `bounds`: `{ sw: {lat,lng}, ne: {lat,lng} }` (for map view constraints)
-- `timezone`: string (e.g. `Europe/Stockholm`)
-- `enabled`: boolean (controls visibility in UI)
-- `createdAt`, `updatedAt`
-
-Seed targets:
-
-- Stockholm (existing)
-- Uppsala
-- Malmö
-- Göteborg
-- Lund
-- Milan
-- Turin
+Seeded IDs: `stockholm`, `uppsala`, `malmo`, `goteborg`, `lund`, `milan`, `turin`.  
+Seed `enabled: true` only for **stockholm** and **milan**.
 
 ### `places/{placeId}`
 
-Required:
+Required: `cityId`, `name`, `address`.
 
-- `cityId`: string
-- `name`: string
-- `address`: string
+Optional: `locationName`, `coords: { lat, lng }`, `website`, `websiteLabel`, `description`, `sectorCategories`, `actionTags`, `sourceRefs`, `status`, `review`, `placeKey`, `osmClauses`, `osmTags`, `createdAt`, `updatedAt`.
 
-Optional:
+Public atlas query: `status == 'approved'` and `cityId == current` (limit 500). Places without finite coords do not get a map dot.
 
-- `locationName`: string (venue/shop name variant)
-- `coords`: `{ lat: number; lng: number }`
-- `website`: string (absolute URL used as the href)
-- `websiteLabel`: string (optional link text shown to users; when empty, UI shows a short host like `www.example.com/`)
-- `description`: string
-- `sectorCategories`: string[]
-- `actionTags`: string[]
-- `sourceRefs`: `SourceRef[]`
-- `status`: `RecordStatus`
-- `review`: `ReviewMeta`
-- `createdAt`, `updatedAt`
-
-#### Place dedupe key
-
-Store a deterministic key for suggesting merges:
-
-- `placeKey = cityId + '|' + norm(name) + '|' + norm(address)`
-
-Merge policy:
-
-- **Never merge by website domain alone** (chains share domains across locations).
-- Auto-suggest merges only when `cityId`, normalized `name`, and normalized `address` match.
-- Reviewer is final authority.
+**Dedupe key:** `placeKey = cityId + '|' + norm(name) + '|' + norm(address)`. Never merge by website domain alone (chains share domains). Reviewer is final.
 
 ### `events/{eventId}`
 
-Required:
+Required: `cityId`, `title`, `startDate` (ISO date `YYYY-MM-DD`), `locationText`.
 
-- `cityId`: string
-- `title`: string
-- `startDate`: string (ISO date, e.g. `2026-03-25`)
-- `locationText`: string (either address text or venue name)
+Optional: `endDate`, `address`, `locationName`, `coords`, `website`, `description`, `timeDisplay`, `imageUrl`, `sectorCategories`, `actionTags`, `sourceRefs`, `eventQueries`, `seriesId`, `recurrence`, `status`, `review`, `createdAt`, `updatedAt`.
 
-Optional:
+Public events query: `status == 'approved'` and `cityId == current` (limit 250). Missing `imageUrl` uses a default image on the client. Coords are stored for later map use; the events page is a calendar/list.
 
-- `endDate`: string (ISO date; omit or equal to startDate if single-day)
-- `address`: string (structured address text if available)
-- `locationName`: string
-- `coords`: `{ lat: number; lng: number }` (optional now; enables map markers later)
-- `website`: string
-- `description`: string
-- `sectorCategories`: string[]
-- `actionTags`: string[]
-- `sourceRefs`: `SourceRef[]`
-- `status`: `RecordStatus`
-- `review`: `ReviewMeta`
-- `createdAt`, `updatedAt`
-
-#### Event matching (soft dedupe)
-
-Because events are more ambiguous, we prefer “match suggestions” rather than automatic merges:
-
-- same `cityId`
-- overlapping or equal date range
-- same normalized `address` OR same normalized `locationName`
-- title similarity is a confidence booster only
-
-Reviewer confirms merge or keeps separate.
+**Soft dedupe:** same `cityId`, overlapping dates, same normalized address or location name; title similarity is a hint. Reviewer confirms.
 
 ---
 
-## Review queue (human-in-the-loop)
-
-Discovery automation writes to a queue; only reviewed items are published into `places/` and `events/`.
+## Review queue
 
 ### `reviewQueue/{queueId}`
 
-Required:
+Required: `kind: 'place' | 'event'`, `cityId`, `status`, `candidate`, `evidence`, `confidence`, `createdAt`, `updatedAt`.
 
-- `kind`: `'place' | 'event'`
-- `cityId`: string
-- `status`: `QueueStatus`
-- `candidate`: `PlaceCandidate | EventCandidate` (may be partial)
-- `evidence`: `EvidenceItem[]`
-- `matchCandidates`: `MatchCandidate[]` (optional suggestions)
-- `confidence`: number (0–1)
-- `createdAt`, `updatedAt`
+Optional: `matchCandidates`, `osmClauses` (places), `eventQueries` (events), `review`, `publishedRef: { collection, id }`.
 
-Optional:
+Statuses: `needs_review`, `approved`, `rejected`, `edited`, `superseded`.
 
-- `review`: `ReviewMeta`
-- `publishedRef`: `{ collection: 'places' | 'events'; id: string }` (after approval)
+Minimum before enqueue: place `name` + `address`; event `title` + `startDate` + (`address` or `locationName` via `locationText`).
 
-#### Queue statuses
+### Source and evidence
 
-- `needs_review`
-- `approved`
-- `rejected`
-- `edited`
-- `superseded`
+`SourceRef`: `sourceType` (`osm` | `rss` | `ics` | `website` | `other`), `url`, `retrievedAt`, optional `licenseNote`.
 
-### Minimum candidate completeness (before queue insertion)
-
-- Place: `name` + `address`
-- Event: `title` + `startDate` + (`address` or `locationName` via `locationText`)
+`EvidenceItem`: `url`, `snippet`, `capturedAt`.
 
 ---
 
-## Source references and evidence
+## Learning and discovery ops collections
 
-### `SourceRef`
+Admin-only. Used by scripts and `/admin/discovery/*`, not by the public site.
 
-- `sourceType`: `'osm' | 'rss' | 'ics' | 'website' | 'other'`
-- `url`: string
-- `retrievedAt`: string (ISO timestamp)
-- `licenseNote`: string (optional; store attribution requirements)
+| Collection | Role |
+|---|---|
+| `reviewMemory` | Place fingerprint (city+name+address), counters, last decision |
+| `reviewMemoryNameIndex` / `reviewMemoryNameGeoIndex` | Name / name+geo penalties and approval signals |
+| `reviewMemoryRollups` | Per-city counters |
+| `eventReviewMemory` | Dated, series, and source-host memory |
+| `eventReviewMemoryTitleIndex` / `eventReviewMemoryRollups` | Event title signals and city counters |
+| `discoveryConfig/osmPlaces` | Global OSM clause extras/disables |
+| `discoveryConfig/eventDiscovery` | Global event query/seed/block overlays |
+| `discoveryJobs/{cityId}_{places\|events}` | Admin-requested run (`queued` → `running` → `done`/`failed`) |
+| `discoveryRuns/{runId}` | Telemetry for a city run |
+| `learningStats/{cityId}_{period}` and `{cityId}_{period}_events` | Monthly moderation aggregates + query suggestions |
 
-### `EvidenceItem`
-
-- `url`: string
-- `snippet`: string (short extracted text)
-- `capturedAt`: string (ISO timestamp)
-
----
-
-## GeoJSON publishing (map consumption)
-
-The map should load **city-scoped snapshots** rather than raw Firestore queries:
-
-- `geojson/{cityId}/places.geojson`
-- (future) `geojson/{cityId}/events.geojson`
-
-Publishing options (pick one later):
-
-- Manual “Publish” action from Admin UI (Spark-friendly)
-- Firestore trigger batching into a snapshot (use sparingly)
+`learning:report` also writes `cities/{id}.discovery.osmClausePenalties`, `osmQuerySuggestions`, `eventQueryPenalties`, `eventQuerySuggestions`. Those **down-rank / suggest**; they do not auto-add or auto-disable Overpass clauses. Apply in Admin → Discovery Queries.
 
 ---
 
-## Cadence (single reviewer operations)
+## User data
 
-- Weekly: review `reviewQueue` where `kind='event'` and `status='needs_review'`
-- Monthly: review `kind='place'` and clean up stale/low-confidence candidates
-
-Suggested sorting:
-
-- Highest confidence first
-- Items with full evidence/structured fields first
-- Items with likely duplicates grouped together
+- `users/{uid}/favourites/{docId}` — atlas hearts (owner only)
+- `users/{uid}/eventFavourites/{docId}` — event hearts (owner only)
 
 ---
 
-## App implementation status (incremental)
+## Cadence
 
-- **Review queues** at `/admin/review/places` and `/admin/review/events` with approve / reject / edit, and manual add.
-- **Catalogues** at `/admin/places` and `/admin/events` for city-scoped approved records (edit / delete).
-- **Approve** creates/updates a document in `places` or `events` with `status: approved` and updates the `reviewQueue` item (`status`, `publishedRef`, `review.reviewedAt`).
-- **Atlas** (`/atlas`) loads approved Firestore places for the selected city (Stockholm also merges static GeoJSON fallback). Map dots colour by primary action tag.
-- **Events** (landing featured block + `/events`): approved Firestore `events`, with static demo fallback if the read fails.
-- Action tags and sector categories are canonicalized through `frontend/src/app/data/taxonomy.ts` before save.
+- **Weekly (Monday 03:00 UTC):** event discovery → `reviewQueue`
+- **Monthly (day 1, 03:00 UTC):** OSM places → `reviewQueue`, then `learning:report`
+- **On demand:** Admin Run → `discoveryJobs` → worker
 
-### Firestore security rules
-
-Rules live in `firestore.rules` (deploy with Firebase CLI). Typical posture:
-
-- **Public read** of approved `places` / `events` (and city metadata as needed).
-- **Admin-only** write on `reviewQueue`, `places`, `events`, and related moderation collections.
-
-If Approve/Reject fails, the review page shows the Firestore error (often `permission-denied`).
+Review in `/admin/review/places` and `/admin/review/events`. Sort by confidence; keep likely duplicates together.
 
 ---
 
-## Related: CLI discovery and scripts
+## App behaviour
 
-For seed vs OSM discovery, Overpass troubleshooting, **current learning behaviour**, review notes, and a **dev log**, see [`DISCOVERY_SCRIPTS.md`](DISCOVERY_SCRIPTS.md).  
-Cadence / roadmap / KPIs: [`SCHEDULED_DISCOVERY_LEARNING_PLAN.md`](SCHEDULED_DISCOVERY_LEARNING_PLAN.md).  
-Target learning contracts: [`LEARNING_V1_SPEC.md`](LEARNING_V1_SPEC.md).
+- **Approve** creates/updates `places` or `events` with `status: approved`, updates the queue row (`status`, `publishedRef`, `review.reviewedAt`), and writes review memory.
+- **Atlas** loads approved Firestore places for the selected city only (no static GeoJSON merge).
+- **Events** (landing + `/events`) load approved Firestore events for the selected city. Read failure → empty list.
+- **Catalogues** `/admin/places` and `/admin/events`: edit/delete approved rows; add new published rows.
+- Action tags and sectors are canonicalized through `taxonomy.ts` before save in admin UI.
+
+Security rules: [`FIREBASE_ADMIN_AND_RULES.md`](FIREBASE_ADMIN_AND_RULES.md) and `firestore.rules`. If Approve fails, the review page shows the Firestore error (often `permission-denied`).

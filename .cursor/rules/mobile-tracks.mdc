@@ -1,31 +1,25 @@
 ---
-description: Parked split — atlas user location vs Option A mobile-first/PWA. Do not start either track until Piero asks.
+description: Mobile web that already shipped — atlas location and phone chrome. Do not add native.
 alwaysApply: true
 ---
 
-# Mobile tracks (parked)
+# Mobile web (shipped)
 
-Two workstreams. **Do not implement either until Piero names the track.** No routes, Capacitor, or native rewrite.
+Location on the atlas and the phone shell already exist. Do not add Capacitor, a native rewrite, Mapbox Directions, or background GPS.
 
-## Track 1 — User location (feature)
+## Location (atlas)
 
-Blue dot + nearby list on the **current** atlas. Browser geolocation only.
+Blue dot + nearby list on the **current** city atlas. Browser `getCurrentPosition` only (no `watchPosition`).
 
-- Permission, deny/timeout UX; optional fly-to on first fix; no background tracking
+- Permission, deny/timeout UX; optional fly-to on first fix
 - Sort/filter **current-city** places by distance; keep search and action tags
-- If GPS is outside the selected city, do not mix catalogues
-- Owns: new geolocation service; `map.service.ts`; `map.component.*`; `places-filter.service.ts`
-- Does not: Directions, PWA, navbar/bottom-tabs, landing/events layout
+- If GPS is outside the selected city, do not mix catalogues or auto-switch city
+- Code: `geolocation.service.ts`, `map.service.ts`, `map.component.*`, `places-filter.service.ts`, account “use my location”
 
-## Track 2 — Option A plan (shell)
+## Phone chrome
 
-**Plan** mobile-first web, then PWA. Do not build the shell unless asked.
+Below 1024px: `phone-top-bar` + `phone-tab-bar` (landing, atlas, events, account). Admin stays desktop chrome. PWA install exists; offline atlas is not in scope.
 
-- IA per screen (landing, atlas, events, account); admin = usable, not redesigned
-- Slot for Locate later; do not spec GPS
-- PWA install (manifest, icons, iOS caveats); offline atlas out of v1
-- Does not: GPS, Mapbox Directions, Capacitor, native rewrite
+## Do not add
 
-## Handoff
-
-Location ships on today’s atlas chrome. Option A plan says where Locate moves on a phone.
+Directions, Capacitor, native apps, mixing city catalogues from GPS.

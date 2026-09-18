@@ -34,9 +34,10 @@ export class PhoneTopBarComponent {
   );
 
   readonly isAccount = computed(() => this.path().startsWith('/account'));
+  readonly isPrivacy = computed(() => this.path().startsWith('/privacy'));
   readonly isAtlas = computed(() => this.path().startsWith('/atlas'));
   readonly isEvents = computed(() => this.path().startsWith('/events'));
-  readonly showCity = computed(() => !this.isAccount());
+  readonly showCity = computed(() => !this.isAccount() && !this.isPrivacy());
   readonly showHeart = computed(() => this.isAtlas() || this.isEvents());
   readonly savedOn = computed(() =>
     this.isAtlas() ? this.chrome.atlasFavoritesOn() : this.chrome.eventsFavoritesOn()

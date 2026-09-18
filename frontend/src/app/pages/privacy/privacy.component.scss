@@ -1,0 +1,67 @@
+@use 'variables' as *;
+
+.privacy-shell {
+  padding: calc(var(--header-offset, 60px) + 1.5rem) 1.5rem 3rem;
+  max-width: 40rem;
+  margin: 0 auto;
+  color: #222;
+  text-align: left;
+
+  h1 {
+    margin: 0 0 0.35rem;
+    font-family: $font-khand;
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1.2;
+    text-align: left;
+    color: $brand-deep;
+  }
+
+  .updated {
+    margin: 0 0 1.25rem;
+    color: #6a6a6a;
+    font-family: $font-khand;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    text-align: left;
+  }
+
+  h2 {
+    margin: 1.75rem 0 0.5rem;
+    padding-top: 0;
+    font-family: $font-khand;
+    font-size: 1.2rem;
+    font-weight: 700;
+    line-height: 1.3;
+    text-align: left;
+    color: $brand-deep;
+    text-decoration: none;
+    -webkit-text-decoration: none;
+  }
+
+  p,
+  li {
+    font-family: $font-khand;
+    font-size: 1.05rem;
+    line-height: 1.5;
+    text-align: left;
+  }
+
+  ul {
+    margin: 0 0 1rem;
+    padding-left: 1.2rem;
+  }
+
+  li {
+    margin: 0 0 0.55rem;
+  }
+
+  a {
+    color: $brand-deep;
+    font-weight: 700;
+  }
+}
+
+:host-context(body.layout-phone) .privacy-shell {
+  padding: calc(var(--header-offset) + 16px) 20px calc(var(--tabbar-height) + 24px);
+}

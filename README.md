@@ -4,52 +4,41 @@ A multi-city platform for finding circular ♻︎ places and events.
 
 ![circulareconomy](https://circeco.github.io/circulareconomy/assets/img/demo/home_page.jpg)
 
-### Circeco is a platform about circular economy for mapping circular initiative and events at a city-scoped level.
-The aim is to highlight and promote the network of existing circular initiative in the city area by making it easily searchable and available to the user. The app also wants to inform about the kind of circular action the user can take in order to have a sustainable alternative to the common consumption model take-make-dispose.
+Circeco maps circular initiatives and events at city scope. The atlas is searchable by circular action; the events calendar lists upcoming circular happenings in the selected city.
 
 ## Technologies
 
-**Angular**  
-Single-page app for the landing page, Circular Atlas, events, and account.
+| | |
+|---|---|
+| **Angular 18** | SPA: landing, Circular Atlas, events, account, admin. |
+| **Firebase** | Auth, Firestore (canonical data), Hosting (live site). |
+| **Mapbox** | Interactive city map. Dots use action-tag colours; favourites are red when signed in. |
+| **OpenStreetMap** | Place discovery (Overpass) and admin geocoding (Nominatim). |
+| **Formspree** | Contact form on the landing page. |
+| **GitHub Actions** | Hosting deploy on `main`; monthly/weekly discovery jobs. |
 
-**TypeScript / SCSS**  
-Application logic and styles. Bootstrap and Font Awesome are used for layout and icons.
-
-**Firebase**  
-Authentication, cloud database, and hosting for the live site.
-
-**Mapbox**  
-Interactive city map for the Circular Atlas. Place markers follow the circular-action colour palette; saved favourites are highlighted.
-
-**OpenStreetMap**  
-Public map data used to help discover circular places.
-
-**Formspree**  
-Contact form on the public site.
+How it is wired: [`ARCHITECTURE.md`](ARCHITECTURE.md). Diagrams: [`DIAGRAMS.md`](DIAGRAMS.md).
 
 ## UX
 
-User experience (UX) is how it feels to use Circeco to find a circular place or event in a city: whether the path is clear, useful, and low-friction—not only how it looks. This section covers who it is for, what they can do, and how the interface supports that.
+A sticky nav (or phone top bar + tabs under 1024px) keeps Atlas, Events, city, and account available. Landing introduces the idea and search; Atlas and Events are dedicated screens.
 
-The design goal is a sleek, simple interface. Colour is kept to a minimum: black and white, teal/green-blue shades for circularity (and the logo), and red for attention—favourites on the map, and a reminder of environmental urgency. The same palette and type make the brand recognisable across landing, atlas, and events.
-
-A sticky navigation bar keeps Atlas, Events, city, and account always available. The public site is no longer one long page: landing introduces the idea and search, then Atlas and Events are dedicated screens so people can focus on the map or the calendar. The landing title animation still spells out CIRC | ECO without extra copy. Hover on the circular-action cards shows each action’s meaning without crowding the page; a rotating-word line states the six actions. Hover on the logo, nav, and buttons marks what is interactive.
-
-The Circular Atlas is the main task: find an initiative on the map, open its details, and optionally save it. Dots use the taxonomy colour of the place’s action tag; favourites stay red when the user is logged in. Clicking a dot (or a list item) zooms and opens a popup with name, address, and website. The list follows the visible map; filters and search work together with pan and zoom. The city switcher scopes places, events, and the map to the selected city. Hearts and account features appear only when signed in, so browsing stays open and saving stays personal.
+The Circular Atlas is the main task: find a place on the map, open details, optionally save it. Dots use the taxonomy colour of the place’s action tag. Clicking a dot or list item zooms and opens name, address, and website. Filters, search, and pan/zoom work together. The city switcher scopes places, events, and the map. Hearts appear when signed in.
 
 ## Taxonomy
 
-Places and events are organised by circular actions. Canonical descriptions and colours: [`CIRCULAR_TAXONOMY.md`](CIRCULAR_TAXONOMY.md)
+Places and events use six circular actions. Copy, order, and colours: [`CIRCULAR_TAXONOMY.md`](CIRCULAR_TAXONOMY.md). Code: `frontend/src/app/data/taxonomy.ts`.
 
 - refuse, reuse, repair, repurpose, recycle, reduce
 
-## Data & moderation
+## Data and moderation
 
-Places and events are discovered from public sources, held in a review queue, and published only after human approval. Approvals/rejections update discovery memory; a monthly report summarizes outcomes.
+Canonical data is Firestore. Discovery writes **candidates** to `reviewQueue`; humans publish to `places` / `events`.
 
-- **How it works today:** [`DISCOVERY_SCRIPTS.md`](DISCOVERY_SCRIPTS.md) (incl. *Learning strategy*)
-- **Cadence / roadmap:** [`SCHEDULED_DISCOVERY_LEARNING_PLAN.md`](SCHEDULED_DISCOVERY_LEARNING_PLAN.md)
-- **Target contracts:** [`LEARNING_V1_SPEC.md`](LEARNING_V1_SPEC.md)
+- Architecture: [`ARCHITECTURE.md`](ARCHITECTURE.md)
+- Schema: [`DATA_MODEL_AND_PIPELINE.md`](DATA_MODEL_AND_PIPELINE.md)
+- Discovery commands and learning: [`DISCOVERY_SCRIPTS.md`](DISCOVERY_SCRIPTS.md)
+- Auth, rules, admin claim: [`FIREBASE_ADMIN_AND_RULES.md`](FIREBASE_ADMIN_AND_RULES.md)
 
 ## Run locally
 
@@ -59,7 +48,7 @@ npm install
 npm start
 ```
 
-Open [http://localhost:4200](http://localhost:4200).
+Open [http://localhost:4200](http://localhost:4200). The app uses the production Firebase project unless you point the Node tools at the emulator (`FIRESTORE_EMULATOR_HOST`).
 
 ## Licence and Copyright
 

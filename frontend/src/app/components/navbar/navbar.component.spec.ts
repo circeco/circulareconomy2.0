@@ -32,6 +32,7 @@ describe('NavbarComponent', () => {
           { path: 'admin/discovery/events', component: BlankComponent },
           { path: 'admin/review/places', component: BlankComponent },
           { path: 'admin/review/events', component: BlankComponent },
+          { path: 'privacy', component: BlankComponent },
         ]),
         { provide: AuthService, useClass: AuthServiceStub },
       ]
@@ -113,6 +114,12 @@ describe('NavbarComponent', () => {
     fixture.nativeElement.querySelector('#logo').click();
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.logo-dropdown')).toBeNull();
+  });
+
+  it('shows the privacy policy title on /privacy', async () => {
+    await goTo('/privacy');
+    expect(component.isLanding()).toBeFalse();
+    expect(fixture.nativeElement.querySelector('#nav-title')?.textContent).toContain('Privacy policy');
   });
 
   it('drops stale place and event when opening Atlas while keeping city', async () => {

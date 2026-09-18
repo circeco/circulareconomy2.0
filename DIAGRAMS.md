@@ -1,174 +1,146 @@
-# Circeco System Diagrams
+# Circeco diagrams
 
-Visuals below capture the same architecture described in `ARCHITECTURE.md`, but translate it into Mermaid diagrams for quick onboarding, debugging, and data-trace exercises.
+Same system as [`ARCHITECTURE.md`](ARCHITECTURE.md).
 
-## Flow Control (routing → persistence)
+## System topology
+
+```mermaid
+flowchart LR
+  subgraph Browser["Browser — circeco.org"]
+    SPA["Angular 18 SPA"]
+    Mapbox["Mapbox GL JS"]
+  end
+
+  subgraph Firebase["Firebase project circeco-bf511"]
+    Auth["Auth"]
+    FS["Firestore"]
+    Host["Hosting"]
+  end
+
+  subgraph GitHub["GitHub circeco/circulareconomy2.0"]
+    Push["push to main"]
+    Cron["scheduled + manual Actions"]
+    Tools["tools/*.js Admin SDK"]
+  end
+
+  OSM["Overpass / Nominatim"]
+  Web["Open web + RSS/ICS"]
+  Formspree["Formspree"]
+
+  SPA --> Auth
+  SPA --> FS
+  SPA --> Mapbox
+  SPA --> Formspree
+  Host --> SPA
+  Push --> Host
+  Cron --> Tools
+  Tools --> FS
+  Tools --> OSM
+  Tools --> Web
+```
+
+## Public read path
+
 ```mermaid
 sequenceDiagram
-    autonumber
-    actor User
-    participant Router as Angular Router
-    participant Landing as LandingComponent / AtlasComponent
-    participant MapCmp as MapComponent
-    participant MapSvc as MapService
-    participant Places as PlacesFilter
-    participant Fav as FavoritesService
-    participant Store as Firebase Firestore
+  autonumber
+  actor User
+  participant Router as Angular Router
+  participant City as CityContextService
+  participant Places as FeaturedPlacesService
+  participant Events as EventsService
+  participant FS as Firestore
+  participant MapCmp as MapComponent
+  participant MapSvc as MapService
 
-    User->>Router: Navigate to `/` or `/atlas`
-    Router->>Landing: Instantiate landing page
-    Router->>MapCmp: Navigate to `/atlas` → instantiate MapComponent via Atlas page
-    MapCmp->>MapSvc: `init(container)`
-    MapSvc-->>MapCmp: `onReady()` + feature stream
-    MapCmp->>Places: `setAllFeatures()`
-    Places-->>MapCmp: `filteredFeatures$`
-    User->>MapCmp: Toggle filters / favorites
-    MapCmp->>MapSvc: `setCategoryFilter()` / `setFavoritesVisibility()`
-    MapCmp->>Fav: Favorite/unfavorite place
-    Fav->>Store: `setDoc` / `deleteDoc`
-    Store-->>Fav: Snapshot updates
-    Fav-->>MapSvc: Update `favorites` source
-    Fav-->>MapCmp: DOM events (`favorites:update`, `favorites:auth`)
+  User->>Router: `/`, `/atlas`, or `/events`
+  Router->>City: city from `?city=` or localStorage
+  City->>Places: cityId$
+  City->>Events: cityId$
+  Places->>FS: places where status=approved and cityId
+  Events->>FS: events where status=approved and cityId
+  FS-->>Places: Place docs
+  Places-->>MapCmp: GeoJSON built in the browser
+  MapCmp->>MapSvc: setPlacesData
+  MapSvc-->>User: Mapbox dots
 ```
 
-## Data Lineage (places list & favorites)
-```mermaid
-graph LR
-    subgraph Assets
-        Geo[circular_places.geojson]
-        Env[environment/emailjs/firebase]
-    end
-    subgraph Services
-        MapSvc(MapService)
-        Places(PlacesFilter)
-        Fav(FavoritesService)
-        Auth(AuthService)
-    end
-    subgraph View
-        MapCmp(MapComponent)
-        Footer(FooterComponent)
-        Login(LoginComponent)
-    end
-    Geo --> MapSvc
-    MapSvc -->|visible features| Places
-    Places -->|enriched, deduped list| MapCmp
-    MapCmp -->|UI filter text| Places
-    MapCmp -->|favorite intent| Fav
-    Fav -->|GeoJSON favorites source| MapSvc
-    Fav -->|events| MapCmp
-    Auth --> Fav
-    Auth --> Login
-    Login --> Auth
-    Footer --> Env
-```
+## Favourites
 
-## Component Structure (high-level topology)
-```mermaid
-graph TD
-    subgraph Shell
-        App(AppComponent)
-        Router(Standalone Routes)
-    end
-    subgraph Pages
-        Landing(LandingComponent)
-        Atlas(AtlasComponent)
-    end
-    subgraph Feature Components
-        Navbar(NavbarComponent)
-        MapCmp(MapComponent)
-        Footer(FooterComponent)
-        Login(LoginComponent)
-    end
-    subgraph Model Services
-        MapSvc(MapService)
-        PlacesSvc(PlacesFilter)
-        FavSvc(FavoritesService)
-        AuthSvc(AuthService)
-    end
-    App --> Router --> Landing
-    Router --> Atlas
-    Landing --> Footer
-    Atlas --> MapCmp
-    App --> Navbar
-    App --> Login
-    Navbar --> AuthSvc
-    Login --> AuthSvc
-    MapCmp --> MapSvc
-    MapCmp --> PlacesSvc
-    MapCmp --> FavSvc
-    FavSvc --> MapSvc
-    AuthSvc --> FavSvc
-```
-
-## Favorites + Filtering (service handshake)
 ```mermaid
 sequenceDiagram
-    autonumber
-    participant MapCmp as MapComponent
-    participant MapSvc as MapService
-    participant Places as PlacesFilter
-    participant Fav as FavoritesService
-    participant Auth as AuthService
-    participant Firestore as Firestore users/{uid}/favourites
-    participant PlacesSrc as Mapbox Source "places"
-    participant FavSrc as Mapbox Source "favorites"
+  autonumber
+  participant MapCmp as MapComponent
+  participant Fav as FavoritesService
+  participant Auth as AuthService
+  participant FS as Firestore users/uid/favourites
+  participant MapSvc as MapService
 
-    MapCmp->>MapSvc: `init(mapHost)`
-    MapSvc->>PlacesSrc: `addSource('places', circular_places.geojson)`
-    MapSvc->>FavSrc: `addSource('favorites', empty FeatureCollection)`
-    MapSvc-->>MapCmp: `onReady()` + `queryRenderedFeatures$()`
-    MapCmp->>Places: `setAllFeatures(rendered)`
-    Places-->>MapCmp: `filteredFeatures$` for UI list
-    Places-->>MapSvc: `enabledCategories$` ⇒ `setCategoryFilter()`
-    MapCmp->>MapSvc: `setFavoritesVisibility(toggled)`
-
-    MapCmp->>Fav: `mountHeartButton()` wires favorite clicks
-    Fav->>Auth: request `user$`
-    Auth-->>Fav: emit `user$` stream
-    Auth-->>MapCmp: DOM event `favorites:auth`
-    Fav->>Auth: `openModal()` if user missing
-
-    Fav->>Firestore: `setDoc()` / `deleteDoc()`
-    Firestore-->>Fav: `collectionData()` snapshot
-    Fav->>FavSrc: `pushToMapSource()` ⇒ `setData(...)`
-    Fav-->>MapCmp: DOM event `favorites:update` (keys → paint/filter)
-    Fav-->>MapCmp: DOM event `favorites-ready`
+  MapCmp->>Fav: heart click
+  Fav->>Auth: user$
+  alt signed out
+    Auth-->>MapCmp: open login modal
+  else signed in
+    Fav->>FS: setDoc / deleteDoc
+    FS-->>Fav: collection snapshot
+    Fav->>MapSvc: favorites GeoJSON source
+    Fav-->>MapCmp: favorites:update
+  end
 ```
 
-## Favorites Chronology (page load)
-```mermaid
-sequenceDiagram
-    autonumber
-    actor User
-    participant App as AppComponent
-    participant Auth as AuthService
-    participant Fav as FavoritesService
-    participant MapCmp as MapComponent
-    participant MapSvc as MapService
-    participant Places as PlacesFilter
-    participant Firestore as Firestore
-    participant PlacesSrc as Mapbox Source "places"
-    participant FavSrc as Mapbox Source "favorites"
+## Discovery and moderation
 
-    User->>App: Route bootstraps shell
-    App->>Auth: Instantiate + set persistence
-    App->>Fav: Instantiate (+ window API, `favorites-ready`)
-    Fav-->>Window: Emit `favorites-ready`
-    MapCmp->>MapSvc: `init(container)`
-    MapSvc->>PlacesSrc: `addSource('places', circular_places.geojson)`
-    MapSvc->>FavSrc: `addSource('favorites', empty collection)`
-    MapSvc-->>Fav: Event `map:favorites-source-ready`
-    MapSvc-->>MapCmp: `onReady()` (style+places loaded)
-    MapCmp->>Places: `setAllFeatures(queryRenderedFeatures)`
-    MapCmp->>Places: `buildIndex(fetch circular_places.geojson)`
-    Places-->>MapCmp: `filteredFeatures$` (dedupe base + fav)
-    Fav->>Auth: subscribe to `user$`
-    Auth-->>Fav: cached/persistent user emitted
-    Fav->>Firestore: `collectionData()` listener
-    Firestore-->>Fav: favourites snapshot
-    Fav->>FavSrc: `pushToMapSource()` (favorites drawn)
-    Fav-->>MapCmp: `favorites:update` (heart refresh + favorite keys)
-    MapCmp->>MapSvc: `setFavoritesVisibility(favoritesVisible)`
-    MapSvc->>PlacesSrc: `setFilter()` favorites-only if categories off & toggle on
-    MapSvc->>PlacesSrc: `setPaintProperty()` paint favorites red via `PLACE_KEY`
+```mermaid
+flowchart TD
+  OSM["OSM Overpass"] --> PlaceScript["discover-osm-places.js"]
+  Agent["Event web agent"] --> EventScripts["discover-events-agent.js + discover-event-feeds.js"]
+  AdminRun["Admin Run discovery"] --> Jobs["discoveryJobs"]
+  Jobs --> Worker["discover:jobs or queued-discovery.yml"]
+  CronM["Monthly Actions"] --> PlaceScript
+  CronW["Weekly Actions"] --> EventScripts
+  Worker --> PlaceScript
+  Worker --> EventScripts
+  PlaceScript --> Queue["reviewQueue needs_review"]
+  EventScripts --> Queue
+  Manual["Admin manual add"] --> Queue
+  Manual --> Catalog
+  Queue --> Review["/admin/review approve reject edit"]
+  Review --> Catalog["places / events status approved"]
+  Review --> Memory["reviewMemory / eventReviewMemory"]
+  Memory --> PlaceScript
+  Memory --> EventScripts
+  Catalog --> Public["Atlas and Events pages"]
+```
+
+## Pages and services
+
+```mermaid
+flowchart TD
+  App["AppComponent"] --> Nav["Navbar or phone chrome"]
+  App --> Outlet["Router outlet"]
+  App --> Login["LoginComponent"]
+
+  Outlet --> Landing["LandingComponent"]
+  Outlet --> Atlas["AtlasComponent"]
+  Outlet --> EventsPage["EventsComponent"]
+  Outlet --> Account["AccountComponent"]
+  Outlet --> Admin["Admin pages"]
+
+  Atlas --> MapCmp["MapComponent"]
+  MapCmp --> MapSvc["MapService"]
+  MapCmp --> Filter["PlacesFilter"]
+  MapCmp --> Featured["FeaturedPlacesService"]
+  MapCmp --> Geo["GeolocationService"]
+  MapCmp --> Fav["FavoritesService"]
+
+  Landing --> Featured
+  Landing --> EventsSvc["EventsService"]
+  EventsPage --> EventsSvc
+  EventsPage --> EventFav["EventFavoritesService"]
+
+  Featured --> FS[(Firestore)]
+  EventsSvc --> FS
+  Fav --> FS
+  EventFav --> FS
+  Cities["CitiesService"] --> FS
 ```

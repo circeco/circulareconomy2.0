@@ -2,7 +2,9 @@
 
 This folder holds **machine-only** credentials. Everything here except this `README.md` is **ignored by git**, so your Firebase private key never goes to GitHub.
 
-## Firebase Admin SDK key (for `npm run admin:set-claim`)
+## Firebase Admin SDK key
+
+Used by `npm run admin:set-claim` and by discovery/seed scripts (`seed:firestore`, `discover:*`, `learning:report`, `discover:jobs`).
 
 1. In [Firebase Console](https://console.firebase.google.com/) → **Project settings** → **Service accounts** → **Generate new private key**.
 2. Save the downloaded JSON into **this folder** with this **exact name**:

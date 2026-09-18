@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { AccountComponent } from './account.component';
 import { AuthService } from '../../services/auth.service';
 import { GeolocationService } from '../../services/geolocation.service';
@@ -12,6 +13,7 @@ describe('AccountComponent', () => {
     await TestBed.configureTestingModule({
       imports: [AccountComponent],
       providers: [
+        provideRouter([]),
         { provide: AuthService, useClass: AuthServiceStub },
         GeolocationService,
       ],
@@ -29,5 +31,11 @@ describe('AccountComponent', () => {
   it('shows the location toggle', () => {
     const label = fixture.nativeElement.textContent as string;
     expect(label).toContain('Use my location');
+  });
+
+  it('links to the privacy policy', () => {
+    const link = fixture.nativeElement.querySelector('a[href="/privacy"]') as HTMLAnchorElement | null;
+    expect(link).toBeTruthy();
+    expect(link?.textContent).toContain('Privacy policy');
   });
 });

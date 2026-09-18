@@ -1,27 +1,32 @@
 # Frontend
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 18.2.8 and is currently developed on the `plan-app-architecture-for-circular-initiatives` branch. Check out that branch locally (`git checkout plan-app-architecture-for-circular-initiatives`) to follow along with the latest changes.
+Angular 18 standalone app for [circeco.org](https://circeco.org). Product architecture: [`../ARCHITECTURE.md`](../ARCHITECTURE.md).
 
-## Development server
+## Develop
 
-Run `npm install` once, then `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+```bash
+npm install
+npm start
+```
 
-## Code scaffolding
+[http://localhost:4200](http://localhost:4200) — `ng serve`, reload on change. Uses the Firebase project in `src/environments/environments.ts` (same project as production).
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+```bash
+npm test          # Karma / Jasmine
+npm run build     # production build → dist/frontend/browser
+```
 
-## Build
+Hosting deploys that build from GitHub Actions on `main` (see repo-root `.github/workflows/firebase-hosting.yml`).
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+## Layout
 
-## Running unit tests
+| Path | Role |
+|---|---|
+| `src/app/pages/` | Routes: landing, atlas, events, account, admin |
+| `src/app/components/` | Map, nav, phone chrome, login, calendar, city switcher, footer |
+| `src/app/services/` | Firestore, auth, map, city, filters, favourites, geolocation |
+| `src/app/data/` | Models, taxonomy, Firestore paths, discovery catalogs |
+| `src/environments/` | Mapbox, Firebase web config, Formspree |
+| `public/manifest.webmanifest` | PWA install metadata |
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
-
-## Running end-to-end tests
-
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
-
-## Further help
-
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+`src/assets/data/circular_places.geojson` is not loaded by the app.
