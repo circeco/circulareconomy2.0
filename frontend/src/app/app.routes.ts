@@ -28,13 +28,18 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./pages/account/account.component').then(m => m.AccountComponent),
     canActivate: [authGuard],
-    title: 'Account'
+    title: 'Manage your account'
   },
   {
     path: 'privacy',
     loadComponent: () =>
       import('./pages/privacy/privacy.component').then(m => m.PrivacyComponent),
-    title: 'Privacy policy'
+    title: 'Privacy and terms'
+  },
+  {
+    path: 'terms',
+    redirectTo: 'privacy',
+    pathMatch: 'full',
   },
   {
     path: 'admin/review',

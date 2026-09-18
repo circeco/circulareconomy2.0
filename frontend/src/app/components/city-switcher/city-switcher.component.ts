@@ -38,7 +38,7 @@ export class CitySwitcherComponent {
     const path = this.currentPath();
     const isLanding = path === '/' || path === '';
     if (this.variant() === 'inline') return isLanding;
-    if (path.startsWith('/privacy')) return false;
+    if (path.startsWith('/privacy') || path.startsWith('/account')) return false;
     return !isLanding; // floating on all non-landing pages (atlas/events/admin/etc.)
   });
 

@@ -33,6 +33,7 @@ describe('NavbarComponent', () => {
           { path: 'admin/review/places', component: BlankComponent },
           { path: 'admin/review/events', component: BlankComponent },
           { path: 'privacy', component: BlankComponent },
+          { path: 'account', component: BlankComponent },
         ]),
         { provide: AuthService, useClass: AuthServiceStub },
       ]
@@ -116,10 +117,25 @@ describe('NavbarComponent', () => {
     expect(fixture.nativeElement.querySelector('.logo-dropdown')).toBeNull();
   });
 
-  it('shows the privacy policy title on /privacy', async () => {
+  it('shows Manage your account in the profile menu', () => {
+    auth.displayUser.set({ uid: 'u1', email: 'a@b.c', photoURL: null });
+    fixture.detectChanges();
+    const link = fixture.nativeElement.querySelector('#manage-account-link') as HTMLAnchorElement | null;
+    expect(link).toBeTruthy();
+    expect(link?.getAttribute('href')).toBe('/account');
+    expect(link?.textContent).toContain('Manage your account');
+  });
+
+  it('shows the manage-account title on /account', async () => {
+    await goTo('/account');
+    expect(component.isLanding()).toBeFalse();
+    expect(fixture.nativeElement.querySelector('#nav-title')?.textContent).toContain('Manage your account');
+  });
+
+  it('shows the privacy and terms title on /privacy', async () => {
     await goTo('/privacy');
     expect(component.isLanding()).toBeFalse();
-    expect(fixture.nativeElement.querySelector('#nav-title')?.textContent).toContain('Privacy policy');
+    expect(fixture.nativeElement.querySelector('#nav-title')?.textContent).toContain('Privacy and terms');
   });
 
   it('drops stale place and event when opening Atlas while keeping city', async () => {

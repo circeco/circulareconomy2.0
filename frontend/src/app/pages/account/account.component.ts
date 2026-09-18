@@ -5,6 +5,7 @@ import { RouterLink } from '@angular/router';
 
 import { AuthService } from '../../services/auth.service';
 import { GeolocationService } from '../../services/geolocation.service';
+import { ViewportService } from '../../services/viewport.service';
 
 @Component({
   selector: 'app-account',
@@ -16,6 +17,7 @@ import { GeolocationService } from '../../services/geolocation.service';
 export class AccountComponent {
   readonly auth = inject(AuthService);
   readonly geo = inject(GeolocationService);
+  readonly viewport = inject(ViewportService);
 
   panel = signal<'email' | 'password' | 'delete' | 'logout' | null>(null);
   currentPassword = '';

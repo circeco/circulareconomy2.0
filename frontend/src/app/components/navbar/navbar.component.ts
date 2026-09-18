@@ -81,11 +81,12 @@ export class NavbarComponent implements AfterViewInit, OnDestroy {
 
   private updateModeFromUrl(): void {
     const url = this.currentPath();
-    // Atlas, events, admin, and privacy share the logo site menu; home is landing.
+    // Atlas, events, admin, account, and privacy share the logo site menu; home is landing.
     const landing =
       !url.startsWith('/atlas') &&
       !url.startsWith('/events') &&
       !url.startsWith('/admin') &&
+      !url.startsWith('/account') &&
       !url.startsWith('/privacy');
     this.isLanding.set(landing);
     this.toggleSnapClass(landing);
@@ -233,7 +234,8 @@ export class NavbarComponent implements AfterViewInit, OnDestroy {
     if (url.startsWith('/events')) {
       return 'Circular Events: Find circular solutions in your area!';
     }
-    if (url.startsWith('/privacy')) return 'Privacy policy';
+    if (url.startsWith('/privacy')) return 'Privacy and terms';
+    if (url.startsWith('/account')) return 'Manage your account';
     if (url.startsWith('/admin')) return 'CIRCECO';
     return 'CIRCULAR ATLAS: Find circular solutions in your area!';
   }

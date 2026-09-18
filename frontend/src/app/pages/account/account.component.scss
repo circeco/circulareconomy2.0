@@ -1,8 +1,8 @@
 @use 'variables' as *;
 
 .account-shell {
-  padding: 3rem 1.5rem;
-  max-width: 900px;
+  padding: calc(var(--header-offset, 60px) + 1.5rem) 1.5rem 3rem;
+  max-width: 40rem;
   margin: 0 auto;
 
   h1 {
@@ -10,7 +10,6 @@
     margin: 0 0 0.25rem;
     font-weight: 700;
     text-align: center;
-    text-transform: capitalize;
   }
 }
 
@@ -21,6 +20,14 @@
 .profile-hero {
   text-align: center;
   margin-bottom: 1.5rem;
+
+  h1 {
+    text-transform: capitalize;
+  }
+}
+
+:host-context(body.layout-desktop) .profile-hero h1 {
+  text-transform: none;
 }
 
 .profile-avatar {
@@ -35,6 +42,10 @@
   justify-content: center;
   font-family: $font-bebas;
   font-size: 32px;
+}
+
+:host-context(body.layout-desktop) .profile-avatar {
+  display: none;
 }
 
 .profile-email {

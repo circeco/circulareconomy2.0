@@ -1,89 +1,468 @@
 <section class="privacy-shell">
-  <h1>Privacy policy</h1>
-  <p class="updated">Last updated 18 September 2026</p>
+  <p class="updated">Last updated: 18 September 2026</p>
 
   <p>
-    This policy describes how <strong>Circeco</strong> (<a href="https://circeco.org">circeco.org</a>)
-    handles information when you use the website, the installable web app, and any future Circeco
-    apps for iPhone or Android. Circeco helps people find circular places and events in a selected city.
+    This page explains how Circeco handles personal information and the terms that apply when you use
+    <strong>Circeco</strong>, including the website and installable web app (PWA).
+  </p>
+  <p>Circeco helps people discover circular places and events in a selected city.</p>
+  <p>
+    Native iPhone and Android applications may be introduced in the future. If they are introduced, this page will be
+    updated where necessary to describe any additional processing or permissions.
+  </p>
+  <p>
+    For questions about privacy, personal data, or these Terms of Use, you can contact Piero Grilli through the
+    contact form available on the Circeco <a routerLink="/">home page</a>.
   </p>
 
-  <h2>Who is responsible</h2>
+  <h1>Privacy</h1>
+  <p>This section describes how Circeco handles information when you use the service.</p>
+
+  <h2>Data controller</h2>
   <p>
-    Circeco.org operates this service. Questions about privacy can be sent with the contact form on the
-    <a routerLink="/">home page</a>.
+    The data controller for personal information processed by Circeco is Piero Grilli, who can be contacted through the
+    contact form on the Circeco <a routerLink="/">home page</a>.
   </p>
 
   <h2>What we collect</h2>
+
+  <h3>Account information</h3>
+  <p>
+    If you create a Circeco account, we process your email address and authentication information through
+    <strong>Google Firebase Authentication</strong>.
+  </p>
+  <p>
+    Circeco does not store your password in plain text. Authentication credentials are handled by Firebase Authentication.
+  </p>
+  <p>
+    An account allows you to sign in, save favourites, and access your account across supported devices.
+  </p>
+
+  <h3>Favourites</h3>
+  <p>
+    Places and events that you save as favourites are stored in <strong>Google Cloud Firestore</strong> and associated
+    with your Circeco account.
+  </p>
+  <p>This allows your favourites to remain available when you sign in on another supported device.</p>
+
+  <h3>City and display preferences</h3>
+  <p>
+    Circeco stores the selected city and certain display preferences locally on your device using browser storage.
+  </p>
+  <p>These preferences remain on your device unless you clear the relevant browser or application data.</p>
+
+  <h3>Location</h3>
+  <p>
+    Circeco can use your device’s location to show your position on the map and provide location-dependent features such
+    as nearby sorting.
+  </p>
+  <p>
+    Location access is optional. Circeco requests location permission only when a location-dependent feature is used and
+    only after you allow it through your browser or device.
+  </p>
+  <p>
+    The current Circeco web application uses a one-time location request rather than continuous location tracking.
+    Circeco does not use background location tracking.
+  </p>
+  <p>
+    If you do not allow location access, you can continue to use Circeco, although location-dependent features may not
+    be available.
+  </p>
+  <p>
+    Location is used in connection with the city selected in Circeco. Circeco does not automatically replace the selected
+    city catalogue with another city’s catalogue based solely on your location.
+  </p>
+
+  <h3>Maps</h3>
+  <p>The Circeco atlas uses <strong>Mapbox</strong> to provide interactive maps.</p>
+  <p>
+    When the atlas is loaded, your device may send requests to Mapbox to retrieve map resources such as map tiles, styles,
+    fonts, or other required resources. These requests may include technical information such as your IP address and
+    approximate geographic area.
+  </p>
+  <p>Mapbox processes information according to its own privacy practices.</p>
+
+  <h3>Place discovery and geographic data</h3>
+  <p>
+    Circeco uses <strong>OpenStreetMap</strong> and related services, including <strong>Overpass</strong> and
+    <strong>Nominatim</strong>, for parts of its place-discovery and geographic-data workflow.
+  </p>
+  <p>These services may process technical information associated with requests made to their infrastructure.</p>
+  <p>Information obtained from these services may be processed and incorporated into Circeco’s public catalogue.</p>
+
+  <h3>Contact form</h3>
+  <p>
+    If you contact Circeco through the contact form on the <a routerLink="/">home page</a>, the information you submit,
+    such as your name, email address, and message, is sent to <strong>Formspree</strong> so that the message can be
+    received and answered.
+  </p>
+  <p>The contact form is not used to create a Circeco account automatically.</p>
+  <p>Contact-form submissions are not stored in Circeco’s Firestore database.</p>
+
+  <h3>Public catalogue</h3>
+  <p>
+    Places and events displayed in the Circeco catalogue are public information intended to help users discover circular
+    activities.
+  </p>
+  <p>
+    Information about public places, organisations, events, opening hours, websites, and similar information is not
+    treated as private account information merely because it appears in Circeco.
+  </p>
+
+  <h2>How we use information</h2>
+  <p>We use information to:</p>
+  <ul>
+    <li>provide and operate Circeco;</li>
+    <li>authenticate users and manage accounts;</li>
+    <li>store and synchronise favourites;</li>
+    <li>provide maps and location-dependent functionality;</li>
+    <li>remember selected cities and display preferences;</li>
+    <li>receive and respond to contact requests;</li>
+    <li>maintain, secure, troubleshoot, and improve the service;</li>
+    <li>prevent misuse of accounts and the service.</li>
+  </ul>
+  <p>We do not sell your personal information.</p>
+  <p>We do not use advertising trackers on Circeco.</p>
+
+  <h2>Legal bases</h2>
+  <p>
+    Where EU/EEA or UK data-protection laws apply, Circeco relies on the following legal bases where appropriate:
+  </p>
   <ul>
     <li>
-      <strong>Account.</strong> If you sign up, we store your email and a password (handled by
-      Google Firebase Authentication). We use this so you can sign in, save favourites, and manage your account.
+      <strong>Contract:</strong> Account information and favourites are processed because they are necessary to provide
+      the account features you request.
     </li>
     <li>
-      <strong>Favourites.</strong> Places and events you save are stored in our database (Google Cloud Firestore)
-      under your account, so they appear when you sign in on another device.
+      <strong>Consent:</strong> Optional device location is processed when you grant location permission.
     </li>
     <li>
-      <strong>City and display preferences.</strong> The selected city and some display choices are kept in your
-      browser (local storage) so the site remembers them. These stay on your device unless you clear site data.
+      <strong>Legitimate interests:</strong> Certain technical, security, maintenance, and service-operation activities
+      may be processed where necessary for the legitimate operation and protection of Circeco, while respecting applicable
+      legal requirements.
     </li>
     <li>
-      <strong>Location.</strong> The atlas can show your position and nearby places only if you turn on
-      “Use my location” and allow it in the browser or OS. We do not track you in the background.
-      Location is used on the map for the city you already selected; we do not mix catalogues from another city.
-    </li>
-    <li>
-      <strong>Map.</strong> The map is provided by Mapbox. Loading the atlas sends map-tile requests to Mapbox
-      (which may include your IP address and approximate area).
-    </li>
-    <li>
-      <strong>Contact form.</strong> If you send a message from the home page, your name, email, and message
-      go to Formspree so we can reply. We do not use that form to create an account.
-    </li>
-    <li>
-      <strong>Public catalogue.</strong> Approved places and events are public information on the site.
-      They are not your personal account data.
+      <strong>Communication:</strong> Information submitted through the contact form is processed so that Circeco can
+      receive and respond to your request.
     </li>
   </ul>
-  <p>We do not sell your personal information. We do not use advertising trackers on the site today.</p>
-
-  <h2>Legal bases (EU/EEA/UK)</h2>
   <p>
-    If those laws apply: we process account and favourites data to provide the service you ask for (contract).
-    We process optional location with your consent. We process contact-form messages to respond to you.
-    Map delivery is required to show the atlas.
+    Where consent is the legal basis, you can withdraw that consent at any time, for example by disabling location
+    permission through your browser or device settings.
+  </p>
+
+  <h2>Third-party services</h2>
+  <p>Circeco relies on third-party services and data sources to operate parts of the service:</p>
+  <ul>
+    <li>
+      <a href="https://firebase.google.com/" rel="noopener noreferrer" target="_blank">Google Firebase / Firebase Authentication</a>
+      — user authentication.
+    </li>
+    <li>
+      <a href="https://firebase.google.com/products/firestore" rel="noopener noreferrer" target="_blank">Google Cloud Firestore</a>
+      — storage of account-related favourites and application data.
+    </li>
+    <li>
+      <a href="https://www.mapbox.com/" rel="noopener noreferrer" target="_blank">Mapbox</a>
+      — interactive maps and related map resources.
+    </li>
+    <li>
+      <a href="https://formspree.io/" rel="noopener noreferrer" target="_blank">Formspree</a>
+      — delivery of contact-form messages.
+    </li>
+    <li>
+      <a href="https://www.openstreetmap.org/" rel="noopener noreferrer" target="_blank">OpenStreetMap</a>
+      — geographic and map-related open data.
+    </li>
+    <li>
+      <a href="https://overpass-api.de/" rel="noopener noreferrer" target="_blank">Overpass</a>
+      — geographic/place-data queries used in the Circeco data-discovery workflow.
+    </li>
+    <li>
+      <a href="https://nominatim.org/" rel="noopener noreferrer" target="_blank">Nominatim</a>
+      — geographic search and geocoding used in the Circeco data workflow.
+    </li>
+  </ul>
+  <p>
+    These third parties may process technical or personal information according to their own policies and applicable
+    contractual arrangements.
+  </p>
+  <p>
+    Some third parties may act as independent controllers for certain processing activities. Their own privacy policies
+    may therefore apply to information they process directly.
+  </p>
+
+  <h2>International data transfers</h2>
+  <p>
+    Some third-party providers used by Circeco may process or store information outside the European Economic Area (EEA),
+    including in countries such as the United States.
+  </p>
+  <p>
+    Where personal information is transferred internationally, Circeco relies on appropriate safeguards where required by
+    applicable data-protection law, such as recognised contractual or other lawful transfer mechanisms.
+  </p>
+  <p>
+    Third-party providers may change their infrastructure, processing locations, or service arrangements. Their current
+    privacy documentation should therefore also be consulted for detailed information about their processing activities.
   </p>
 
   <h2>How long we keep data</h2>
+  <p>Account information and favourites are generally retained while your account remains active.</p>
   <p>
-    Account and favourites stay until you delete the account or we close the service.
-    Browser storage lasts until you clear it. Contact-form messages are kept only as long as needed to reply
-    and run the project. Mapbox and Firebase keep technical logs under their own policies.
+    If you delete your account, Circeco will delete the account and associated favourites that Circeco controls, subject
+    to information that must be retained where required by law or information that may remain temporarily in secure backups
+    before being overwritten.
+  </p>
+  <p>
+    Browser storage containing city and display preferences remains on your device until you clear the relevant data or it
+    is otherwise removed.
+  </p>
+  <p>
+    Contact-form messages are retained only for as long as reasonably necessary to respond to the request and operate or
+    document the Circeco project, subject to applicable legal requirements.
+  </p>
+  <p>
+    Third-party providers may retain technical logs or other information according to their own retention policies.
   </p>
 
-  <h2>Processors</h2>
-  <ul>
-    <li><a href="https://firebase.google.com/" rel="noopener noreferrer" target="_blank">Google Firebase</a> — authentication and database</li>
-    <li><a href="https://www.mapbox.com/" rel="noopener noreferrer" target="_blank">Mapbox</a> — map tiles and map style</li>
-    <li><a href="https://formspree.io/" rel="noopener noreferrer" target="_blank">Formspree</a> — contact form delivery</li>
-  </ul>
-  <p>Each of those providers has its own privacy policy for data they process on our behalf or as a separate controller of technical logs.</p>
+  <h2>Security</h2>
+  <p>
+    Circeco uses reasonable technical and organisational measures appropriate to the nature of the information processed
+    to help protect personal information against unauthorised access, loss, misuse, or alteration.
+  </p>
+  <p>
+    Authentication is handled through Firebase Authentication, and access to account-related Firestore information is
+    controlled through application and database security rules.
+  </p>
+  <p>No internet-based service can guarantee absolute security.</p>
 
-  <h2>Your choices</h2>
+  <h2>Your rights</h2>
+  <p>Where applicable under EU/EEA or UK data-protection law, you may have the right to:</p>
   <ul>
-    <li>You can use the atlas and events without an account.</li>
-    <li>You can refuse location permission. Nearby sorting will not run.</li>
-    <li>Signed-in users can change email or password, and can delete the account in Account (this removes that account and its favourites).</li>
-    <li>You can ask us, via the home page contact form, for a copy of account data we hold or to correct it.</li>
+    <li>request access to personal information we hold about you;</li>
+    <li>request correction of inaccurate or incomplete information;</li>
+    <li>request deletion of your personal information;</li>
+    <li>request restriction of processing;</li>
+    <li>request portability of certain personal information;</li>
+    <li>object to certain processing;</li>
+    <li>withdraw consent where processing is based on consent;</li>
+    <li>lodge a complaint with the relevant data-protection supervisory authority.</li>
   </ul>
+  <p>
+    You can contact Circeco through the <a routerLink="/">home page</a> contact form to request access, correction,
+    deletion, or other applicable rights.
+  </p>
+  <p>We may need to verify your identity before completing certain requests.</p>
+
+  <h2>Account deletion</h2>
+  <p>You can delete your Circeco account through the account functionality provided by Circeco.</p>
+  <p>
+    Deleting your account removes the account and associated favourites controlled by Circeco, subject to the retention
+    exceptions described above.
+  </p>
+  <p>The current web application provides account deletion through the account functionality.</p>
+  <p>
+    If native iPhone or Android applications are introduced in the future, they will provide an appropriate
+    account-deletion mechanism where required by applicable law and platform rules.
+  </p>
+
+  <h2>Cookies and local storage</h2>
+  <p>
+    Circeco uses browser storage to remember information such as your selected city and display preferences.
+  </p>
+  <p>
+    These technologies are used to provide and remember functionality and are not used by Circeco for advertising or
+    cross-site behavioural tracking.
+  </p>
+  <p>
+    Third-party services such as Mapbox, Firebase, Formspree, OpenStreetMap-related services, Overpass, or Nominatim may
+    use their own technical mechanisms when providing their services. Their respective policies describe those mechanisms
+    in more detail.
+  </p>
 
   <h2>Children</h2>
-  <p>Circeco is not directed at children under 16. We do not knowingly collect personal data from them.</p>
+  <p>Circeco is not directed at children under 16.</p>
+  <p>We do not knowingly collect personal information from children under 16.</p>
+  <p>
+    If you believe that a child has provided personal information to Circeco, please contact us through the
+    <a routerLink="/">home page</a> contact form.
+  </p>
+
+  <h2>Changes to this Privacy Policy</h2>
+  <p>
+    Circeco may update this Privacy Policy when the service, technology, legal requirements, or third-party services
+    change.
+  </p>
+  <p>The “Last updated” date at the top of this page indicates when the policy was most recently changed.</p>
+  <p>
+    If a change materially affects how personal information is processed, Circeco will take appropriate steps to
+    communicate the change where required by law.
+  </p>
+
+  <h1 id="terms">Terms of Use</h1>
+  <p>
+    By accessing or using Circeco, you agree to these Terms of Use. If you do not agree with these terms, please do not
+    use the service.
+  </p>
+
+  <h2>Using Circeco</h2>
+  <p>Circeco is a discovery service that helps users find circular places and events in a selected city.</p>
+  <p>You may use Circeco for lawful personal and informational purposes.</p>
+  <p>You must not use Circeco to:</p>
+  <ul>
+    <li>break into or attempt to gain unauthorised access to accounts, systems, or administrative tools;</li>
+    <li>interfere with the operation or security of the service;</li>
+    <li>intentionally abuse or overload the service;</li>
+    <li>misuse another person’s account;</li>
+    <li>scrape or collect catalogue information in an abusive or disruptive manner;</li>
+    <li>use Circeco for unlawful purposes.</li>
+  </ul>
+  <p>
+    We may restrict or terminate access to an account that is used in violation of these terms or in a way that threatens
+    the security or operation of Circeco.
+  </p>
+
+  <h2>The catalogue</h2>
+  <p>Circeco’s catalogue is intended to help users discover circular places and events.</p>
+  <p>Listings may be incomplete, outdated, unavailable, or inaccurate.</p>
+  <p>
+    Opening hours, prices, websites, event details, services, and other information may change without notice.
+  </p>
+  <p>
+    Information about a listed organisation, business, group, or place does not constitute an endorsement, recommendation,
+    partnership, or guarantee by Circeco.
+  </p>
+  <p>
+    Users should verify important information directly with the relevant organisation before travelling, purchasing a
+    service, attending an event, or relying on catalogue information.
+  </p>
+  <p>
+    Circeco is not responsible for what happens when you visit, contact, purchase from, or otherwise interact with an
+    organisation or place listed in the catalogue.
+  </p>
+
+  <h2>Events</h2>
+  <p>
+    Event information may change or events may be cancelled, postponed, relocated, or otherwise modified by their
+    organisers.
+  </p>
+  <p>Circeco does not guarantee that an event will take place as displayed.</p>
+  <p>Users should confirm important event details with the event organiser where appropriate.</p>
+
+  <h2>Accounts</h2>
+  <p>
+    If you create an account, you must provide an email address that you control and keep your account information
+    accurate.
+  </p>
+  <p>You are responsible for maintaining the security of your account and for activity carried out through it.</p>
+  <p>You must not share or misuse another person’s account.</p>
+  <p>You can delete your account using the account-deletion functionality provided by Circeco.</p>
+
+  <h2>Third-party services and external links</h2>
+  <p>
+    Circeco uses third-party services and data sources, including Firebase, Mapbox, Formspree, OpenStreetMap, Overpass,
+    and Nominatim, to provide parts of the service and catalogue.
+  </p>
+  <p>Those services operate under their own terms and privacy policies.</p>
+  <p>Circeco may also contain links to external websites operated by other organisations.</p>
+  <p>
+    Circeco does not control those external websites and is not responsible for their content, availability, security,
+    privacy practices, or terms.
+  </p>
+
+  <h2>Availability</h2>
+  <p>Circeco is provided on an “as is” and “as available” basis.</p>
+  <p>
+    Features, catalogue information, maps, accounts, events, and other parts of the service may change, become
+    temporarily unavailable, or be discontinued.
+  </p>
+  <p>
+    We do not guarantee that Circeco will always be available, uninterrupted, error-free, or compatible with every device
+    or browser.
+  </p>
+
+  <h2>Intellectual property</h2>
+  <p>
+    Unless otherwise stated, the Circeco application, website, original code, design elements, branding, and other
+    original materials created for Circeco remain the property of their respective rights holders.
+  </p>
+  <p>
+    Third-party names, logos, trademarks, images, map data, and other materials remain the property of their respective
+    owners.
+  </p>
+  <p>
+    Catalogue information may originate from public sources, organisations, or other third parties and may be subject to
+    their respective rights and licences.
+  </p>
+
+  <h2>Mobile and installable applications</h2>
+  <p>Circeco is currently available as a website and installable web app (PWA).</p>
+  <p>The current implementation does not include a native iPhone or Android application.</p>
+  <p>
+    Native applications may be introduced in the future. If native applications are released, they may require
+    operating-system permissions for features such as location access.
+  </p>
+  <p>
+    Any future native application will remain subject to this Privacy Policy and Terms of Use, together with any
+    additional disclosures required for that application.
+  </p>
 
   <h2>Apps and updates</h2>
   <p>
-    A future Circeco app in the App Store or Google Play uses this same service and this same policy.
-    We will update this page if that changes. The date at the top will change when we do.
+    Circeco may release updates, bug fixes, security improvements, feature changes, or other modifications to the website
+    or installable web app.
   </p>
+  <p>
+    If native iPhone or Android applications are introduced, those applications may also receive updates through their
+    respective app stores.
+  </p>
+  <p>
+    Some updates may be required to continue using particular features or supported versions of the service.
+  </p>
+  <p>
+    The Privacy Policy and Terms of Use may be updated when changes to Circeco or its services require them.
+  </p>
+  <p>The “Last updated” date at the top of this page will be changed when the page is materially updated.</p>
+
+  <h2>Disclaimer and liability</h2>
+  <p>Circeco provides catalogue and discovery information for general informational purposes.</p>
+  <p>To the extent permitted by applicable law, Circeco is not responsible for losses arising from:</p>
+  <ul>
+    <li>inaccurate, incomplete, or outdated catalogue information;</li>
+    <li>changes to opening hours, events, services, or availability;</li>
+    <li>actions or omissions of organisations listed on Circeco;</li>
+    <li>external websites or third-party services;</li>
+    <li>temporary or permanent service interruptions;</li>
+    <li>information voluntarily saved by a user, including favourites;</li>
+    <li>reliance on Circeco information without independently verifying it.</li>
+  </ul>
+  <p>
+    Nothing in these Terms excludes or limits liability that cannot legally be excluded or limited under applicable law.
+  </p>
+
+  <h2>Changes to the service</h2>
+  <p>
+    Circeco may add, remove, modify, or discontinue features, catalogue categories, cities, accounts, or other parts of
+    the service.
+  </p>
+  <p>
+    Where appropriate, significant changes will be reflected in an updated version of these Terms or Privacy Policy.
+  </p>
+
+  <h2>Governing law</h2>
+  <p>
+    These Terms are governed by the laws applicable to the data controller, together with applicable mandatory consumer
+    and data-protection laws.
+  </p>
+  <p>
+    Nothing in these Terms is intended to remove or restrict rights that cannot legally be removed or restricted under
+    applicable law.
+  </p>
+
+  <h2>Contact</h2>
+  <p>
+    For questions about Circeco, privacy, personal data, account deletion, or these Terms of Use, please contact:
+  </p>
+  <p><strong>Piero Grilli</strong></p>
+  <p>Contact through the contact form available on the Circeco <a routerLink="/">home page</a>.</p>
 </section>

@@ -1,7 +1,7 @@
 <section class="account-shell">
   <div class="profile-hero">
     <div class="profile-avatar" aria-hidden="true">{{ initials() }}</div>
-    <h1>{{ displayName() }}</h1>
+    <h1>{{ viewport.isPhone() ? displayName() : 'Manage your account' }}</h1>
     <p class="profile-email">{{ email() }}</p>
   </div>
 
@@ -63,7 +63,7 @@
 
     <li>
       <a routerLink="/privacy" class="account-row">
-        Privacy policy
+        Privacy and terms
         <span class="chevron">›</span>
       </a>
     </li>

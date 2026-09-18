@@ -65,6 +65,15 @@
         font-weight: 700;
       }
 
+      a.dropdown-item {
+        color: #0c343d;
+        box-sizing: border-box;
+
+        &:hover {
+          background: #f4f7f8;
+        }
+      }
+
       .location-toggle {
         display: flex;
         align-items: center;

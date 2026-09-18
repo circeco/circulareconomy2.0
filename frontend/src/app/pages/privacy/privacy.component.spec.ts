@@ -20,9 +20,12 @@ describe('PrivacyComponent', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('states that Circeco operates the service', () => {
+  it('covers privacy and terms on one page', () => {
     const text = (fixture.nativeElement as HTMLElement).textContent || '';
-    expect(text).toContain('circeco.org');
+    expect(text).toContain('Last updated: 18 September 2026');
+    expect(text).toContain('Piero Grilli');
     expect(text).toContain('Firebase');
+    expect(text).toContain('Terms of Use');
+    expect(text).toContain('contact form');
   });
 });
