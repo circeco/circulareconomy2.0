@@ -24,7 +24,7 @@ Below 1024px: `phone-top-bar` + `phone-tab-bar` (landing, atlas, events, account
 
 - One Angular codebase in `frontend/`. Default `ng build` is still the website (service worker on).
 - Native uses `configurations.capacitor` (production-like, service worker off) and `environment.native`.
-- Do not add `ios/` or `android/` until explicitly asked.
+- Android project lives in `frontend/android/`. Do not add `ios/` until explicitly asked.
 - Website must remain independently buildable; do not point Firebase Hosting at the Capacitor configuration.
 
 ## Do not add

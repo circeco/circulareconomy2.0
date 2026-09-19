@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Circeco</string>
+    <string name="title_activity_main">Circeco</string>
+    <string name="package_name">org.circeco.app</string>
+    <string name="custom_url_scheme">org.circeco.app</string>
+</resources>
