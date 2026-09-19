@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Scale Circeco PWA / home-screen icons from the designer raster master
-# (frontend/src/assets/icons/app-icon.png). 512 outputs stay byte-identical
-# to that PNG; 180/192 (and favicons) are LANCZOS downscales so the baked
+# Scale Circeco PWA / home-screen / Android launcher icons from the designer
+# raster master (frontend/src/assets/icons/app-icon.png). 512 PWA outputs stay
+# byte-identical to that PNG; smaller sizes are LANCZOS downscales so the baked
 # rounded coral frame stays uniform. Vector geometry lives in app-icon.svg
 # and app-icon-maskable.svg for editing — do not rasterize a sharp-square mark.
 set -euo pipefail

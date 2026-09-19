@@ -27,3 +27,15 @@ The script looks for credentials in this order:
 **Do not** rename `firebase-adminsdk.json` to something else unless you use `GOOGLE_APPLICATION_CREDENTIALS`.
 
 If this key leaks, revoke it in the Console and generate a new one.
+
+## Play upload keystore
+
+Used to sign the Android App Bundle (`npm --prefix frontend run cap:aab`). Losing this key can lock you out of Play updates.
+
+Files (gitignored, this folder only):
+
+- `android-upload.jks`
+- `android-keystore.properties`
+
+Keep a copy off this Mac. Do not commit them.
+
