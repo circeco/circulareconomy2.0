@@ -1,6 +1,7 @@
 /** Production replacement for `environments.ts` (`angular.json` fileReplacements). */
 export const environment = {
   production: true,
+  native: false,
   mapboxToken: 'pk.eyJ1IjoiY2lyY2VjbyIsImEiOiJjazczN3docmowNjMwM2ZwZGFkand4YTUxIn0.0pNRz0t74QkAc6y5shG0BA',
   mapStyle: 'mapbox://styles/circeco/ck5zjodry0ujw1ioaiqvk9kjs',
   firebase: {

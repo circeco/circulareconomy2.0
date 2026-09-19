@@ -1,11 +1,11 @@
 ---
-description: Mobile web that already shipped — atlas location and phone chrome. Do not add native.
+description: Mobile web that already shipped — atlas location and phone chrome. Capacitor wraps the same Angular app.
 alwaysApply: true
 ---
 
-# Mobile web (shipped)
+# Mobile web (shipped) + Capacitor wrap
 
-Location on the atlas and the phone shell already exist. Do not add Capacitor, a native rewrite, Mapbox Directions, or background GPS.
+Location on the atlas and the phone shell already exist. Capacitor 7 in `frontend/` wraps this same Angular app for later iOS/Android. Do not add a native rewrite, Mapbox Directions, or background GPS.
 
 ## Location (atlas)
 
@@ -20,6 +20,13 @@ Blue dot + nearby list on the **current** city atlas. Browser `getCurrentPositio
 
 Below 1024px: `phone-top-bar` + `phone-tab-bar` (landing, atlas, events, account). Admin stays desktop chrome. PWA install exists; offline atlas is not in scope.
 
+## Capacitor
+
+- One Angular codebase in `frontend/`. Default `ng build` is still the website (service worker on).
+- Native uses `configurations.capacitor` (production-like, service worker off) and `environment.native`.
+- Do not add `ios/` or `android/` until explicitly asked.
+- Website must remain independently buildable; do not point Firebase Hosting at the Capacitor configuration.
+
 ## Do not add
 
-Directions, Capacitor, native apps, mixing city catalogues from GPS.
+Directions, background GPS, mixing city catalogues from GPS, a second frontend.

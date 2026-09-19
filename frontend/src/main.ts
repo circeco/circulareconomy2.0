@@ -31,7 +31,7 @@ bootstrapApplication(AppComponent, {
 
     // Installable PWA shell only — production builds. Map tiles / offline atlas stay network-only.
     provideServiceWorker('ngsw-worker.js', {
-      enabled: !isDevMode(),
+      enabled: !isDevMode() && !environment.native,
       registrationStrategy: 'registerWhenStable:30000',
     }),
   ],

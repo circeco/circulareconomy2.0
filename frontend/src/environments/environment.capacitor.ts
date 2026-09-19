@@ -1,7 +1,7 @@
-/** Dev / `ng serve` config. Production builds replace this file with `environment.prod.ts`. */
+/** Capacitor native replacement for `environments.ts` (`angular.json` fileReplacements). */
 export const environment = {
-  production: false,
-  native: false,
+  production: true,
+  native: true,
   mapboxToken: 'pk.eyJ1IjoiY2lyY2VjbyIsImEiOiJjazczN3docmowNjMwM2ZwZGFkand4YTUxIn0.0pNRz0t74QkAc6y5shG0BA',
   mapStyle: 'mapbox://styles/circeco/ck5zjodry0ujw1ioaiqvk9kjs',
   firebase: {
